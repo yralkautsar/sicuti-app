@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { usePathname } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 
@@ -36,6 +37,7 @@ const NAV = [
 
 export default function DashboardPage() {
   const router = useRouter()
+  const pathname = usePathname()
   const [profile, setProfile]   = useState(null)
   const [stats, setStats]       = useState({ guru: 0, murid: 0, hadirHari: 0, cutiPending: 0 })
   const [recentAbs, setRecentAbs] = useState([])
@@ -140,7 +142,7 @@ export default function DashboardPage() {
         {/* Nav */}
         <nav className="flex-1 px-3 py-4 flex flex-col gap-0.5">
           {NAV.map(({ href, label, icon }) => {
-            const active = typeof window !== 'undefined' && window.location.pathname === href
+            const active = pathname === href
             return (
               <a key={href} href={href}
                 className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"

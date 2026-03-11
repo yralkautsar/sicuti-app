@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { usePathname } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 
@@ -17,10 +18,11 @@ const NAV = [
   { href: '/dashboard/cuti',    label: 'Cuti Guru',  icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg> },
 ]
 
-const EMPTY_FORM = { full_name: '', nip: '', jabatan: '', no_hp: '', kelas: '' }
+const EMPTY_FORM = { full_name: '', nip: '', jabatan: '', no_hp: '' }
 
 export default function GuruPage() {
   const router = useRouter()
+  const pathname = usePathname()
   const [profile, setProfile]   = useState(null)
   const [gurus, setGurus]       = useState([])
   const [loading, setLoading]   = useState(true)
@@ -46,10 +48,11 @@ export default function GuruPage() {
 
   const fetchGurus = async () => {
     setLoading(true)
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('profiles')
       .select('*')
       .order('full_name', { ascending: true })
+    if (error) console.error('fetchGurus error:', error)
     setGurus(data || [])
     setLoading(false)
   }
@@ -112,7 +115,7 @@ export default function GuruPage() {
         // Update existing
         const { error } = await supabase
           .from('profiles')
-          .update({ full_name: form.full_name, nip: form.nip, jabatan: form.jabatan, no_hp: form.no_hp, kelas: form.kelas })
+          .update({ full_name: form.full_name, nip: form.nip, jabatan: form.jabatan, no_hp: form.no_hp })
           .eq('id', editGuru.id)
         if (error) throw error
       } else {
@@ -131,7 +134,6 @@ export default function GuruPage() {
             nip: form.nip || null,
             jabatan: form.jabatan || null,
             no_hp: form.no_hp || null,
-            kelas: form.kelas || null,
             role: 'guru',
             qr_code,
           })
@@ -150,7 +152,7 @@ export default function GuruPage() {
 
   const openEdit = (guru) => {
     setEditGuru(guru)
-    setForm({ full_name: guru.full_name, nip: guru.nip || '', jabatan: guru.jabatan || '', no_hp: guru.no_hp || '', kelas: guru.kelas || '' })
+    setForm({ full_name: guru.full_name, nip: guru.nip || '', jabatan: guru.jabatan || '', no_hp: guru.no_hp || '' })
     setShowModal(true)
   }
 
@@ -199,7 +201,7 @@ export default function GuruPage() {
         </div>
         <nav className="flex-1 px-3 py-4 flex flex-col gap-0.5">
           {NAV.map(({ href, label, icon }) => {
-            const active = typeof window !== 'undefined' && window.location.pathname === href
+            const active = pathname === href
             return (
               <a key={href} href={href}
                 className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
@@ -295,7 +297,7 @@ export default function GuruPage() {
               <table className="w-full">
                 <thead>
                   <tr style={{ background: '#fafafa', borderBottom: '1px solid #f3f4f6' }}>
-                    {['Nama Guru', 'NIP', 'Jabatan', 'Kelas', 'No. HP', 'QR Code', 'Aksi'].map(h => (
+                    {['Nama Guru', 'NIP', 'Jabatan', 'No. HP', 'QR Code', 'Aksi'].map(h => (
                       <th key={h} className="text-left px-5 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wider"
                         style={{ fontFamily: 'DM Mono' }}>
                         {h}
@@ -329,10 +331,6 @@ export default function GuruPage() {
                       {/* Jabatan */}
                       <td className="px-5 py-4">
                         <span className="text-sm text-gray-600">{guru.jabatan || '—'}</span>
-                      </td>
-                      {/* Kelas */}
-                      <td className="px-5 py-4">
-                        <span className="text-sm text-gray-600">{guru.kelas || '—'}</span>
                       </td>
                       {/* No HP */}
                       <td className="px-5 py-4">
@@ -452,24 +450,6 @@ export default function GuruPage() {
                   <option value="Wali Kelas">Wali Kelas</option>
                   <option value="Guru Pendamping">Guru Pendamping</option>
                 </select>
-              </div>
-
-              {/* Kelas */}
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-widest text-gray-400 mb-1.5"
-                  style={{ fontFamily: 'DM Mono' }}>Kelas</label>
-                <input
-                  type="text"
-                  placeholder="contoh: Kelas A, Kelas B (opsional)"
-                  value={form.kelas}
-                  onChange={e => setForm(p => ({ ...p, kelas: e.target.value }))}
-                  className="w-full px-4 py-3 text-sm border rounded-xl transition-all"
-                  style={{
-                    border: `1.5px solid ${form.kelas ? purple : '#e5e7eb'}`,
-                    background: form.kelas ? purple50 : 'white',
-                    color: '#111'
-                  }}
-                />
               </div>
 
               {formError && (
