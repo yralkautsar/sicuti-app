@@ -102,16 +102,22 @@ export default function QRMassalPage() {
     setGenerating(false)
 
     // Build print window
+    const logoUrl = window.location.origin + '/logo.png'
+    const isGuru = tab === 'guru'
     const cards = toGenerate.map(item => {
-      const isGuru = tab === 'guru'
       const sub = isGuru
         ? (item.jabatan || '')
-        : `${item.classes?.nama_kelas || ''} · ${item.tahun_ajaran || ''}`
+        : `${item.classes?.nama_kelas || ''}${item.tahun_ajaran ? ' · ' + item.tahun_ajaran : ''}`
+      const label = isGuru ? 'Kartu Absensi Guru' : 'Kartu Absensi Murid'
       return `
         <div class="card">
+          <div class="card-top">
+            <img src="${logoUrl}" class="logo" />
+            <div class="label">${label}</div>
+          </div>
+          <img src="${newMap[item.id]}" class="qr" />
           <div class="name">${item.full_name}</div>
           <div class="sub">${sub}</div>
-          <img src="${newMap[item.id]}" class="qr" />
           <div class="code">${item.qr_code || item.id}</div>
         </div>
       `
@@ -132,24 +138,49 @@ export default function QRMassalPage() {
           .grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 6mm;
-            padding: 10mm;
+            gap: 5mm;
+            padding: 8mm;
           }
           .card {
-            border: 1.5px solid #e5e7eb;
-            border-radius: 8px;
-            padding: 10px 8px;
+            border: 1.5px solid #ede9fe;
+            border-radius: 10px;
+            padding: 8px 6px;
             text-align: center;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 4px;
+            gap: 3px;
             break-inside: avoid;
             background: #fff;
           }
+          .card-top {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+            margin-bottom: 2px;
+          }
+          .logo {
+            width: 28px;
+            height: 28px;
+            object-fit: contain;
+          }
+          .label {
+            font-size: 7px;
+            font-weight: 700;
+            color: #6d28d9;
+            letter-spacing: 0.07em;
+            text-transform: uppercase;
+          }
+          .qr {
+            width: 120px;
+            height: 120px;
+            display: block;
+            margin: 2px auto;
+          }
           .name {
             font-size: 11px;
-            font-weight: 700;
+            font-weight: 800;
             color: #111;
             line-height: 1.3;
             word-break: break-word;
@@ -158,12 +189,6 @@ export default function QRMassalPage() {
             font-size: 9px;
             color: #6b7280;
             line-height: 1.2;
-          }
-          .qr {
-            width: 110px;
-            height: 110px;
-            display: block;
-            margin: 4px auto;
           }
           .code {
             font-size: 7px;
