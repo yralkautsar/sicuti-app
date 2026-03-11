@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
-import Sidebar from '@/components/sidebar'
+import Sidebar from '@/components/Sidebar'
 
 const purple      = '#6d28d9'
 const purple50    = '#f5f3ff'
