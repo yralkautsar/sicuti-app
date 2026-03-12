@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useMemo } from 'react'
+import React, { useEffect, useState, useMemo } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import Sidebar from '@/components/Sidebar'
@@ -27,6 +27,42 @@ function isLate(timeStr) {
   return timeStr.slice(0, 5) > BATAS_JAM
 }
 
+function menitDiff(timeStr) {
+  if (!timeStr) return null
+  const [bh, bm] = BATAS_JAM.split(':').map(Number)
+  const cleaned = timeStr.replace('.', ':')
+  const parts = cleaned.split(':').map(Number)
+  if (parts.length < 2 || isNaN(parts[0]) || isNaN(parts[1])) return null
+  const [h, m] = parts
+  const diff = (h * 60 + m) - (bh * 60 + bm)
+  if (diff === 0) return null
+  const total = Math.abs(diff)
+  const jam   = Math.floor(total / 60)
+  const mnt   = total % 60
+  const label = jam > 0
+    ? (mnt > 0 ? `${jam} jam ${mnt} mnt` : `${jam} jam`)
+    : `${mnt} mnt`
+  return { label, early: diff < 0 }
+}
+
+function menitRaw(timeStr) {
+  if (!timeStr) return 0
+  const [bh, bm] = BATAS_JAM.split(':').map(Number)
+  const cleaned = timeStr.replace('.', ':')
+  const parts = cleaned.split(':').map(Number)
+  if (parts.length < 2 || isNaN(parts[0]) || isNaN(parts[1])) return 0
+  const diff = (parts[0] * 60 + parts[1]) - (bh * 60 + bm)
+  return diff > 0 ? diff : 0
+}
+
+function fmtMenit(total) {
+  if (total <= 0) return ''
+  const jam = Math.floor(total / 60)
+  const mnt = total % 60
+  if (jam > 0) return mnt > 0 ? `${jam} jam ${mnt} mnt` : `${jam} jam`
+  return `${mnt} mnt`
+}
+
 function fmtTime(scannedAt) {
   if (!scannedAt) return null
   return new Date(scannedAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Makassar' })
@@ -50,6 +86,7 @@ export default function LaporanPage() {
   const [gurus, setGurus]             = useState([])
   const [filterKelas, setFilterKelas] = useState('')
   const [loading, setLoading]         = useState(false)
+  const [expandedRow, setExpandedRow] = useState(null)
 
   const now = new Date()
   const [tanggal, setTanggal] = useState(now.toISOString().slice(0, 10))
@@ -135,14 +172,20 @@ export default function LaporanPage() {
     const filtered  = murids.filter(m => !filterKelas || m.class_id === filterKelas)
     return filtered.map(m => {
       const recs = bulanDataMurid.filter(r => r.student_id === m.id)
-      let hadir = 0, telat = 0, tidakMasuk = 0
+      let hadir = 0, telat = 0, tidakMasuk = 0, totalMenit = 0
+      const telatDetail = []
       hariKerja.forEach(tgl => {
         const masukRec = recs.find(r => r.date === tgl && r.type === 'masuk')
         if (!masukRec) { tidakMasuk++; return }
         const jam = fmtTime(masukRec.scanned_at)
-        if (isLate(jam)) telat++; else hadir++
+        if (isLate(jam)) {
+          telat++
+          const mnt = menitRaw(jam)
+          totalMenit += mnt
+          telatDetail.push({ tgl, jam, mnt })
+        } else hadir++
       })
-      return { ...m, hadir, telat, tidakMasuk, total: hariKerja.length }
+      return { ...m, hadir, telat, tidakMasuk, total: hariKerja.length, telatDetail, totalMenit }
     })
   }, [bulanDataMurid, murids, filterKelas, bulan, tahun])
 
@@ -171,14 +214,20 @@ export default function LaporanPage() {
     const hariKerja = getWeekdaysInMonth(tahun, bulan)
     return gurus.map(g => {
       const recs = bulanDataGuru.filter(r => r.profile_id === g.id)
-      let hadir = 0, telat = 0, tidakMasuk = 0
+      let hadir = 0, telat = 0, tidakMasuk = 0, totalMenit = 0
+      const telatDetail = []
       hariKerja.forEach(tgl => {
         const masukRec = recs.find(r => r.date === tgl && r.type === 'masuk')
         if (!masukRec) { tidakMasuk++; return }
         const jam = fmtTime(masukRec.scanned_at)
-        if (isLate(jam)) telat++; else hadir++
+        if (isLate(jam)) {
+          telat++
+          const mnt = menitRaw(jam)
+          totalMenit += mnt
+          telatDetail.push({ tgl, jam, mnt })
+        } else hadir++
       })
-      return { ...g, hadir, telat, tidakMasuk, total: hariKerja.length }
+      return { ...g, hadir, telat, tidakMasuk, total: hariKerja.length, telatDetail, totalMenit }
     })
   }, [bulanDataGuru, gurus, bulan, tahun])
 
@@ -193,19 +242,28 @@ export default function LaporanPage() {
 
     let headers, csvRows
     if (isHarian) {
-      headers  = ['No', 'Nama', isMurid ? 'Kelas' : 'Jabatan', 'Jam Masuk', 'Jam Pulang', 'Status']
-      csvRows  = rows.map((r, i) => [
-        i + 1,
-        r.full_name,
-        isMurid ? (r.classes?.nama_kelas || '') : (r.jabatan || ''),
-        r.jamMasuk  || '',
-        r.jamPulang || '',
-        r.status,
-      ])
+      headers  = ['No', 'Nama', isMurid ? 'Kelas' : 'Jabatan', 'Jam Masuk', 'Keterlambatan', 'Jam Pulang', 'Status']
+      csvRows  = rows.map((r, i) => {
+        const d = menitDiff(r.jamMasuk)
+        const ket = d ? (d.early ? `${d.label} lebih awal` : `${d.label} terlambat`) : ''
+        return [
+          i + 1,
+          r.full_name,
+          isMurid ? (r.classes?.nama_kelas || '') : (r.jabatan || ''),
+          r.jamMasuk  || '',
+          ket,
+          r.jamPulang || '',
+          r.status,
+        ]
+      })
     } else {
-      headers  = ['No', 'Nama', isMurid ? 'Kelas' : 'Jabatan', 'Hari Kerja', 'Hadir', 'Telat', 'Tidak Masuk', '% Hadir']
+      headers  = ['No', 'Nama', isMurid ? 'Kelas' : 'Jabatan', 'Hari Kerja', 'Hadir', 'Telat', 'Tidak Masuk', '% Hadir', 'Total Hari Telat', 'Total Menit Telat', 'Detail Keterlambatan']
       csvRows  = rows.map((r, i) => {
         const pct = r.total > 0 ? Math.round(((r.hadir + r.telat) / r.total) * 100) : 0
+        const detail = (r.telatDetail || []).map(t => {
+          const tglFmt = new Date(t.tgl).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })
+          return `${tglFmt} (${t.mnt} mnt)`
+        }).join(', ')
         return [
           i + 1,
           r.full_name,
@@ -215,6 +273,9 @@ export default function LaporanPage() {
           r.telat,
           r.tidakMasuk,
           pct + '%',
+          r.telat || 0,
+          r.totalMenit ? fmtMenit(r.totalMenit) : '',
+          detail,
         ]
       })
     }
@@ -294,7 +355,7 @@ export default function LaporanPage() {
 
             {/* Subject: Murid | Guru */}
             <div className="flex p-1 rounded-xl" style={{ background: '#f3f4f6' }}>
-              {[{ key: 'murid', label: '👦 Murid' }, { key: 'guru', label: '👨‍🏫 Guru' }].map(t => (
+              {[{ key: 'murid', label: 'Murid' }, { key: 'guru', label: 'Guru' }].map(t => (
                 <button key={t.key} onClick={() => setSubjectTab(t.key)}
                   className="px-4 py-2 rounded-lg text-sm font-semibold transition-all"
                   style={subjectTab === t.key
@@ -427,9 +488,24 @@ export default function LaporanPage() {
                               {subjectTab === 'murid' ? (row.classes?.nama_kelas || '—') : (row.jabatan || '—')}
                             </td>
                             <td className="px-5 py-3.5">
-                              {row.jamMasuk
-                                ? <span className="text-sm font-medium" style={{ fontFamily: 'DM Mono', color: isLate(row.jamMasuk) ? '#d97706' : '#16a34a' }}>{row.jamMasuk}</span>
-                                : <span className="text-sm text-gray-300">—</span>}
+                              {row.jamMasuk ? (
+                                <div className="flex flex-col gap-0.5">
+                                  <span className="text-sm font-medium" style={{ fontFamily: 'DM Mono', color: isLate(row.jamMasuk) ? '#d97706' : '#16a34a' }}>
+                                    {row.jamMasuk}
+                                  </span>
+                                  {(() => {
+                                    const d = menitDiff(row.jamMasuk)
+                                    if (!d) return null
+                                    return (
+                                      <span className="text-xs font-semibold" style={{ color: d.early ? '#16a34a' : '#dc2626' }}>
+                                        {d.early ? `${d.label} lebih awal` : `${d.label} terlambat`}
+                                      </span>
+                                    )
+                                  })()}
+                                </div>
+                              ) : (
+                                <span className="text-sm text-gray-300">—</span>
+                              )}
                             </td>
                             <td className="px-5 py-3.5">
                               {row.jamPulang
@@ -462,45 +538,91 @@ export default function LaporanPage() {
                     <table className="w-full">
                       <thead>
                         <tr style={{ background: '#fafafa', borderBottom: '1px solid #f3f4f6' }}>
-                          {['No', subjectTab === 'murid' ? 'Nama Murid' : 'Nama Guru', subjectTab === 'murid' ? 'Kelas' : 'Jabatan', 'Hari Kerja', 'Hadir', 'Telat', 'Tidak Masuk', '% Hadir'].map(h => (
-                            <th key={h} className="text-left px-5 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wider" style={{ fontFamily: 'DM Mono' }}>{h}</th>
+                          {['', 'No', subjectTab === 'murid' ? 'Nama Murid' : 'Nama Guru', subjectTab === 'murid' ? 'Kelas' : 'Jabatan', 'Hari Kerja', 'Hadir', 'Telat', 'Tidak Masuk', '% Hadir', 'Total Terlambat'].map(h => (
+                            <th key={h} className="text-left px-4 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wider" style={{ fontFamily: 'DM Mono' }}>{h}</th>
                           ))}
                         </tr>
                       </thead>
                       <tbody>
                         {bulanRows.map((row, i) => {
-                          const pct = row.total > 0 ? Math.round(((row.hadir + row.telat) / row.total) * 100) : 0
+                          const pct      = row.total > 0 ? Math.round(((row.hadir + row.telat) / row.total) * 100) : 0
+                          const expanded = expandedRow === row.id
+                          const hasDetail = row.telatDetail?.length > 0
                           return (
-                            <tr key={row.id} className="border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors">
-                              <td className="px-5 py-3.5 text-sm text-gray-400">{i + 1}</td>
-                              <td className="px-5 py-3.5">
-                                <div className="flex items-center gap-2.5">
-                                  <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0" style={{ background: purple }}>
-                                    {row.full_name?.[0]}
+                            <React.Fragment key={row.id}>
+                              <tr
+                                onClick={() => hasDetail && setExpandedRow(expanded ? null : row.id)}
+                                className="border-b border-gray-50 last:border-0 transition-colors"
+                                style={{ cursor: hasDetail ? 'pointer' : 'default', background: expanded ? '#faf5ff' : undefined }}>
+                                <td className="pl-4 py-3.5 w-8">
+                                  {hasDetail && (
+                                    <span className="text-gray-400 text-xs transition-transform inline-block" style={{ transform: expanded ? 'rotate(90deg)' : 'rotate(0deg)' }}>▶</span>
+                                  )}
+                                </td>
+                                <td className="px-4 py-3.5 text-sm text-gray-400">{i + 1}</td>
+                                <td className="px-4 py-3.5">
+                                  <div className="flex items-center gap-2.5">
+                                    <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0" style={{ background: purple }}>
+                                      {row.full_name?.[0]}
+                                    </div>
+                                    <span className="text-sm font-medium text-gray-900">{row.full_name}</span>
                                   </div>
-                                  <span className="text-sm font-medium text-gray-900">{row.full_name}</span>
-                                </div>
-                              </td>
-                              <td className="px-5 py-3.5 text-sm text-gray-500">
-                                {subjectTab === 'murid' ? (row.classes?.nama_kelas || '—') : (row.jabatan || '—')}
-                              </td>
-                              <td className="px-5 py-3.5 text-sm text-gray-600">{row.total}</td>
-                              <td className="px-5 py-3.5"><span className="text-sm font-semibold" style={{ color: '#16a34a' }}>{row.hadir}</span></td>
-                              <td className="px-5 py-3.5"><span className="text-sm font-semibold" style={{ color: '#d97706' }}>{row.telat}</span></td>
-                              <td className="px-5 py-3.5"><span className="text-sm font-semibold" style={{ color: '#dc2626' }}>{row.tidakMasuk}</span></td>
-                              <td className="px-5 py-3.5">
-                                <div className="flex items-center gap-2">
-                                  <div className="w-16 h-1.5 rounded-full overflow-hidden" style={{ background: '#f3f4f6' }}>
-                                    <div className="h-full rounded-full" style={{ width: `${pct}%`, background: pct >= 80 ? '#22c55e' : pct >= 60 ? '#f59e0b' : '#ef4444' }}/>
+                                </td>
+                                <td className="px-4 py-3.5 text-sm text-gray-500">
+                                  {subjectTab === 'murid' ? (row.classes?.nama_kelas || '—') : (row.jabatan || '—')}
+                                </td>
+                                <td className="px-4 py-3.5 text-sm text-gray-600">{row.total}</td>
+                                <td className="px-4 py-3.5"><span className="text-sm font-semibold" style={{ color: '#16a34a' }}>{row.hadir}</span></td>
+                                <td className="px-4 py-3.5"><span className="text-sm font-semibold" style={{ color: '#d97706' }}>{row.telat}</span></td>
+                                <td className="px-4 py-3.5"><span className="text-sm font-semibold" style={{ color: '#dc2626' }}>{row.tidakMasuk}</span></td>
+                                <td className="px-4 py-3.5">
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-16 h-1.5 rounded-full overflow-hidden" style={{ background: '#f3f4f6' }}>
+                                      <div className="h-full rounded-full" style={{ width: `${pct}%`, background: pct >= 80 ? '#22c55e' : pct >= 60 ? '#f59e0b' : '#ef4444' }}/>
+                                    </div>
+                                    <span className="text-sm font-semibold" style={{ color: pct >= 80 ? '#16a34a' : pct >= 60 ? '#d97706' : '#dc2626' }}>{pct}%</span>
                                   </div>
-                                  <span className="text-sm font-semibold" style={{ color: pct >= 80 ? '#16a34a' : pct >= 60 ? '#d97706' : '#dc2626' }}>{pct}%</span>
-                                </div>
-                              </td>
-                            </tr>
+                                </td>
+                                <td className="px-4 py-3.5">
+                                  {row.totalMenit > 0 ? (
+                                    <div className="flex flex-col gap-0.5">
+                                      <span className="text-xs font-semibold" style={{ color: '#dc2626' }}>{row.telat} hari</span>
+                                      <span className="text-xs text-gray-400">{fmtMenit(row.totalMenit)}</span>
+                                    </div>
+                                  ) : (
+                                    <span className="text-sm text-gray-300">—</span>
+                                  )}
+                                </td>
+                              </tr>
+                              {expanded && hasDetail && (
+                                <tr style={{ background: '#faf5ff' }}>
+                                  <td colSpan={10} className="px-8 pb-4 pt-1">
+                                    <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2" style={{ fontFamily: 'DM Mono' }}>
+                                      Detail Keterlambatan — {row.full_name}
+                                    </div>
+                                    <div className="flex flex-wrap gap-2">
+                                      {row.telatDetail.map((t, idx) => {
+                                        const tglFmt = new Date(t.tgl).toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short' })
+                                        return (
+                                          <div key={idx} className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-medium"
+                                            style={{ background: '#fee2e2', color: '#dc2626' }}>
+                                            <span>{tglFmt}</span>
+                                            <span className="font-bold">·</span>
+                                            <span>{t.jam}</span>
+                                            <span className="font-bold">·</span>
+                                            <span>{t.mnt} mnt terlambat</span>
+                                          </div>
+                                        )
+                                      })}
+                                    </div>
+                                  </td>
+                                </tr>
+                              )}
+                            </React.Fragment>
                           )
                         })}
                         {bulanRows.length === 0 && (
-                          <tr><td colSpan={8} className="text-center py-12 text-gray-400 text-sm">Belum ada data</td></tr>
+                          <tr><td colSpan={10} className="text-center py-12 text-gray-400 text-sm">Belum ada data</td></tr>
                         )}
                       </tbody>
                     </table>
