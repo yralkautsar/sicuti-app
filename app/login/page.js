@@ -59,7 +59,7 @@ export default function LoginPage() {
       `}</style>
 
       {/* LEFT — branding panel */}
-      <div className="hidden lg:flex w-[38%] flex-col justify-between p-10"
+      <div className="hidden lg:flex w-[17%] flex-col justify-between p-10"
         style={{ background: purple }}>
 
         {/* Logo */}

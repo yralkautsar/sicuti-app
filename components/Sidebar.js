@@ -51,7 +51,7 @@ const ALL_NAV = [
   },
 ]
 
-export default function Sidebar({ profile, pendingCuti = 0 }) {
+export default function Sidebar({ profile, pendingCuti = 0, className = '' }) {
   const pathname = usePathname()
   const router   = useRouter()
 
@@ -66,7 +66,7 @@ export default function Sidebar({ profile, pendingCuti = 0 }) {
   }
 
   return (
-    <aside className="w-60 flex flex-col border-r border-gray-100 bg-white flex-shrink-0">
+    <aside className={`w-60 flex flex-col border-r border-gray-100 bg-white flex-shrink-0 ${className}`}>
       {/* Logo */}
       <div className="px-5 py-5 border-b border-gray-100">
         <div className="flex items-center gap-3">
