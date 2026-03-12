@@ -34,57 +34,74 @@ export default function DashboardPage() {
     return () => clearInterval(id)
   }, [])
 
-  // Data fetch
+  // Data fetch — bisa dipanggil ulang oleh realtime
+  const fetchData = async () => {
+    const today = new Date().toISOString().split('T')[0]
+
+    const [
+      { count: guruCount },
+      { count: muridCount },
+      { count: hadirCount },
+      { count: cutiCount },
+      { data: recentData },
+      { data: leaveData },
+    ] = await Promise.all([
+      supabase.from('profiles').select('*', { count: 'exact', head: true }),
+      supabase.from('students').select('*', { count: 'exact', head: true }).eq('active', true),
+      supabase.from('attendance_students').select('*', { count: 'exact', head: true }).eq('date', today).eq('type', 'masuk'),
+      supabase.from('leave_requests').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
+      supabase.from('attendance_students')
+        .select('*, students(full_name, kelas)')
+        .eq('date', today)
+        .order('scanned_at', { ascending: false })
+        .limit(6),
+      supabase.from('leave_requests')
+        .select('*')
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false })
+        .limit(3),
+    ])
+
+    setStats({ guru: guruCount || 0, murid: muridCount || 0, hadirHari: hadirCount || 0, cutiPending: cutiCount || 0 })
+    setRecentAbs(recentData || [])
+
+    if (leaveData && leaveData.length > 0) {
+      const ids = [...new Set(leaveData.map(r => r.profile_id))]
+      const { data: profilesData } = await supabase.from('profiles').select('id, full_name').in('id', ids)
+      const map = {}
+      ;(profilesData || []).forEach(p => { map[p.id] = p })
+      setPendingLeave(leaveData.map(r => ({ ...r, profiles: map[r.profile_id] || null })))
+    } else {
+      setPendingLeave([])
+    }
+    setLoading(false)
+  }
+
+  // Init + realtime subscription
   useEffect(() => {
-    const load = async () => {
+    const init = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/login'); return }
-
       const { data: prof } = await supabase.from('profiles').select('*').eq('id', user.id).single()
       setProfile(prof)
-
-      const today = new Date().toISOString().split('T')[0]
-
-      const [
-        { count: guruCount },
-        { count: muridCount },
-        { count: hadirCount },
-        { count: cutiCount },
-        { data: recentData },
-        { data: leaveData },
-      ] = await Promise.all([
-        supabase.from('profiles').select('*', { count: 'exact', head: true }),
-        supabase.from('students').select('*', { count: 'exact', head: true }).eq('active', true),
-        supabase.from('attendance_students').select('*', { count: 'exact', head: true }).eq('date', today).eq('type', 'masuk'),
-        supabase.from('leave_requests').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
-        supabase.from('attendance_students')
-          .select('*, students(full_name, kelas)')
-          .eq('date', today)
-          .order('scanned_at', { ascending: false })
-          .limit(6),
-        supabase.from('leave_requests')
-          .select('*')
-          .eq('status', 'pending')
-          .order('created_at', { ascending: false })
-          .limit(3),
-      ])
-
-      setStats({ guru: guruCount || 0, murid: muridCount || 0, hadirHari: hadirCount || 0, cutiPending: cutiCount || 0 })
-      setRecentAbs(recentData || [])
-
-      // Attach profile data to leave requests manually
-      if (leaveData && leaveData.length > 0) {
-        const ids = [...new Set(leaveData.map(r => r.profile_id))]
-        const { data: profilesData } = await supabase.from('profiles').select('id, full_name').in('id', ids)
-        const map = {}
-        ;(profilesData || []).forEach(p => { map[p.id] = p })
-        setPendingLeave(leaveData.map(r => ({ ...r, profiles: map[r.profile_id] || null })))
-      } else {
-        setPendingLeave([])
-      }
-      setLoading(false)
+      await fetchData()
     }
-    load()
+    init()
+
+    // Subscribe realtime — attendance_students & leave_requests
+    const channel = supabase
+      .channel('dashboard-realtime')
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'attendance_students' },
+        () => { fetchData() }
+      )
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'leave_requests' },
+        () => { fetchData() }
+      )
+      .subscribe()
+
+    return () => { supabase.removeChannel(channel) }
   }, [])
 
 
@@ -123,7 +140,7 @@ export default function DashboardPage() {
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1.5">
               <div className="w-1.5 h-1.5 rounded-full bg-green-400 pulse"/>
-              <span className="text-xs text-gray-400" style={{ fontFamily: 'DM Mono' }}>Sistem Aktif</span>
+              <span className="text-xs text-gray-400" style={{ fontFamily: 'DM Mono' }}>Live · Realtime</span>
             </div>
             <div className="font-bold tabular-nums text-lg" style={{ color: purple, fontFamily: 'DM Mono' }}>
               {time} <span className="text-xs font-normal text-gray-400">WITA</span>
