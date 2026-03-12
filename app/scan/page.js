@@ -61,7 +61,7 @@ export default function ScanPage() {
       const qr = new Html5Qrcode('qr-reader')
       qrInstanceRef.current = qr
       await qr.start(
-        { facingMode: 'environment' },
+        { facingMode: 'user' },
         { fps: 15, qrbox: (viewfinderWidth, viewfinderHeight) => { const size = Math.min(viewfinderWidth, viewfinderHeight) * 0.8; return { width: size, height: size }; } },
         onScanSuccess,
         () => {}
