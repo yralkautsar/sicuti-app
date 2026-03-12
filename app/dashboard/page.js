@@ -18,6 +18,9 @@ export default function DashboardPage() {
   const [stats, setStats]       = useState({ guru: 0, murid: 0, hadirHari: 0, cutiPending: 0 })
   const [recentAbs, setRecentAbs] = useState([])
   const [pendingLeave, setPendingLeave] = useState([])
+  const [belumHadirMurid, setBelumHadirMurid] = useState([])
+  const [belumHadirGuru, setBelumHadirGuru]   = useState([])
+  const [belumTab, setBelumTab] = useState('murid')
   const [time, setTime]         = useState('')
   const [date, setDate]         = useState('')
   const [loading, setLoading]   = useState(true)
@@ -36,7 +39,7 @@ export default function DashboardPage() {
 
   // Data fetch — bisa dipanggil ulang oleh realtime
   const fetchData = async () => {
-    const today = new Date().toISOString().split('T')[0]
+    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Makassar' })
 
     const [
       { count: guruCount },
@@ -45,6 +48,10 @@ export default function DashboardPage() {
       { count: cutiCount },
       { data: recentData },
       { data: leaveData },
+      { data: allMurid },
+      { data: allGuru },
+      { data: sudahHadirMurid },
+      { data: sudahHadirGuru },
     ] = await Promise.all([
       supabase.from('profiles').select('*', { count: 'exact', head: true }),
       supabase.from('students').select('*', { count: 'exact', head: true }).eq('active', true),
@@ -60,7 +67,17 @@ export default function DashboardPage() {
         .eq('status', 'pending')
         .order('created_at', { ascending: false })
         .limit(3),
+      supabase.from('students').select('id, full_name, classes(nama_kelas)').eq('active', true).order('full_name'),
+      supabase.from('profiles').select('id, full_name, jabatan').order('full_name'),
+      supabase.from('attendance_students').select('student_id').eq('date', today).eq('type', 'masuk'),
+      supabase.from('attendance_guru').select('profile_id').eq('date', today).eq('type', 'masuk'),
     ])
+
+    // Belum hadir = semua - yang sudah scan masuk
+    const sudahMuridIds = new Set((sudahHadirMurid || []).map(r => r.student_id))
+    const sudahGuruIds  = new Set((sudahHadirGuru  || []).map(r => r.profile_id))
+    setBelumHadirMurid((allMurid || []).filter(m => !sudahMuridIds.has(m.id)))
+    setBelumHadirGuru((allGuru  || []).filter(g => !sudahGuruIds.has(g.id)))
 
     setStats({ guru: guruCount || 0, murid: muridCount || 0, hadirHari: hadirCount || 0, cutiPending: cutiCount || 0 })
     setRecentAbs(recentData || [])
@@ -91,14 +108,9 @@ export default function DashboardPage() {
     // Subscribe realtime — attendance_students & leave_requests
     const channel = supabase
       .channel('dashboard-realtime')
-      .on('postgres_changes',
-        { event: '*', schema: 'public', table: 'attendance_students' },
-        () => { fetchData() }
-      )
-      .on('postgres_changes',
-        { event: '*', schema: 'public', table: 'leave_requests' },
-        () => { fetchData() }
-      )
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'attendance_students' }, () => { fetchData() })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'attendance_guru' },     () => { fetchData() })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'leave_requests' },      () => { fetchData() })
       .subscribe()
 
     return () => { supabase.removeChannel(channel) }
@@ -233,6 +245,64 @@ export default function DashboardPage() {
                   <span className="text-xs text-gray-400">0%</span>
                   <span className="text-xs text-gray-400">100%</span>
                 </div>
+              </div>
+
+              {/* ── BELUM HADIR ── */}
+              <div className="fu4 bg-white rounded-2xl border border-gray-100 p-6 mb-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 className="font-semibold text-gray-900">Belum Hadir Hari Ini</h3>
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      {belumTab === 'murid'
+                        ? `${belumHadirMurid.length} murid belum scan masuk`
+                        : `${belumHadirGuru.length} guru belum scan masuk`}
+                    </p>
+                  </div>
+                  <div className="flex p-1 rounded-xl" style={{ background: '#f3f4f6' }}>
+                    {[
+                      { key: 'murid', label: `Murid (${belumHadirMurid.length})` },
+                      { key: 'guru',  label: `Guru (${belumHadirGuru.length})` },
+                    ].map(t => (
+                      <button key={t.key} onClick={() => setBelumTab(t.key)}
+                        className="px-4 py-1.5 rounded-lg text-xs font-semibold transition-all"
+                        style={belumTab === t.key
+                          ? { background: 'white', color: purple, boxShadow: '0 1px 4px rgba(0,0,0,.08)' }
+                          : { color: '#6b7280' }}>
+                        {t.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {(belumTab === 'murid' ? belumHadirMurid : belumHadirGuru).length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-8 text-center">
+                    <div className="w-12 h-12 rounded-full mb-3 flex items-center justify-center" style={{ background: '#f0fdf4' }}>
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2" strokeLinecap="round">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/>
+                      </svg>
+                    </div>
+                    <p className="text-sm font-semibold text-green-600">Semua sudah hadir! 🎉</p>
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap gap-2 max-h-36 overflow-y-auto">
+                    {(belumTab === 'murid' ? belumHadirMurid : belumHadirGuru).map(item => (
+                      <div key={item.id}
+                        className="flex items-center gap-2 px-3 py-2 rounded-xl border text-sm"
+                        style={{ background: '#fef2f2', borderColor: '#fecaca' }}>
+                        <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
+                          style={{ background: '#dc2626' }}>
+                          {item.full_name?.[0]}
+                        </div>
+                        <div>
+                          <div className="font-medium text-gray-800 text-xs leading-tight">{item.full_name}</div>
+                          <div className="text-xs text-gray-400 leading-tight">
+                            {belumTab === 'murid' ? (item.classes?.nama_kelas || '—') : (item.jabatan || '—')}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* ── BOTTOM GRID ── */}
