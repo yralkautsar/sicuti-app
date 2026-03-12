@@ -184,6 +184,55 @@ export default function LaporanPage() {
 
   const printLaporan = () => window.print()
 
+  const exportCSV = () => {
+    const isHarian  = mode === 'harian'
+    const isMurid   = subjectTab === 'murid'
+    const rows      = isHarian ? hariRows : bulanRows
+    const label     = isMurid ? 'Murid' : 'Guru'
+    const periode   = isHarian ? tanggal : `${BULAN[bulan]}_${tahun}`
+
+    let headers, csvRows
+    if (isHarian) {
+      headers  = ['No', 'Nama', isMurid ? 'Kelas' : 'Jabatan', 'Jam Masuk', 'Jam Pulang', 'Status']
+      csvRows  = rows.map((r, i) => [
+        i + 1,
+        r.full_name,
+        isMurid ? (r.classes?.nama_kelas || '') : (r.jabatan || ''),
+        r.jamMasuk  || '',
+        r.jamPulang || '',
+        r.status,
+      ])
+    } else {
+      headers  = ['No', 'Nama', isMurid ? 'Kelas' : 'Jabatan', 'Hari Kerja', 'Hadir', 'Telat', 'Tidak Masuk', '% Hadir']
+      csvRows  = rows.map((r, i) => {
+        const pct = r.total > 0 ? Math.round(((r.hadir + r.telat) / r.total) * 100) : 0
+        return [
+          i + 1,
+          r.full_name,
+          isMurid ? (r.classes?.nama_kelas || '') : (r.jabatan || ''),
+          r.total,
+          r.hadir,
+          r.telat,
+          r.tidakMasuk,
+          pct + '%',
+        ]
+      })
+    }
+
+    const csv = [headers, ...csvRows]
+      .map(row => row.map(v => `"${String(v).replace(/"/g, '""')}"`).join(','))
+      .join('\n')
+
+    const bom  = '\uFEFF' // UTF-8 BOM supaya Excel baca karakter Indonesia dengan benar
+    const blob = new Blob([bom + csv], { type: 'text/csv;charset=utf-8;' })
+    const url  = URL.createObjectURL(blob)
+    const a    = document.createElement('a')
+    a.href     = url
+    a.download = `Laporan_Absensi_${label}_${isHarian ? 'Harian' : 'Bulanan'}_${periode}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   const hariRows    = subjectTab === 'murid' ? hariRowsMurid    : hariRowsGuru
   const hariSummary = subjectTab === 'murid' ? hariSummaryMurid : hariSummaryGuru
   const bulanRows   = subjectTab === 'murid' ? bulanRowsMurid   : bulanRowsGuru
@@ -213,16 +262,29 @@ export default function LaporanPage() {
             <h1 className="font-bold text-gray-900 text-lg">Laporan Absensi</h1>
             <p className="text-xs text-gray-400">Batas tepat waktu: {BATAS_JAM} · Senin–Jumat</p>
           </div>
-          <button onClick={printLaporan}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all"
-            style={{ background: purple, boxShadow: `0 4px 14px ${purple}30` }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-              <polyline points="6 9 6 2 18 2 18 9"/>
-              <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
-              <rect x="6" y="14" width="12" height="8"/>
-            </svg>
-            Print / Export
-          </button>
+          <div className="flex items-center gap-3">
+            <button onClick={exportCSV}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all"
+              style={{ background: '#f0fdf4', color: '#16a34a' }}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="12" y1="18" x2="12" y2="12"/>
+                <line x1="9" y1="15" x2="15" y2="15"/>
+              </svg>
+              Export Excel
+            </button>
+            <button onClick={printLaporan}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all"
+              style={{ background: purple, boxShadow: `0 4px 14px ${purple}30` }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <polyline points="6 9 6 2 18 2 18 9"/>
+                <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+                <rect x="6" y="14" width="12" height="8"/>
+              </svg>
+              Print
+            </button>
+          </div>
         </header>
 
         <div className="flex-1 overflow-y-auto px-8 py-6 print-area">
