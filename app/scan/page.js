@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 
 const SCHOOL_NAME   = 'TK Karakter Mutiara Bunda Bali'
@@ -14,7 +14,6 @@ export default function ScanPage() {
   const lastScannedRef      = useRef(null)
   const lastScannedTimeRef  = useRef(0)
   const scanModeRef         = useRef('murid')
-  const onScanSuccessRef    = useRef(null)
 
   const [status, setStatus]               = useState('idle')
   const [result, setResult]               = useState(null)
@@ -97,23 +96,6 @@ export default function ScanPage() {
     }
   }
 
-  const onScanSuccess = useCallback(async (decodedText) => {
-    // ref always points to latest version
-    const now = Date.now()
-    if (decodedText === lastScannedRef.current && now - lastScannedTimeRef.current < SCAN_COOLDOWN) return
-    lastScannedRef.current     = cleanQR
-    lastScannedTimeRef.current = now
-    setStatus('loading')
-    try {
-      if (scanModeRef.current === 'murid') await handleStudentScan(cleanQR)
-      else await handleGuruScan(cleanQR)
-    } catch {
-      setStatus('error')
-      setResult({ message: 'Terjadi kesalahan sistem. Coba lagi.' })
-      resetAfterDelay()
-    }
-  }, [])
-  onScanSuccessRef.current = onScanSuccess
 
   const handleStudentScan = async (qrCode) => {
     const { data: student, error } = await supabase.from('students').select('*').eq('qr_code', qrCode).eq('active', true).single()
