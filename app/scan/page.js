@@ -230,24 +230,32 @@ export default function ScanPage() {
           to   { opacity: 1; transform: translateY(0); }
         }
         .fade-up { animation: fadeUp 0.3s ease both; }
+        @media (orientation: portrait) {
+          .header-school-name { display: none; }
+          .header-date { display: none; }
+          .header-login { display: none !important; }
+          .header-time { font-size: 18px !important; }
+          .footer-steps { display: none; }
+          .footer-hint { display: none; }
+        }
       `}</style>
 
       {/* HEADER */}
-      <header className="flex-shrink-0 flex items-center justify-between px-6 py-3 border-b border-gray-100">
+      <header className="flex-shrink-0 flex items-center justify-between px-4 py-2.5 border-b border-gray-100">
         <div className="flex items-center gap-3">
-          <img src="/logoborder.png" alt="Logo" className="w-9 h-9 object-contain" />
+          <img src="/logoborder.png" alt="Logo" className="w-8 h-8 object-contain flex-shrink-0" />
           <div>
-            <div className="font-bold text-gray-900 text-sm leading-tight">{SCHOOL_NAME}</div>
-            <div className="text-xs text-gray-400" style={{ fontFamily: 'DM Mono' }}>{date}</div>
+            <div className="header-school-name font-bold text-gray-900 text-sm leading-tight">{SCHOOL_NAME}</div>
+            <div className="header-date text-xs text-gray-400" style={{ fontFamily: 'DM Mono' }}>{date}</div>
           </div>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           <div className="text-right">
-            <div className="font-bold tabular-nums" style={{ fontSize: 22, color: purple, fontFamily: 'DM Mono' }}>{time}</div>
+            <div className="header-time font-bold tabular-nums" style={{ fontSize: 20, color: purple, fontFamily: 'DM Mono' }}>{time}</div>
             <div className="text-xs text-gray-400">WITA</div>
           </div>
           <a href="/login"
-            className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all"
+            className="header-login flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold transition-all"
             style={{ background: purple50, color: purple }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/>
@@ -450,8 +458,8 @@ export default function ScanPage() {
       </div>
 
       {/* BOTTOM STRIP */}
-      <div className="flex-shrink-0 border-t border-gray-100 px-6 py-2.5 flex items-center justify-between">
-        <div className="flex items-center gap-5">
+      <div className="flex-shrink-0 border-t border-gray-100 px-4 py-2 flex items-center justify-between">
+        <div className="footer-steps flex items-center gap-5">
           {[
             { label: 'Ambil kartu QR' },
             { label: 'Arahkan ke kamera' },
@@ -465,7 +473,7 @@ export default function ScanPage() {
           ))}
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-xs text-gray-300">Kartu hilang? Hubungi guru piket.</span>
+          <span className="footer-hint text-xs text-gray-300">Kartu hilang? Hubungi guru piket.</span>
           <div className="flex items-center gap-1.5">
             <div className="w-1.5 h-1.5 rounded-full bg-green-400" />
             <span className="text-xs text-gray-400" style={{ fontFamily: 'DM Mono' }}>Sistem Aktif</span>
