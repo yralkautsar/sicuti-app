@@ -161,6 +161,17 @@ export default function ScanPage() {
         #qr-reader__status_span { display:none!important; }
         #qr-reader__dashboard_section_swaplink { display:none!important; }
         select#qr-reader__camera_selection { display:none!important; }
+        #qr-reader__dashboard_section_fsr { display:none!important; }
+        #qr-reader__dashboard { padding:16px!important; text-align:center!important; }
+        #qr-reader__dashboard_section_csr button,
+        #qr-reader__dashboard_section_csr a {
+          display:inline-block!important; padding:12px 28px!important;
+          background:#6d28d9!important; color:white!important;
+          border-radius:12px!important; font-size:14px!important;
+          font-weight:600!important; text-decoration:none!important;
+          cursor:pointer!important; border:none!important; opacity:1!important;
+          font-family:Plus Jakarta Sans,sans-serif!important;
+        }
         .scan-line {
           position:absolute; left:8%; right:8%; height:2px; z-index:10; pointer-events:none;
           background: linear-gradient(90deg, transparent, ${purple} 35%, #a78bfa 65%, transparent);
