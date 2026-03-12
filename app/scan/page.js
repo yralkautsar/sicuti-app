@@ -45,11 +45,7 @@ export default function ScanPage() {
 
   const stopCamera = async () => {
     if (qrInstanceRef.current) {
-      try {
-        const state = qrInstanceRef.current.getState()
-        if (state === 2) await qrInstanceRef.current.stop()
-        qrInstanceRef.current.clear()
-      } catch {}
+      try { await qrInstanceRef.current.clear() } catch {}
       qrInstanceRef.current = null
     }
   }
@@ -58,25 +54,10 @@ export default function ScanPage() {
     setCameraError('')
     await stopCamera()
     try {
-      const { Html5Qrcode } = await import('html5-qrcode')
-      const cameras = await Html5Qrcode.getCameras()
-      console.log('Available cameras:', cameras)
-      if (!cameras || cameras.length === 0) {
-        setCameraError('Tidak ada kamera yang ditemukan.')
-        return
-      }
-      // Prefer front camera (label contains 'front' or 'user'), fallback to first
-      const front = cameras.find(c => /front|user|depan/i.test(c.label))
-      const cameraId = (front || cameras[0]).id
-      console.log('Using camera:', cameraId)
+      const { Html5QrcodeScanner } = await import('html5-qrcode')
 
-      const qr = new Html5Qrcode('qr-reader')
-      qrInstanceRef.current = qr
-
-      // Define handler inline so it always has access to latest refs
       const handleDecode = async (decodedText) => {
         const cleanQR = decodedText.trim()
-        console.log('QR scanned raw:', JSON.stringify(cleanQR))
         const now = Date.now()
         if (cleanQR === lastScannedRef.current && now - lastScannedTimeRef.current < SCAN_COOLDOWN) return
         lastScannedRef.current = cleanQR
@@ -93,12 +74,13 @@ export default function ScanPage() {
         }
       }
 
-      await qr.start(
-        cameraId,
-        { fps: 15, qrbox: (w, h) => { const s = Math.min(w, h) * 0.8; return { width: s, height: s } } },
-        handleDecode,
-        () => {}
+      const scanner = new Html5QrcodeScanner(
+        'qr-reader',
+        { fps: 15, qrbox: { width: 250, height: 250 }, facingMode: 'user' },
+        false
       )
+      qrInstanceRef.current = scanner
+      scanner.render(handleDecode, () => {})
       setCameraStarted(true)
     } catch (err) {
       console.error('Camera error:', err)
@@ -117,7 +99,6 @@ export default function ScanPage() {
 
   const onScanSuccess = useCallback(async (decodedText) => {
     // ref always points to latest version
-    console.log("QR scanned:", decodedText)
     const now = Date.now()
     if (decodedText === lastScannedRef.current && now - lastScannedTimeRef.current < SCAN_COOLDOWN) return
     lastScannedRef.current     = cleanQR
@@ -176,7 +157,11 @@ export default function ScanPage() {
         #qr-reader { width:100%!important; height:100%!important; border:none!important; background:transparent!important; }
         #qr-reader video { width:100%!important; height:100%!important; object-fit:cover!important; border-radius:20px; }
         #qr-reader__scan_region { border:none!important; padding:0!important; }
-        #qr-reader__dashboard { display:none!important; }
+        #qr-reader__header_message { display:none!important; }
+        #qr-reader__status_span { display:none!important; }
+        #qr-reader__dashboard_section_swaplink { display:none!important; }
+        select#qr-reader__camera_selection { display:none!important; }
+        #qr-reader__dashboard_section_csr span { display:none!important; }
         .scan-line {
           position:absolute; left:8%; right:8%; height:2px; z-index:10; pointer-events:none;
           background: linear-gradient(90deg, transparent, ${purple} 35%, #a78bfa 65%, transparent);
