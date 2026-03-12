@@ -254,6 +254,12 @@ export default function ScanPage() {
             <div className="header-time font-bold tabular-nums" style={{ fontSize: 20, color: purple, fontFamily: 'DM Mono' }}>{time}</div>
             <div className="text-xs text-gray-400">WITA</div>
           </div>
+          <a href="/panduan" target="_blank"
+            className="no-print flex items-center justify-center w-9 h-9 rounded-xl text-sm font-bold transition-all"
+            style={{ background: purple50, color: purple }}
+            title="Panduan Penggunaan">
+            ?
+          </a>
           <a href="/login"
             className="header-login flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold transition-all"
             style={{ background: purple50, color: purple }}>

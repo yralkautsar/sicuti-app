@@ -5,7 +5,7 @@ export async function middleware(request) {
   const { pathname } = request.nextUrl
 
   // Public routes — no auth needed
-  const publicRoutes = ['/login', '/scan']
+  const publicRoutes = ['/login', '/scan', '/panduan']
   if (publicRoutes.some(r => pathname.startsWith(r))) {
     return NextResponse.next()
   }
@@ -41,6 +41,6 @@ export async function middleware(request) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|login|scan).*)',
+    '/((?!_next/static|_next/image|favicon.ico|login|scan|panduan).*)',
   ],
 }
