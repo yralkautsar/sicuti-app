@@ -63,7 +63,7 @@ export default function ScanPage() {
       const { Html5Qrcode } = await import('html5-qrcode')
 
       // Request camera permission via native browser API first
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } })
       stream.getTracks().forEach(t => t.stop()) // stop stream, just needed permission
 
       // Get available cameras
@@ -71,8 +71,8 @@ export default function ScanPage() {
       if (!cameras || cameras.length === 0) throw new Error('Tidak ada kamera ditemukan.')
 
       // Pick back camera if available, else first
-      const back = cameras.find(c => /back|rear|environment|belakang/i.test(c.label))
-      const cameraId = (back || cameras[0]).id
+      const back = cameras.find(c => /front|user|depan|facing front/i.test(c.label))
+      const cameraId = (back || cameras[cameras.length - 1]).id
 
       const qr = new Html5Qrcode('qr-reader-container')
       qrInstanceRef.current = qr
