@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import Sidebar from '@/components/Sidebar'
@@ -34,6 +34,14 @@ export default function MuridPage() {
   const [showQR, setShowQR]           = useState(null)
   const [qrDataUrl, setQrDataUrl]     = useState('')
   const [activeTab, setActiveTab]     = useState('all')
+
+  // Import CSV
+  const [showImport, setShowImport]   = useState(false)
+  const [csvPreview, setCsvPreview]   = useState([])
+  const [csvErrors, setCsvErrors]     = useState([])
+  const [importing, setImporting]     = useState(false)
+  const [importDone, setImportDone]   = useState(null) // { success, failed }
+  const fileInputRef                  = useRef(null)
 
   useEffect(() => {
     const init = async () => {
@@ -174,6 +182,96 @@ export default function MuridPage() {
 
   const totalAktif = murids.filter(m => m.active).length
 
+  // Download template CSV
+  const downloadTemplate = () => {
+    const header = 'full_name,nisn,nama_kelas,tahun_ajaran,wali_name,wali_phone,jenis_kelamin,tanggal_lahir,alamat'
+    const example = 'Ahmad Fauzi,1234567890,Kelas A,2025/2026,Budi Santoso,08123456789,Laki-laki,2019-05-10,Jl. Contoh No. 1 Denpasar'
+    const blob = new Blob([header + '\n' + example], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url; a.download = 'template_import_murid.csv'; a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  // Parse CSV file
+  const handleCSVFile = (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    setCsvPreview([])
+    setCsvErrors([])
+    setImportDone(null)
+    const reader = new FileReader()
+    reader.onload = (ev) => {
+      const text = ev.target.result
+      const lines = text.split('\n').map(l => l.trim()).filter(Boolean)
+      if (lines.length < 2) { setCsvErrors(['File kosong atau tidak ada data selain header.']); return }
+      const headers = lines[0].split(',').map(h => h.trim().toLowerCase())
+      const required = ['full_name']
+      const missing = required.filter(r => !headers.includes(r))
+      if (missing.length > 0) { setCsvErrors([`Kolom wajib tidak ditemukan: ${missing.join(', ')}`]); return }
+
+      const rows = []
+      const errs = []
+      for (let i = 1; i < lines.length; i++) {
+        const vals = lines[i].split(',').map(v => v.trim())
+        const row = {}
+        headers.forEach((h, idx) => { row[h] = vals[idx] || '' })
+        if (!row.full_name) { errs.push(`Baris ${i + 1}: full_name kosong, dilewati.`); continue }
+        // Match class_id dari nama_kelas
+        const matchedClass = classes.find(c =>
+          c.nama_kelas?.toLowerCase() === row.nama_kelas?.toLowerCase() &&
+          (!row.tahun_ajaran || c.tahun_ajaran === row.tahun_ajaran)
+        )
+        rows.push({
+          full_name:     row.full_name,
+          nisn:          row.nisn || null,
+          class_id:      matchedClass?.id || null,
+          nama_kelas:    row.nama_kelas || '',
+          tahun_ajaran:  row.tahun_ajaran || null,
+          wali_name:     row.wali_name || null,
+          wali_phone:    row.wali_phone || null,
+          jenis_kelamin: row.jenis_kelamin || null,
+          tanggal_lahir: row.tanggal_lahir || null,
+          alamat:        row.alamat || null,
+          _classFound:   !!matchedClass,
+        })
+      }
+      setCsvPreview(rows)
+      setCsvErrors(errs)
+    }
+    reader.readAsText(file)
+  }
+
+  // Batch insert
+  const handleImport = async () => {
+    if (csvPreview.length === 0) return
+    setImporting(true)
+    let success = 0, failed = 0
+    for (const row of csvPreview) {
+      try {
+        const qr_code = 'MRD-' + Math.random().toString(36).substring(2, 10).toUpperCase()
+        const { error } = await supabase.from('students').insert({
+          full_name:     row.full_name,
+          nisn:          row.nisn || null,
+          class_id:      row.class_id || null,
+          tahun_ajaran:  row.tahun_ajaran || null,
+          wali_name:     row.wali_name || null,
+          wali_phone:    row.wali_phone || null,
+          jenis_kelamin: row.jenis_kelamin || null,
+          tanggal_lahir: row.tanggal_lahir || null,
+          alamat:        row.alamat || null,
+          active:        true,
+          qr_code,
+        })
+        if (error) failed++
+        else success++
+      } catch { failed++ }
+    }
+    setImportDone({ success, failed })
+    setImporting(false)
+    await fetchMurids()
+  }
+
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden"
       style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
@@ -200,14 +298,32 @@ export default function MuridPage() {
             <h1 className="font-bold text-gray-900 text-lg">Data Murid</h1>
             <p className="text-xs text-gray-400">{totalAktif} murid aktif · {murids.length} total</p>
           </div>
-          <button onClick={() => { setShowModal(true); setEditMurid(null); setForm(EMPTY_FORM) }}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all"
-            style={{ background: purple, boxShadow: `0 4px 14px ${purple}30` }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-              <path d="M12 5v14M5 12h14"/>
-            </svg>
-            Tambah Murid
-          </button>
+          <div className="flex items-center gap-3">
+            <button onClick={downloadTemplate}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all"
+              style={{ background: purple50, color: purple }}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              Template CSV
+            </button>
+            <button onClick={() => { setShowImport(true); setCsvPreview([]); setCsvErrors([]); setImportDone(null) }}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all"
+              style={{ background: '#f0fdf4', color: '#16a34a' }}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
+              Import CSV
+            </button>
+            <button onClick={() => { setShowModal(true); setEditMurid(null); setForm(EMPTY_FORM) }}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all"
+              style={{ background: purple, boxShadow: `0 4px 14px ${purple}30` }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                <path d="M12 5v14M5 12h14"/>
+              </svg>
+              Tambah Murid
+            </button>
+          </div>
         </header>
 
         <div className="flex-1 overflow-y-auto px-8 py-6">
@@ -597,6 +713,142 @@ export default function MuridPage() {
                 Print Kartu QR
               </button>
             </div>
+          </div>
+        </div>
+      )}
+      {/* ── MODAL IMPORT CSV ── */}
+      {showImport && (
+        <div className="overlay" onClick={e => e.target === e.currentTarget && setShowImport(false)}>
+          <div className="modal bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 overflow-hidden flex flex-col" style={{ maxHeight: '90vh' }}>
+            <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between flex-shrink-0">
+              <div>
+                <h2 className="font-bold text-gray-900 text-lg">Import Data Murid</h2>
+                <p className="text-xs text-gray-400 mt-0.5">Upload file CSV sesuai template untuk import massal</p>
+              </div>
+              <button onClick={() => setShowImport(false)}
+                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-400">✕</button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-4">
+
+              {/* Upload area */}
+              {!importDone && (
+                <div
+                  onClick={() => fileInputRef.current?.click()}
+                  className="border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all hover:border-purple-400"
+                  style={{ borderColor: csvPreview.length > 0 ? purple : '#e5e7eb', background: csvPreview.length > 0 ? purple50 : '#fafafa' }}>
+                  <input ref={fileInputRef} type="file" accept=".csv" className="hidden" onChange={handleCSVFile} />
+                  <div className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-3"
+                    style={{ background: csvPreview.length > 0 ? purple100 : '#f3f4f6' }}>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={csvPreview.length > 0 ? purple : '#9ca3af'} strokeWidth="2" strokeLinecap="round">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                      <polyline points="14 2 14 8 20 8"/>
+                    </svg>
+                  </div>
+                  {csvPreview.length > 0 ? (
+                    <p className="text-sm font-semibold" style={{ color: purple }}>{csvPreview.length} baris data siap diimport</p>
+                  ) : (
+                    <>
+                      <p className="text-sm font-semibold text-gray-700 mb-1">Klik untuk pilih file CSV</p>
+                      <p className="text-xs text-gray-400">Format: .csv · Download template di atas untuk format yang benar</p>
+                    </>
+                  )}
+                </div>
+              )}
+
+              {/* Errors */}
+              {csvErrors.length > 0 && (
+                <div className="px-4 py-3 rounded-xl text-sm text-yellow-700 bg-yellow-50 border border-yellow-200">
+                  <p className="font-semibold mb-1">⚠ Peringatan ({csvErrors.length})</p>
+                  {csvErrors.map((e, i) => <p key={i} className="text-xs">{e}</p>)}
+                </div>
+              )}
+
+              {/* Import done */}
+              {importDone && (
+                <div className="flex flex-col items-center gap-3 py-6 text-center">
+                  <div className="w-16 h-16 rounded-full flex items-center justify-center" style={{ background: '#dcfce7' }}>
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round">
+                      <path d="M20 6L9 17l-5-5"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="font-bold text-gray-900 text-lg">Import Selesai</p>
+                    <p className="text-sm text-gray-500 mt-1">
+                      <span className="text-green-600 font-semibold">{importDone.success} berhasil</span>
+                      {importDone.failed > 0 && <span className="text-red-500 font-semibold"> · {importDone.failed} gagal</span>}
+                    </p>
+                  </div>
+                  <button onClick={() => setShowImport(false)}
+                    className="px-6 py-2.5 rounded-xl text-sm font-semibold text-white"
+                    style={{ background: purple }}>
+                    Selesai
+                  </button>
+                </div>
+              )}
+
+              {/* Preview table */}
+              {csvPreview.length > 0 && !importDone && (
+                <div>
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2" style={{ fontFamily: 'DM Mono' }}>
+                    Preview Data ({csvPreview.length} murid)
+                  </p>
+                  <div className="rounded-xl border border-gray-100 overflow-auto" style={{ maxHeight: 280 }}>
+                    <table className="w-full text-xs">
+                      <thead>
+                        <tr style={{ background: '#fafafa', borderBottom: '1px solid #f3f4f6' }}>
+                          {['Nama', 'NISN', 'Kelas', 'Tahun Ajaran', 'Wali', 'Status Kelas'].map(h => (
+                            <th key={h} className="text-left px-3 py-2.5 font-semibold text-gray-400 whitespace-nowrap">{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {csvPreview.map((row, i) => (
+                          <tr key={i} className="border-b border-gray-50 last:border-0">
+                            <td className="px-3 py-2 font-medium text-gray-800">{row.full_name}</td>
+                            <td className="px-3 py-2 text-gray-500" style={{ fontFamily: 'DM Mono' }}>{row.nisn || '—'}</td>
+                            <td className="px-3 py-2 text-gray-500">{row.nama_kelas || '—'}</td>
+                            <td className="px-3 py-2 text-gray-500">{row.tahun_ajaran || '—'}</td>
+                            <td className="px-3 py-2 text-gray-500">{row.wali_name || '—'}</td>
+                            <td className="px-3 py-2">
+                              {row.nama_kelas ? (
+                                row._classFound
+                                  ? <span className="text-green-600 font-semibold">✓ Ditemukan</span>
+                                  : <span className="text-yellow-600 font-semibold">⚠ Tidak ada</span>
+                              ) : <span className="text-gray-300">—</span>}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  {csvPreview.some(r => r.nama_kelas && !r._classFound) && (
+                    <p className="text-xs text-yellow-600 mt-2">
+                      ⚠ Beberapa kelas tidak ditemukan — murid tetap diimport tapi tanpa kelas. Pastikan nama kelas di CSV sama persis dengan data kelas yang sudah dibuat.
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            {csvPreview.length > 0 && !importDone && (
+              <div className="px-6 py-4 border-t border-gray-100 flex gap-3 flex-shrink-0">
+                <button onClick={() => { setCsvPreview([]); setCsvErrors([]); fileInputRef.current.value = '' }}
+                  className="flex-1 py-3 rounded-xl text-sm font-semibold text-gray-500 bg-gray-100 hover:bg-gray-200 transition-all">
+                  Ganti File
+                </button>
+                <button onClick={handleImport} disabled={importing}
+                  className="flex-1 py-3 rounded-xl text-sm font-semibold text-white flex items-center justify-center gap-2 transition-all"
+                  style={{ background: importing ? '#a78bfa' : '#16a34a' }}>
+                  {importing ? (
+                    <><div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin"/>Mengimport...</>
+                  ) : (
+                    <>Import {csvPreview.length} Murid</>
+                  )}
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
