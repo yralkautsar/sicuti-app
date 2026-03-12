@@ -82,7 +82,7 @@ export default function GuruPage() {
         .footer { margin-top: 16px; font-size: 10px; color: #d1d5db; }
       </style></head><body>
       <div class="card">
-        <img src="${window.location.origin}/logo.png" class="logo" />
+        <img src="${window.location.origin}/logoborder.png" class="logo" />
         <div class="school">Kartu Absensi Guru</div>
         <div class="name">${guru.full_name}</div>
         <div class="jabatan">${guru.jabatan || 'Guru'} · ${SCHOOL}</div>
@@ -462,7 +462,7 @@ export default function GuruPage() {
             <div className="px-6 py-6 flex flex-col items-center gap-4">
               {/* Card preview */}
               <div className="w-full rounded-2xl border-2 p-5 text-center" style={{ borderColor: purple100 }}>
-                <img src="/logo.png" alt="Logo" style={{ width: 48, height: 48, objectFit: 'contain', margin: '0 auto 10px' }} />
+                <img src="/logoborder.png" alt="Logo" style={{ width: 48, height: 48, objectFit: 'contain', margin: '0 auto 10px' }} />
                 <div className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: purple, fontFamily: 'DM Mono' }}>
                   Kartu Absensi Guru
                 </div>

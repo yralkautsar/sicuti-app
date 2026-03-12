@@ -682,7 +682,7 @@ export default function MuridPage() {
             </div>
             <div className="px-6 py-6 flex flex-col items-center gap-4">
               <div className="w-full rounded-2xl border-2 p-5 text-center" style={{ borderColor: purple100 }}>
-                <img src="/logo.png" alt="Logo" style={{ width: 48, height: 48, objectFit: 'contain', margin: '0 auto 10px' }} />
+                <img src="/logoborder.png" alt="Logo" style={{ width: 48, height: 48, objectFit: 'contain', margin: '0 auto 10px' }} />
                 <div className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: purple, fontFamily: 'DM Mono' }}>
                   Kartu Absensi Murid
                 </div>
