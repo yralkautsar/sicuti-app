@@ -11,7 +11,7 @@ const purple100  = '#ede9fe'
 const SCHOOL     = 'TK Karakter Mutiara Bunda Bali'
 
 
-const EMPTY_FORM = { full_name: '', nip: '', jabatan: '', no_hp: '' }
+const EMPTY_FORM = { full_name: '', email: '', password: '', nip: '', jabatan: '', no_hp: '', role: 'guru' }
 
 export default function GuruPage() {
   const router = useRouter()
@@ -96,7 +96,7 @@ export default function GuruPage() {
     win.print()
   }
 
-  // Save guru baru (create auth user + profile)
+  // Save guru
   const handleSave = async (e) => {
     e.preventDefault()
     setSaving(true)
@@ -104,32 +104,38 @@ export default function GuruPage() {
 
     try {
       if (editGuru) {
-        // Update existing
+        // Update profile only (email/password tidak diubah di sini)
         const { error } = await supabase
           .from('profiles')
-          .update({ full_name: form.full_name, nip: form.nip, jabatan: form.jabatan, no_hp: form.no_hp })
+          .update({
+            full_name: form.full_name,
+            nip:       form.nip || null,
+            jabatan:   form.jabatan || null,
+            no_hp:     form.no_hp || null,
+            role:      form.role || 'guru',
+          })
           .eq('id', editGuru.id)
         if (error) throw error
       } else {
-        // Generate unique QR code
-        const qr_code = 'GURU-' + Math.random().toString(36).substring(2, 10).toUpperCase()
+        // Create auth user + profile via API route (pakai service role key)
+        if (!form.email || !form.password) throw new Error('Email dan password wajib diisi.')
+        if (form.password.length < 6) throw new Error('Password minimal 6 karakter.')
 
-        // Create auth user via admin API — pakai service role tidak bisa dari client
-        // Pakai pendekatan: insert ke profiles dengan id sementara, nanti admin buat akun manual
-        // Untuk sekarang: insert profile only (tanpa auth user)
-        const tempId = crypto.randomUUID()
-        const { error } = await supabase
-          .from('profiles')
-          .insert({
-            id: tempId,
+        const res = await fetch('/api/create-user', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email:     form.email,
+            password:  form.password,
             full_name: form.full_name,
-            nip: form.nip || null,
-            jabatan: form.jabatan || null,
-            no_hp: form.no_hp || null,
-            role: 'guru',
-            qr_code,
-          })
-        if (error) throw error
+            nip:       form.nip || null,
+            jabatan:   form.jabatan || null,
+            no_hp:     form.no_hp || null,
+            role:      form.role || 'guru',
+          }),
+        })
+        const result = await res.json()
+        if (!res.ok) throw new Error(result.error || 'Gagal membuat akun.')
       }
 
       await fetchGurus()
@@ -345,45 +351,31 @@ export default function GuruPage() {
               </button>
             </div>
             <form onSubmit={handleSave} className="px-6 py-5 flex flex-col gap-4">
+
+              {/* Nama */}
               {[
-                { key: 'full_name', label: 'Nama Lengkap', placeholder: 'contoh: Siti Nurhaliza, S.Pd', required: true, type: 'text' },
-                { key: 'nip',       label: 'NIP',          placeholder: 'Nomor Induk Pegawai (opsional)', required: false, type: 'text' },
-                { key: 'no_hp',     label: 'No. HP / WA',  placeholder: 'contoh: 0812xxxxxxxx', required: false, type: 'text' },
-              ].map(({ key, label, placeholder, required }) => (
+                { key: 'full_name', label: 'Nama Lengkap', placeholder: 'contoh: Siti Nurhaliza, S.Pd', required: true,  type: 'text'     },
+                { key: 'nip',       label: 'NIP',          placeholder: 'Nomor Induk Pegawai (opsional)', required: false, type: 'text'    },
+                { key: 'no_hp',     label: 'No. HP / WA',  placeholder: 'contoh: 0812xxxxxxxx',          required: false, type: 'text'    },
+              ].map(({ key, label, placeholder, required, type }) => (
                 <div key={key}>
-                  <label className="block text-xs font-semibold uppercase tracking-widest text-gray-400 mb-1.5"
-                    style={{ fontFamily: 'DM Mono' }}>
+                  <label className="block text-xs font-semibold uppercase tracking-widest text-gray-400 mb-1.5" style={{ fontFamily: 'DM Mono' }}>
                     {label}{required && <span className="text-red-400 ml-1">*</span>}
                   </label>
-                  <input
-                    type="text"
-                    required={required}
-                    placeholder={placeholder}
-                    value={form[key]}
+                  <input type={type} required={required} placeholder={placeholder} value={form[key]}
                     onChange={e => setForm(p => ({ ...p, [key]: e.target.value }))}
                     className="w-full px-4 py-3 text-sm border rounded-xl transition-all"
-                    style={{
-                      border: `1.5px solid ${form[key] ? purple : '#e5e7eb'}`,
-                      background: form[key] ? purple50 : 'white',
-                      color: '#111'
-                    }}
+                    style={{ border: `1.5px solid ${form[key] ? purple : '#e5e7eb'}`, background: form[key] ? purple50 : 'white', color: '#111' }}
                   />
                 </div>
               ))}
 
-              {/* Jabatan dropdown */}
+              {/* Jabatan */}
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-widest text-gray-400 mb-1.5"
-                  style={{ fontFamily: 'DM Mono' }}>Jabatan</label>
-                <select
-                  value={form.jabatan}
-                  onChange={e => setForm(p => ({ ...p, jabatan: e.target.value }))}
+                <label className="block text-xs font-semibold uppercase tracking-widest text-gray-400 mb-1.5" style={{ fontFamily: 'DM Mono' }}>Jabatan</label>
+                <select value={form.jabatan} onChange={e => setForm(p => ({ ...p, jabatan: e.target.value }))}
                   className="w-full px-4 py-3 text-sm border rounded-xl transition-all appearance-none"
-                  style={{
-                    border: `1.5px solid ${form.jabatan ? purple : '#e5e7eb'}`,
-                    background: form.jabatan ? purple50 : 'white',
-                    color: form.jabatan ? '#111' : '#9ca3af'
-                  }}>
+                  style={{ border: `1.5px solid ${form.jabatan ? purple : '#e5e7eb'}`, background: form.jabatan ? purple50 : 'white', color: form.jabatan ? '#111' : '#9ca3af' }}>
                   <option value="">Pilih jabatan...</option>
                   <option value="Kepala Sekolah">Kepala Sekolah</option>
                   <option value="Admin">Admin</option>
@@ -392,17 +384,50 @@ export default function GuruPage() {
                 </select>
               </div>
 
-              {formError && (
-                <div className="px-4 py-3 rounded-xl text-sm text-red-600"
-                  style={{ background: '#fef2f2', border: '1px solid #fecaca' }}>
-                  {formError}
-                </div>
+              {/* Role */}
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-widest text-gray-400 mb-1.5" style={{ fontFamily: 'DM Mono' }}>Role Sistem</label>
+                <select value={form.role} onChange={e => setForm(p => ({ ...p, role: e.target.value }))}
+                  className="w-full px-4 py-3 text-sm border rounded-xl transition-all appearance-none"
+                  style={{ border: `1.5px solid ${purple}`, background: purple50, color: '#111' }}>
+                  <option value="guru">Guru — akses terbatas</option>
+                  <option value="admin">Admin — akses penuh</option>
+                </select>
+              </div>
+
+              {/* Email + Password — hanya saat tambah baru */}
+              {!editGuru && (
+                <>
+                  <div className="border-t border-gray-100 pt-3">
+                    <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3" style={{ fontFamily: 'DM Mono' }}>
+                      Akun Login
+                    </p>
+                    {[
+                      { key: 'email',    label: 'Email',    placeholder: 'email@sekolah.com', required: true, type: 'email'    },
+                      { key: 'password', label: 'Password', placeholder: 'min. 6 karakter',   required: true, type: 'password' },
+                    ].map(({ key, label, placeholder, required, type }) => (
+                      <div key={key} className="mb-3">
+                        <label className="block text-xs font-semibold uppercase tracking-widest text-gray-400 mb-1.5" style={{ fontFamily: 'DM Mono' }}>
+                          {label}<span className="text-red-400 ml-1">*</span>
+                        </label>
+                        <input type={type} required={required} placeholder={placeholder} value={form[key]}
+                          onChange={e => setForm(p => ({ ...p, [key]: e.target.value }))}
+                          className="w-full px-4 py-3 text-sm border rounded-xl transition-all"
+                          style={{ border: `1.5px solid ${form[key] ? purple : '#e5e7eb'}`, background: form[key] ? purple50 : 'white', color: '#111' }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs text-gray-400 bg-gray-50 px-3 py-2.5 rounded-lg">
+                    💡 QR code absensi akan dibuat otomatis. Guru dapat login ke sistem dengan email & password di atas.
+                  </p>
+                </>
               )}
 
-              {!editGuru && (
-                <p className="text-xs text-gray-400 bg-gray-50 px-3 py-2.5 rounded-lg">
-                  💡 QR code akan dibuat otomatis. Akun login untuk guru dapat dibuat terpisah melalui Supabase Auth.
-                </p>
+              {formError && (
+                <div className="px-4 py-3 rounded-xl text-sm text-red-600" style={{ background: '#fef2f2', border: '1px solid #fecaca' }}>
+                  {formError}
+                </div>
               )}
 
               <div className="flex gap-3 pt-1">
