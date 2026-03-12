@@ -10,10 +10,11 @@ const purple50      = '#f5f3ff'
 const purple100     = '#ede9fe'
 
 export default function ScanPage() {
-  const qrInstanceRef      = useRef(null)
-  const lastScannedRef     = useRef(null)
-  const lastScannedTimeRef = useRef(0)
-  const scanModeRef        = useRef('murid')
+  const qrInstanceRef       = useRef(null)
+  const lastScannedRef      = useRef(null)
+  const lastScannedTimeRef  = useRef(0)
+  const scanModeRef         = useRef('murid')
+  const onScanSuccessRef    = useRef(null)
 
   const [status, setStatus]               = useState('idle')
   const [result, setResult]               = useState(null)
@@ -74,7 +75,7 @@ export default function ScanPage() {
       await qr.start(
         cameraId,
         { fps: 15, qrbox: (w, h) => { const s = Math.min(w, h) * 0.8; return { width: s, height: s } } },
-        onScanSuccess,
+        (text, result) => { if (onScanSuccessRef.current) onScanSuccessRef.current(text, result) },
         () => {}
       )
       setCameraStarted(true)
@@ -94,6 +95,7 @@ export default function ScanPage() {
   }
 
   const onScanSuccess = useCallback(async (decodedText) => {
+    // ref always points to latest version
     console.log("QR scanned:", decodedText)
     const now = Date.now()
     if (decodedText === lastScannedRef.current && now - lastScannedTimeRef.current < SCAN_COOLDOWN) return
@@ -109,6 +111,7 @@ export default function ScanPage() {
       resetAfterDelay()
     }
   }, [])
+  onScanSuccessRef.current = onScanSuccess
 
   const handleStudentScan = async (qrCode) => {
     const { data: student, error } = await supabase.from('students').select('*').eq('qr_code', qrCode).eq('active', true).single()
