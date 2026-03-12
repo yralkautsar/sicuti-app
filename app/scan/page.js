@@ -58,11 +58,22 @@ export default function ScanPage() {
     await stopCamera()
     try {
       const { Html5Qrcode } = await import('html5-qrcode')
+      const cameras = await Html5Qrcode.getCameras()
+      console.log('Available cameras:', cameras)
+      if (!cameras || cameras.length === 0) {
+        setCameraError('Tidak ada kamera yang ditemukan.')
+        return
+      }
+      // Prefer front camera (label contains 'front' or 'user'), fallback to first
+      const front = cameras.find(c => /front|user|depan/i.test(c.label))
+      const cameraId = (front || cameras[0]).id
+      console.log('Using camera:', cameraId)
+
       const qr = new Html5Qrcode('qr-reader')
       qrInstanceRef.current = qr
       await qr.start(
-        { facingMode: 'user' },
-        { fps: 15, qrbox: (viewfinderWidth, viewfinderHeight) => { const size = Math.min(viewfinderWidth, viewfinderHeight) * 0.8; return { width: size, height: size }; } },
+        cameraId,
+        { fps: 15, qrbox: (w, h) => { const s = Math.min(w, h) * 0.8; return { width: s, height: s } } },
         onScanSuccess,
         () => {}
       )
@@ -86,12 +97,12 @@ export default function ScanPage() {
     console.log("QR scanned:", decodedText)
     const now = Date.now()
     if (decodedText === lastScannedRef.current && now - lastScannedTimeRef.current < SCAN_COOLDOWN) return
-    lastScannedRef.current     = decodedText
+    lastScannedRef.current     = cleanQR
     lastScannedTimeRef.current = now
     setStatus('loading')
     try {
-      if (scanModeRef.current === 'murid') await handleStudentScan(decodedText)
-      else await handleGuruScan(decodedText)
+      if (scanModeRef.current === 'murid') await handleStudentScan(cleanQR)
+      else await handleGuruScan(cleanQR)
     } catch {
       setStatus('error')
       setResult({ message: 'Terjadi kesalahan sistem. Coba lagi.' })
