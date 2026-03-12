@@ -161,7 +161,6 @@ export default function ScanPage() {
         #qr-reader__status_span { display:none!important; }
         #qr-reader__dashboard_section_swaplink { display:none!important; }
         select#qr-reader__camera_selection { display:none!important; }
-        #qr-reader__dashboard_section_csr span { display:none!important; }
         .scan-line {
           position:absolute; left:8%; right:8%; height:2px; z-index:10; pointer-events:none;
           background: linear-gradient(90deg, transparent, ${purple} 35%, #a78bfa 65%, transparent);
