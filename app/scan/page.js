@@ -72,10 +72,31 @@ export default function ScanPage() {
 
       const qr = new Html5Qrcode('qr-reader')
       qrInstanceRef.current = qr
+
+      // Define handler inline so it always has access to latest refs
+      const handleDecode = async (decodedText) => {
+        const cleanQR = decodedText.trim()
+        console.log('QR scanned raw:', JSON.stringify(cleanQR))
+        const now = Date.now()
+        if (cleanQR === lastScannedRef.current && now - lastScannedTimeRef.current < SCAN_COOLDOWN) return
+        lastScannedRef.current = cleanQR
+        lastScannedTimeRef.current = now
+        setStatus('loading')
+        try {
+          if (scanModeRef.current === 'murid') await handleStudentScan(cleanQR)
+          else await handleGuruScan(cleanQR)
+        } catch (e) {
+          console.error('Scan handler error:', e)
+          setStatus('error')
+          setResult({ message: 'Terjadi kesalahan sistem. Coba lagi.' })
+          setTimeout(() => { setStatus('idle'); setResult(null) }, 3000)
+        }
+      }
+
       await qr.start(
         cameraId,
         { fps: 15, qrbox: (w, h) => { const s = Math.min(w, h) * 0.8; return { width: s, height: s } } },
-        (text, result) => { if (onScanSuccessRef.current) onScanSuccessRef.current(text, result) },
+        handleDecode,
         () => {}
       )
       setCameraStarted(true)
