@@ -1,0 +1,21 @@
+name: Keep Supabase Active
+
+on:
+  schedule:
+    # Jalankan setiap 5 hari — cron: menit jam hari bulan hari-minggu
+    # Setiap tanggal 1, 6, 11, 16, 21, 26 jam 08.00 UTC (15.00 WITA)
+    - cron: '0 8 1,6,11,16,21,26 * *'
+  workflow_dispatch: # bisa dijalankan manual juga dari GitHub
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase to prevent auto-pause
+        run: |
+          curl -s \
+            -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}" \
+            "${{ secrets.SUPABASE_URL }}/rest/v1/classes?select=id&limit=1" \
+            -o /dev/null -w "Status: %{http_code}\n"
+          echo "Ping selesai — $(date)"
