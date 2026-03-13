@@ -9,10 +9,19 @@ const purple    = '#6d28d9'
 const purple50  = '#f5f3ff'
 const purple100 = '#ede9fe'
 
-
 const EMPTY_FORM = { nama_kelas: '', tahun_ajaran: '', wali_kelas_id: '', active: true }
-
 const TAHUN_AJARAN_OPTIONS = ['2024/2025', '2025/2026', '2026/2027']
+
+function loadXLSX() {
+  return new Promise((resolve, reject) => {
+    if (window.XLSX) { resolve(window.XLSX); return }
+    const s = document.createElement('script')
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'
+    s.onload = () => resolve(window.XLSX)
+    s.onerror = reject
+    document.head.appendChild(s)
+  })
+}
 
 export default function KelasPage() {
   const router = useRouter()
@@ -162,6 +171,79 @@ export default function KelasPage() {
     fetchCounts()
   }, [classes])
 
+  // Detail kelas — modal lihat murid & export
+  const [showDetail, setShowDetail]   = useState(null) // kelas object
+  const [detailMurids, setDetailMurids] = useState([])
+  const [detailLoading, setDetailLoading] = useState(false)
+  const [exporting, setExporting]     = useState(false)
+
+  const openDetail = async (kelas) => {
+    setShowDetail(kelas)
+    setDetailLoading(true)
+    const { data } = await supabase
+      .from('students')
+      .select('*')
+      .eq('class_id', kelas.id)
+      .order('full_name', { ascending: true })
+    setDetailMurids(data || [])
+    setDetailLoading(false)
+  }
+
+  const exportKelasExcel = async () => {
+    if (!showDetail) return
+    setExporting(true)
+    try {
+      const XLSX = await loadXLSX()
+      const wb   = XLSX.utils.book_new()
+
+      // Sheet data murid
+      const rows = detailMurids.map((m, i) => ({
+        'No':             i + 1,
+        'Nama Lengkap':   m.full_name      || '',
+        'NISN':           m.nisn           || '',
+        'Jenis Kelamin':  m.jenis_kelamin  || '',
+        'Tanggal Lahir':  m.tanggal_lahir
+          ? new Date(m.tanggal_lahir).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
+          : '',
+        'Alamat':         m.alamat         || '',
+        'Nama Wali':      m.wali_name      || '',
+        'No HP Wali':     m.wali_phone     || '',
+        'Status':         m.active ? 'Aktif' : 'Nonaktif',
+        'QR Code':        m.qr_code        || '',
+      }))
+
+      const ws = XLSX.utils.json_to_sheet(rows)
+      ws['!cols'] = [
+        { wch: 4 }, { wch: 28 }, { wch: 16 }, { wch: 14 },
+        { wch: 22 }, { wch: 36 }, { wch: 24 }, { wch: 18 },
+        { wch: 10 }, { wch: 18 },
+      ]
+
+      // Info kelas di baris atas — tambah metadata
+      XLSX.utils.sheet_add_aoa(ws, [
+        [`Kelas: ${showDetail.nama_kelas}`],
+        [`Tahun Ajaran: ${showDetail.tahun_ajaran}`],
+        [`Wali Kelas: ${showDetail.wali?.full_name || '—'}`],
+        [`Jumlah Murid: ${detailMurids.length}`],
+        [],
+      ], { origin: 'A1' })
+
+      // Geser data ke baris 7 (setelah metadata 5 baris + 1 header)
+      const wsData = XLSX.utils.json_to_sheet(rows)
+      wsData['!cols'] = ws['!cols']
+      const sheetName = `${showDetail.nama_kelas} ${showDetail.tahun_ajaran}`.slice(0, 31)
+      XLSX.utils.book_append_sheet(wb, wsData, sheetName)
+
+      const fileName = `Data_Murid_${showDetail.nama_kelas}_${showDetail.tahun_ajaran}.xlsx`
+        .replace(/\//g, '-').replace(/ /g, '_')
+      XLSX.writeFile(wb, fileName)
+    } catch (err) {
+      console.error(err)
+      alert('Gagal export. Silakan coba lagi.')
+    }
+    setExporting(false)
+  }
+
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden"
       style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
@@ -290,6 +372,17 @@ export default function KelasPage() {
 
                   {/* Right — actions */}
                   <div className="flex items-center gap-2">
+                    <button onClick={() => openDetail(kelas)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+                      style={{ background: purple50, color: purple }}>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                        <line x1="12" y1="18" x2="12" y2="12"/>
+                        <polyline points="9 15 12 18 15 15"/>
+                      </svg>
+                      Data & Export
+                    </button>
                     <button onClick={() => toggleActive(kelas)}
                       className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
                       style={kelas.active
@@ -322,6 +415,136 @@ export default function KelasPage() {
           )}
         </div>
       </main>
+
+      {/* ── MODAL DETAIL KELAS ── */}
+      {showDetail && (
+        <div className="overlay" onClick={e => e.target === e.currentTarget && setShowDetail(null)}>
+          <div className="modal bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 overflow-hidden flex flex-col"
+            style={{ maxHeight: '85vh' }}>
+
+            {/* Header */}
+            <div className="px-6 py-5 border-b border-gray-100 flex-shrink-0">
+              <div className="flex items-start justify-between">
+                <div>
+                  <h2 className="font-bold text-gray-900 text-lg">{showDetail.nama_kelas}</h2>
+                  <div className="flex items-center gap-3 mt-1">
+                    <span className="text-xs text-gray-400" style={{ fontFamily: 'DM Mono' }}>
+                      TA {showDetail.tahun_ajaran}
+                    </span>
+                    <span className="text-xs text-gray-400">
+                      Wali: <span className="font-semibold text-gray-700">
+                        {showDetail.wali?.full_name || '— belum ditentukan'}
+                      </span>
+                    </span>
+                    {showDetail.wali?.jabatan && (
+                      <span className="text-xs text-gray-400">{showDetail.wali.jabatan}</span>
+                    )}
+                  </div>
+                </div>
+                <button onClick={() => setShowDetail(null)}
+                  className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-400 flex-shrink-0">
+                  ✕
+                </button>
+              </div>
+
+              {/* Stats + Export */}
+              <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-50">
+                <div className="flex items-center gap-4">
+                  <div className="text-center">
+                    <div className="font-bold text-2xl" style={{ color: purple }}>{detailMurids.length}</div>
+                    <div className="text-xs text-gray-400">Total Murid</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="font-bold text-2xl text-green-600">{detailMurids.filter(m => m.active).length}</div>
+                    <div className="text-xs text-gray-400">Aktif</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="font-bold text-2xl text-gray-400">{detailMurids.filter(m => !m.active).length}</div>
+                    <div className="text-xs text-gray-400">Nonaktif</div>
+                  </div>
+                </div>
+                <button onClick={exportKelasExcel} disabled={exporting || detailLoading || detailMurids.length === 0}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white transition-all"
+                  style={{ background: exporting ? '#a78bfa' : purple, opacity: detailMurids.length === 0 ? 0.5 : 1 }}>
+                  {exporting ? (
+                    <><div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin"/>Mengexport...</>
+                  ) : (
+                    <>
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                        <line x1="12" y1="18" x2="12" y2="12"/>
+                        <polyline points="9 15 12 18 15 15"/>
+                      </svg>
+                      Download Excel
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Daftar murid */}
+            <div className="flex-1 overflow-y-auto">
+              {detailLoading ? (
+                <div className="flex items-center justify-center h-40">
+                  <div className="w-6 h-6 rounded-full border-2 border-t-transparent animate-spin"
+                    style={{ borderColor: `${purple100} ${purple100} ${purple100} ${purple}` }}/>
+                </div>
+              ) : detailMurids.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-40 text-center">
+                  <p className="font-semibold text-gray-500 text-sm">Belum ada murid di kelas ini</p>
+                  <p className="text-xs text-gray-400 mt-1">Tambahkan murid melalui halaman Data Murid</p>
+                </div>
+              ) : (
+                <table className="w-full">
+                  <thead className="sticky top-0">
+                    <tr style={{ background: '#fafafa', borderBottom: '1px solid #f3f4f6' }}>
+                      {['No', 'Nama Murid', 'NISN', 'Wali & No HP', 'Status'].map(h => (
+                        <th key={h} className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider"
+                          style={{ fontFamily: 'DM Mono' }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {detailMurids.map((m, i) => (
+                      <tr key={m.id} className="border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors">
+                        <td className="px-5 py-3 text-xs text-gray-400" style={{ fontFamily: 'DM Mono' }}>{i + 1}</td>
+                        <td className="px-5 py-3">
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
+                              style={{ background: m.active ? purple : '#d1d5db' }}>
+                              {m.full_name?.[0]}
+                            </div>
+                            <div>
+                              <div className="text-sm font-medium text-gray-900">{m.full_name}</div>
+                              <div className="text-xs text-gray-400">{m.jenis_kelamin || '—'}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-5 py-3 text-xs text-gray-500" style={{ fontFamily: 'DM Mono' }}>
+                          {m.nisn || '—'}
+                        </td>
+                        <td className="px-5 py-3">
+                          <div className="text-sm text-gray-700">{m.wali_name || '—'}</div>
+                          <div className="text-xs text-gray-400" style={{ fontFamily: 'DM Mono' }}>{m.wali_phone || ''}</div>
+                        </td>
+                        <td className="px-5 py-3">
+                          <span className="text-xs font-semibold px-2 py-0.5 rounded-full"
+                            style={m.active
+                              ? { background: '#f0fdf4', color: '#16a34a' }
+                              : { background: '#f3f4f6', color: '#6b7280' }}>
+                            {m.active ? 'Aktif' : 'Nonaktif'}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── MODAL TAMBAH / EDIT KELAS ── */}
       {showModal && (
