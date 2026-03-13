@@ -34,7 +34,6 @@ export default function KelasPage() {
   const [editKelas, setEditKelas] = useState(null)
   const [saving, setSaving]       = useState(false)
   const [formError, setFormError] = useState('')
-  const [filterTA, setFilterTA]   = useState('')
 
   useEffect(() => {
     const init = async () => {
@@ -157,7 +156,18 @@ export default function KelasPage() {
 
 
   const tahunanList = [...new Set(classes.map(c => c.tahun_ajaran))].sort().reverse()
-  const filtered = filterTA ? classes.filter(c => c.tahun_ajaran === filterTA) : classes
+
+  // Group by nama_kelas
+  const grouped = classes.reduce((acc, k) => {
+    if (!acc[k.nama_kelas]) acc[k.nama_kelas] = []
+    acc[k.nama_kelas].push(k)
+    return acc
+  }, {})
+
+  // Sort angkatan dalam tiap grup by tahun_ajaran desc
+  Object.values(grouped).forEach(arr =>
+    arr.sort((a, b) => (b.tahun_ajaran > a.tahun_ajaran ? 1 : -1))
+  )
 
   // Count murid per kelas
   const [muridCounts, setMuridCounts] = useState({})
@@ -172,10 +182,22 @@ export default function KelasPage() {
   }, [classes])
 
   // Detail kelas — modal lihat murid & export
-  const [showDetail, setShowDetail]   = useState(null) // kelas object
+  const [showDetail, setShowDetail]     = useState(null)
   const [detailMurids, setDetailMurids] = useState([])
   const [detailLoading, setDetailLoading] = useState(false)
-  const [exporting, setExporting]     = useState(false)
+  const [exporting, setExporting]       = useState(false)
+
+  // Accordion — semua grup expanded by default
+  const [expanded, setExpanded]         = useState({})
+  const toggleExpand = (nama) => setExpanded(p => ({ ...p, [nama]: !p[nama] }))
+  // Default expand semua saat classes pertama kali load
+  useEffect(() => {
+    if (classes.length > 0) {
+      const init = {}
+      classes.forEach(k => { init[k.nama_kelas] = true })
+      setExpanded(init)
+    }
+  }, [classes.length === 0 ? 0 : 1])
 
   const openDetail = async (kelas) => {
     setShowDetail(kelas)
@@ -268,7 +290,7 @@ export default function KelasPage() {
         <header className="bg-white border-b border-gray-100 px-8 py-4 flex items-center justify-between flex-shrink-0">
           <div>
             <h1 className="font-bold text-gray-900 text-lg">Manajemen Kelas</h1>
-            <p className="text-xs text-gray-400">{classes.length} kelas terdaftar</p>
+            <p className="text-xs text-gray-400">{Object.keys(grouped).length} kelas · {classes.length} angkatan terdaftar</p>
           </div>
           <button onClick={() => { setShowModal(true); setEditKelas(null); setForm(EMPTY_FORM) }}
             className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all"
@@ -281,136 +303,161 @@ export default function KelasPage() {
         </header>
 
         <div className="flex-1 overflow-y-auto px-8 py-6">
-
-          {/* Filter tahun ajaran */}
-          {tahunanList.length > 1 && (
-            <div className="fu flex items-center gap-2 mb-6 flex-wrap">
-              <span className="text-xs text-gray-400 font-medium">Tahun Ajaran:</span>
-              <button onClick={() => setFilterTA('')}
-                className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
-                style={!filterTA ? { background: purple, color: 'white' } : { background: 'white', color: '#6b7280', border: '1px solid #e5e7eb' }}>
-                Semua
-              </button>
-              {tahunanList.map(ta => (
-                <button key={ta} onClick={() => setFilterTA(ta)}
-                  className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
-                  style={filterTA === ta ? { background: purple, color: 'white' } : { background: 'white', color: '#6b7280', border: '1px solid #e5e7eb' }}>
-                  {ta}
-                </button>
-              ))}
-            </div>
-          )}
-
           {loading ? (
             <div className="flex items-center justify-center h-48">
               <div className="w-7 h-7 rounded-full border-2 border-t-transparent animate-spin"
                 style={{ borderColor: `${purple100} ${purple100} ${purple100} ${purple}` }}/>
             </div>
-          ) : filtered.length === 0 ? (
+          ) : Object.keys(grouped).length === 0 ? (
             <div className="fu flex flex-col items-center justify-center py-20 text-center">
-              <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4"
-                style={{ background: purple50 }}>
+              <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4" style={{ background: purple50 }}>
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={purple} strokeWidth="2" strokeLinecap="round">
                   <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
                   <polyline points="9 22 9 12 15 12 15 22"/>
                 </svg>
               </div>
               <p className="font-semibold text-gray-700 mb-1">Belum ada kelas</p>
-              <p className="text-sm text-gray-400">Klik "Tambah Kelas" untuk mulai membuat data kelas</p>
+              <p className="text-sm text-gray-400">Klik "Tambah Kelas" untuk mulai</p>
             </div>
           ) : (
-            <div className="fu grid grid-cols-1 gap-3">
-              {filtered.map((kelas) => (
-                <div key={kelas.id}
-                  className="bg-white rounded-2xl border border-gray-100 px-6 py-5 flex items-center justify-between hover:shadow-sm transition-shadow">
+            <div className="fu flex flex-col gap-4">
+              {Object.entries(grouped).map(([namaKelas, angkatanList]) => {
+                const isOpen       = expanded[namaKelas] !== false
+                const totalMurid   = angkatanList.reduce((s, k) => s + (muridCounts[k.id] || 0), 0)
+                const adaAktif     = angkatanList.some(k => k.active)
 
-                  {/* Left — kelas info */}
-                  <div className="flex items-center gap-5">
-                    {/* Icon */}
-                    <div className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
-                      style={{ background: kelas.active ? purple50 : '#f3f4f6' }}>
-                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
-                        stroke={kelas.active ? purple : '#9ca3af'} strokeWidth="2" strokeLinecap="round">
-                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-                        <polyline points="9 22 9 12 15 12 15 22"/>
-                      </svg>
+                return (
+                  <div key={namaKelas} className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+
+                    {/* ── GROUP HEADER ── */}
+                    <div className="flex items-center justify-between px-6 py-4 cursor-pointer hover:bg-gray-50 transition-all"
+                      onClick={() => toggleExpand(namaKelas)}>
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                          style={{ background: adaAktif ? purple50 : '#f3f4f6' }}>
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                            stroke={adaAktif ? purple : '#9ca3af'} strokeWidth="2" strokeLinecap="round">
+                            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                            <polyline points="9 22 9 12 15 12 15 22"/>
+                          </svg>
+                        </div>
+                        <div>
+                          <h3 className="font-bold text-gray-900 text-base">{namaKelas}</h3>
+                          <div className="flex items-center gap-3 mt-0.5">
+                            <span className="text-xs text-gray-400">
+                              {angkatanList.length} angkatan
+                            </span>
+                            <span className="text-xs text-gray-400">·</span>
+                            <span className="text-xs text-gray-400">
+                              {totalMurid} murid total
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <button
+                          onClick={e => {
+                            e.stopPropagation()
+                            setEditKelas(null)
+                            setForm({ ...EMPTY_FORM, nama_kelas: namaKelas })
+                            setShowModal(true)
+                          }}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
+                          style={{ background: purple50, color: purple }}>
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                            <path d="M12 5v14M5 12h14"/>
+                          </svg>
+                          Tambah Angkatan
+                        </button>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round"
+                          style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>
+                          <path d="M6 9l6 6 6-6"/>
+                        </svg>
+                      </div>
                     </div>
 
-                    <div>
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <h3 className="font-bold text-gray-900 text-base">{kelas.nama_kelas}</h3>
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${
-                          kelas.active
-                            ? 'bg-green-50 text-green-600'
-                            : 'bg-gray-100 text-gray-400'
-                        }`}>
-                          {kelas.active ? 'Aktif' : 'Nonaktif'}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-4 mt-1">
-                        <span className="text-xs text-gray-400" style={{ fontFamily: 'DM Mono' }}>
-                          TA {kelas.tahun_ajaran}
-                        </span>
-                        <span className="text-xs text-gray-400">
-                          Wali: <span className="font-medium text-gray-600">
-                            {kelas.wali?.full_name || kelas.profiles?.full_name || '— belum ditentukan'}
-                          </span>
-                        </span>
-                      </div>
-                    </div>
-                  </div>
+                    {/* ── ANGKATAN LIST ── */}
+                    {isOpen && (
+                      <div className="border-t border-gray-50">
+                        {angkatanList.map((kelas, i) => (
+                          <div key={kelas.id}
+                            className="grid items-center px-6 py-4 hover:bg-gray-50 transition-colors"
+                            style={{ borderTop: i > 0 ? '1px solid #f9fafb' : 'none', gridTemplateColumns: '1fr 80px 1fr' }}>
 
-                  {/* Center — stats */}
-                  <div className="flex items-center gap-8">
-                    <div className="text-center">
-                      <div className="font-bold text-gray-900 text-xl">
-                        {muridCounts[kelas.id] || 0}
-                      </div>
-                      <div className="text-xs text-gray-400">Murid</div>
-                    </div>
-                  </div>
+                            {/* Left — tahun ajaran + wali */}
+                            <div className="flex items-center gap-4 pl-14">
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <span className="font-semibold text-sm text-gray-800"
+                                    style={{ fontFamily: 'DM Mono' }}>
+                                    {kelas.tahun_ajaran}
+                                  </span>
+                                  <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${
+                                    kelas.active ? 'bg-green-50 text-green-600' : 'bg-gray-100 text-gray-400'
+                                  }`}>
+                                    {kelas.active ? 'Aktif' : 'Nonaktif'}
+                                  </span>
+                                </div>
+                                <div className="text-xs text-gray-400 mt-0.5">
+                                  Wali: <span className="font-medium text-gray-600">
+                                    {kelas.wali?.full_name || '— belum ditentukan'}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
 
-                  {/* Right — actions */}
-                  <div className="flex items-center gap-2">
-                    <button onClick={() => openDetail(kelas)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
-                      style={{ background: purple50, color: purple }}>
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                        <polyline points="14 2 14 8 20 8"/>
-                        <line x1="12" y1="18" x2="12" y2="12"/>
-                        <polyline points="9 15 12 18 15 15"/>
-                      </svg>
-                      Data & Export
-                    </button>
-                    <button onClick={() => toggleActive(kelas)}
-                      className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
-                      style={kelas.active
-                        ? { background: '#f0fdf4', color: '#16a34a' }
-                        : { background: '#f3f4f6', color: '#6b7280' }}>
-                      {kelas.active ? '✓ Aktif' : 'Nonaktif'}
-                    </button>
-                    <button onClick={() => openEdit(kelas)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-all">
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                      </svg>
-                      Edit
-                    </button>
-                    <button onClick={() => handleDelete(kelas.id)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-red-400 hover:text-red-600 hover:bg-red-50 transition-all">
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                        <polyline points="3 6 5 6 21 6"/>
-                        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
-                        <path d="M10 11v6M14 11v6"/>
-                        <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
-                      </svg>
-                      Hapus
-                    </button>
+                            {/* Center — murid count, selalu di tengah */}
+                            <div className="flex flex-col items-center justify-center">
+                              <span className="font-bold text-lg text-gray-900">{muridCounts[kelas.id] || 0}</span>
+                              <span className="text-xs text-gray-400">murid</span>
+                            </div>
+
+                            {/* Right — actions */}
+                            <div className="flex items-center gap-2 justify-end">
+                              <button onClick={() => openDetail(kelas)}
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+                                style={{ background: purple50, color: purple }}>
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                  <polyline points="14 2 14 8 20 8"/>
+                                  <line x1="12" y1="18" x2="12" y2="12"/>
+                                  <polyline points="9 15 12 18 15 15"/>
+                                </svg>
+                                Data & Export
+                              </button>
+                              <button onClick={() => toggleActive(kelas)}
+                                className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+                                style={kelas.active
+                                  ? { background: '#f0fdf4', color: '#16a34a' }
+                                  : { background: '#f3f4f6', color: '#6b7280' }}>
+                                {kelas.active ? '✓ Aktif' : 'Nonaktif'}
+                              </button>
+                              <button onClick={() => openEdit(kelas)}
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-all">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                                </svg>
+                                Edit
+                              </button>
+                              <button onClick={() => handleDelete(kelas.id)}
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-red-400 hover:text-red-600 hover:bg-red-50 transition-all">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                                  <polyline points="3 6 5 6 21 6"/>
+                                  <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                                  <path d="M10 11v6M14 11v6"/>
+                                  <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                                </svg>
+                                Hapus
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           )}
         </div>
@@ -552,7 +599,7 @@ export default function KelasPage() {
           <div className="modal bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
             <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
               <h2 className="font-bold text-gray-900 text-lg">
-                {editKelas ? 'Edit Kelas' : 'Tambah Kelas Baru'}
+                {editKelas ? 'Edit Angkatan' : form.nama_kelas && !editKelas ? `Tambah Angkatan — ${form.nama_kelas}` : 'Tambah Kelas Baru'}
               </h2>
               <button onClick={() => setShowModal(false)}
                 className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-400">
@@ -562,25 +609,32 @@ export default function KelasPage() {
 
             <form onSubmit={handleSave} className="px-6 py-5 flex flex-col gap-4">
 
-              {/* Nama Kelas */}
+              {/* Nama Kelas — lock jika dari Tambah Angkatan */}
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-widest text-gray-400 mb-1.5"
                   style={{ fontFamily: 'DM Mono' }}>
                   Nama Kelas <span className="text-red-400">*</span>
                 </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="contoh: Kelas A, Kelas B, Kelas Melati"
-                  value={form.nama_kelas}
-                  onChange={e => setForm(p => ({ ...p, nama_kelas: e.target.value }))}
-                  className="w-full px-4 py-3 text-sm border rounded-xl transition-all"
-                  style={{
-                    border: `1.5px solid ${form.nama_kelas ? purple : '#e5e7eb'}`,
-                    background: form.nama_kelas ? purple50 : 'white',
-                    color: '#111'
-                  }}
-                />
+                {!editKelas && form.nama_kelas && Object.keys(grouped).includes(form.nama_kelas) ? (
+                  <div className="w-full px-4 py-3 text-sm rounded-xl font-semibold"
+                    style={{ background: purple50, border: `1.5px solid ${purple}`, color: purple }}>
+                    {form.nama_kelas}
+                  </div>
+                ) : (
+                  <input
+                    type="text"
+                    required
+                    placeholder="contoh: TK A Baik Hati, TK B Ceria"
+                    value={form.nama_kelas}
+                    onChange={e => setForm(p => ({ ...p, nama_kelas: e.target.value }))}
+                    className="w-full px-4 py-3 text-sm border rounded-xl transition-all"
+                    style={{
+                      border: `1.5px solid ${form.nama_kelas ? purple : '#e5e7eb'}`,
+                      background: form.nama_kelas ? purple50 : 'white',
+                      color: '#111'
+                    }}
+                  />
+                )}
               </div>
 
               {/* Tahun Ajaran */}
