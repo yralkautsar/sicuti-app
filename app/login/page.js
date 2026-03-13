@@ -65,7 +65,7 @@ export default function LoginPage() {
         {/* Logo */}
         <div className="fade-up">
           <div className="flex items-center gap-3 mb-12">
-            <img src="/logo.png" alt="Logo Sekolah"
+            <img src="/logoborder.png" alt="Logo Sekolah"
               style={{ width: 40, height: 40, objectFit: 'contain' }} />
             <div>
               <div className="font-semibold text-white text-sm leading-tight">{SCHOOL}</div>
