@@ -8,7 +8,8 @@ import Sidebar from '@/components/Sidebar'
 const purple    = '#6d28d9'
 const purple50  = '#f5f3ff'
 const purple100 = '#ede9fe'
-const BATAS_JAM = '07:30'
+const BATAS_GURU  = '07:00'
+const BATAS_MURID = '07:30'
 const BULAN = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember']
 
 function fmtTime(scannedAt) {
@@ -18,12 +19,12 @@ function fmtTime(scannedAt) {
 
 function isLate(timeStr) {
   if (!timeStr) return false
-  return timeStr.replace('.', ':').slice(0, 5) > BATAS_JAM
+  return timeStr.replace('.', ':').slice(0, 5) > BATAS_GURU
 }
 
 function menitRaw(timeStr) {
   if (!timeStr) return 0
-  const [bh, bm] = BATAS_JAM.split(':').map(Number)
+  const [bh, bm] = BATAS_GURU.split(':').map(Number)
   const cleaned = timeStr.replace('.', ':')
   const parts = cleaned.split(':').map(Number)
   if (parts.length < 2 || isNaN(parts[0]) || isNaN(parts[1])) return 0
@@ -43,7 +44,13 @@ function getWeekdaysInMonth(year, month) {
   const days = []
   const d = new Date(year, month, 1)
   while (d.getMonth() === month) {
-    if (d.getDay() !== 0 && d.getDay() !== 6) days.push(d.toISOString().slice(0, 10))
+    const dow = d.getDay()
+    if (dow !== 0 && dow !== 6) {
+      const y = d.getFullYear()
+      const m = String(d.getMonth() + 1).padStart(2, '0')
+      const day = String(d.getDate()).padStart(2, '0')
+      days.push(`${y}-${m}-${day}`)
+    }
     d.setDate(d.getDate() + 1)
   }
   return days
@@ -266,8 +273,10 @@ export default function ProfilPage() {
                         </div>
                       </>
                     ) : (
-                      <div className="flex items-center gap-2 text-green-600">
-                        <span className="text-2xl">🎉</span>
+                      <div className="flex items-center gap-2" style={{ color: '#16a34a' }}>
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/>
+                        </svg>
                         <span className="text-sm font-semibold">Tidak ada keterlambatan bulan ini!</span>
                       </div>
                     )}

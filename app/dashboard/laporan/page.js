@@ -8,7 +8,8 @@ import Sidebar from '@/components/Sidebar'
 const purple    = '#6d28d9'
 const purple50  = '#f5f3ff'
 const purple100 = '#ede9fe'
-const BATAS_JAM = '07:30'
+const BATAS_MURID = '07:30'
+const BATAS_GURU  = '07:00'
 const BULAN = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember']
 
 function getWeekdaysInMonth(year, month) {
@@ -16,20 +17,25 @@ function getWeekdaysInMonth(year, month) {
   const d = new Date(year, month, 1)
   while (d.getMonth() === month) {
     const dow = d.getDay()
-    if (dow !== 0 && dow !== 6) days.push(d.toISOString().slice(0, 10))
+    if (dow !== 0 && dow !== 6) {
+      const y = d.getFullYear()
+      const m = String(d.getMonth() + 1).padStart(2, '0')
+      const day = String(d.getDate()).padStart(2, '0')
+      days.push(`${y}-${m}-${day}`)
+    }
     d.setDate(d.getDate() + 1)
   }
   return days
 }
 
-function isLate(timeStr) {
+function isLate(timeStr, batas) {
   if (!timeStr) return false
-  return timeStr.slice(0, 5) > BATAS_JAM
+  return timeStr.slice(0, 5) > batas
 }
 
-function menitDiff(timeStr) {
+function menitDiff(timeStr, batas) {
   if (!timeStr) return null
-  const [bh, bm] = BATAS_JAM.split(':').map(Number)
+  const [bh, bm] = batas.split(':').map(Number)
   const cleaned = timeStr.replace('.', ':')
   const parts = cleaned.split(':').map(Number)
   if (parts.length < 2 || isNaN(parts[0]) || isNaN(parts[1])) return null
@@ -45,9 +51,9 @@ function menitDiff(timeStr) {
   return { label, early: diff < 0 }
 }
 
-function menitRaw(timeStr) {
+function menitRaw(timeStr, batas) {
   if (!timeStr) return 0
-  const [bh, bm] = BATAS_JAM.split(':').map(Number)
+  const [bh, bm] = batas.split(':').map(Number)
   const cleaned = timeStr.replace('.', ':')
   const parts = cleaned.split(':').map(Number)
   if (parts.length < 2 || isNaN(parts[0]) || isNaN(parts[1])) return 0
@@ -155,7 +161,7 @@ export default function LaporanPage() {
       const jamMasuk  = fmtTime(masukRec?.scanned_at)
       const jamPulang = fmtTime(pulangRec?.scanned_at)
       let status = 'Tidak Masuk'
-      if (masukRec) status = isLate(jamMasuk) ? 'Telat' : 'Hadir'
+      if (masukRec) status = isLate(jamMasuk, BATAS_MURID) ? 'Telat' : 'Hadir'
       return { ...m, jamMasuk, jamPulang, status }
     })
   }, [hariDataMurid, murids, filterKelas])
@@ -178,9 +184,9 @@ export default function LaporanPage() {
         const masukRec = recs.find(r => r.date === tgl && r.type === 'masuk')
         if (!masukRec) { tidakMasuk++; return }
         const jam = fmtTime(masukRec.scanned_at)
-        if (isLate(jam)) {
+        if (isLate(jam, BATAS_MURID)) {
           telat++
-          const mnt = menitRaw(jam)
+          const mnt = menitRaw(jam, BATAS_MURID)
           totalMenit += mnt
           telatDetail.push({ tgl, jam, mnt })
         } else hadir++
@@ -198,7 +204,7 @@ export default function LaporanPage() {
       const jamMasuk  = fmtTime(masukRec?.scanned_at)
       const jamPulang = fmtTime(pulangRec?.scanned_at)
       let status = 'Tidak Masuk'
-      if (masukRec) status = isLate(jamMasuk) ? 'Telat' : 'Hadir'
+      if (masukRec) status = isLate(jamMasuk, BATAS_GURU) ? 'Telat' : 'Hadir'
       return { ...g, jamMasuk, jamPulang, status }
     })
   }, [hariDataGuru, gurus])
@@ -220,9 +226,9 @@ export default function LaporanPage() {
         const masukRec = recs.find(r => r.date === tgl && r.type === 'masuk')
         if (!masukRec) { tidakMasuk++; return }
         const jam = fmtTime(masukRec.scanned_at)
-        if (isLate(jam)) {
+        if (isLate(jam, BATAS_GURU)) {
           telat++
-          const mnt = menitRaw(jam)
+          const mnt = menitRaw(jam, BATAS_GURU)
           totalMenit += mnt
           telatDetail.push({ tgl, jam, mnt })
         } else hadir++
@@ -244,7 +250,8 @@ export default function LaporanPage() {
     if (isHarian) {
       headers  = ['No', 'Nama', isMurid ? 'Kelas' : 'Jabatan', 'Jam Masuk', 'Keterlambatan', 'Jam Pulang', 'Status']
       csvRows  = rows.map((r, i) => {
-        const d = menitDiff(r.jamMasuk)
+        const batas = isMurid ? BATAS_MURID : BATAS_GURU
+        const d = menitDiff(r.jamMasuk, batas)
         const ket = d ? (d.early ? `${d.label} lebih awal` : `${d.label} terlambat`) : ''
         return [
           i + 1,
@@ -321,7 +328,7 @@ export default function LaporanPage() {
         <header className="bg-white border-b border-gray-100 px-8 py-4 flex items-center justify-between flex-shrink-0 no-print">
           <div>
             <h1 className="font-bold text-gray-900 text-lg">Laporan Absensi</h1>
-            <p className="text-xs text-gray-400">Batas tepat waktu: {BATAS_JAM} · Senin–Jumat</p>
+            <p className="text-xs text-gray-400">Batas tepat waktu: Murid {BATAS_MURID} · Guru {BATAS_GURU} · Senin–Jumat</p>
           </div>
           <div className="flex items-center gap-3">
             <button onClick={exportCSV}
@@ -355,13 +362,24 @@ export default function LaporanPage() {
 
             {/* Subject: Murid | Guru */}
             <div className="flex p-1 rounded-xl" style={{ background: '#f3f4f6' }}>
-              {[{ key: 'murid', label: 'Murid' }, { key: 'guru', label: 'Guru' }].map(t => (
+              {[
+                { key: 'murid', label: 'Murid', icon: (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+                  </svg>
+                )},
+                { key: 'guru', label: 'Guru', icon: (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                  </svg>
+                )},
+              ].map(t => (
                 <button key={t.key} onClick={() => setSubjectTab(t.key)}
-                  className="px-4 py-2 rounded-lg text-sm font-semibold transition-all"
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-all"
                   style={subjectTab === t.key
                     ? { background: 'white', color: purple, boxShadow: '0 1px 4px rgba(0,0,0,.08)' }
                     : { color: '#6b7280' }}>
-                  {t.label}
+                  {t.icon}{t.label}
                 </button>
               ))}
             </div>
@@ -490,11 +508,12 @@ export default function LaporanPage() {
                             <td className="px-5 py-3.5">
                               {row.jamMasuk ? (
                                 <div className="flex flex-col gap-0.5">
-                                  <span className="text-sm font-medium" style={{ fontFamily: 'DM Mono', color: isLate(row.jamMasuk) ? '#d97706' : '#16a34a' }}>
+                                  <span className="text-sm font-medium" style={{ fontFamily: 'DM Mono', color: isLate(row.jamMasuk, subjectTab === 'murid' ? BATAS_MURID : BATAS_GURU) ? '#d97706' : '#16a34a' }}>
                                     {row.jamMasuk}
                                   </span>
                                   {(() => {
-                                    const d = menitDiff(row.jamMasuk)
+                                    const batas = subjectTab === 'murid' ? BATAS_MURID : BATAS_GURU
+                                    const d = menitDiff(row.jamMasuk, batas)
                                     if (!d) return null
                                     return (
                                       <span className="text-xs font-semibold" style={{ color: d.early ? '#16a34a' : '#dc2626' }}>

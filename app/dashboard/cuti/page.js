@@ -46,12 +46,11 @@ export default function CutiPage() {
   const [formError, setFormError]   = useState('')
 
   // Modal review (admin)
-  const [showReview, setShowReview] = useState(null)
-  const [reviewNote, setReviewNote] = useState('')
-  const [reviewing, setReviewing]   = useState(false)
-
-  // Modal detail
-  const [showDetail, setShowDetail] = useState(null)
+  const [showReview, setShowReview]   = useState(null)
+  const [reviewNote, setReviewNote]   = useState('')
+  const [reviewing, setReviewing]     = useState(false)
+  const [showDetail, setShowDetail]   = useState(null)
+  const [showRekap, setShowRekap]     = useState(false)
 
   useEffect(() => {
     const init = async () => {
@@ -163,6 +162,19 @@ export default function CutiPage() {
 
   const pendingCount = requests.filter(r => r.status === 'pending').length
 
+  // Rekap cuti per guru (admin only)
+  const rekapPerGuru = useMemo(() => {
+    if (!isAdmin) return []
+    const tahun = new Date().getFullYear()
+    return gurus.map(g => {
+      const mine     = requests.filter(r => r.profile_id === g.id && new Date(r.date_start).getFullYear() === tahun)
+      const approved = mine.filter(r => r.status === 'approved')
+      const pending  = mine.filter(r => r.status === 'pending')
+      const terpakai = approved.reduce((sum, r) => sum + hitungHari(r.date_start, r.date_end), 0)
+      return { ...g, terpakai, pending: pending.length, sisa: MAX_CUTI - terpakai }
+    }).sort((a, b) => b.terpakai - a.terpakai)
+  }, [requests, gurus, isAdmin])
+
 
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden"
@@ -247,6 +259,87 @@ export default function CutiPage() {
                   <div className="text-3xl font-bold" style={{ color: c.color }}>{c.val}</div>
                 </div>
               ))}
+            </div>
+          )}
+
+          {/* Rekap per guru (admin view) */}
+          {isAdmin && (
+            <div className="fu mb-5 bg-white rounded-2xl border border-gray-100 overflow-hidden">
+              <button onClick={() => setShowRekap(v => !v)}
+                className="w-full flex items-center justify-between px-6 py-4 hover:bg-gray-50 transition-all">
+                <div className="flex items-center gap-2">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={purple} strokeWidth="2" strokeLinecap="round">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+                  </svg>
+                  <span className="font-semibold text-gray-900 text-sm">Rekap Cuti Per Guru — {new Date().getFullYear()}</span>
+                  <span className="text-xs px-2 py-0.5 rounded-full font-semibold"
+                    style={{ background: purple50, color: purple }}>{gurus.length} guru</span>
+                </div>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round"
+                  style={{ transform: showRekap ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>
+                  <path d="M6 9l6 6 6-6"/>
+                </svg>
+              </button>
+
+              {showRekap && (
+                <div className="border-t border-gray-100 overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr style={{ background: '#fafafa', borderBottom: '1px solid #f3f4f6' }}>
+                        {['Nama Guru', 'Jabatan', 'Terpakai', 'Sisa', 'Progress', 'Pending'].map(h => (
+                          <th key={h} className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider"
+                            style={{ fontFamily: 'DM Mono' }}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {rekapPerGuru.map((g, i) => {
+                        const pct = Math.round((g.terpakai / MAX_CUTI) * 100)
+                        const barColor = g.terpakai >= MAX_CUTI ? '#dc2626' : g.terpakai >= MAX_CUTI * 0.7 ? '#d97706' : '#16a34a'
+                        return (
+                          <tr key={g.id} className="border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-all"
+                            onClick={() => setFilterGuru(filterGuru === g.id ? '' : g.id)}
+                            style={{ cursor: 'pointer' }}>
+                            <td className="px-5 py-3">
+                              <div className="flex items-center gap-2.5">
+                                <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
+                                  style={{ background: purple }}>
+                                  {g.full_name?.[0]}
+                                </div>
+                                <span className="text-sm font-medium text-gray-900">{g.full_name}</span>
+                              </div>
+                            </td>
+                            <td className="px-5 py-3 text-xs text-gray-400">{g.jabatan || '—'}</td>
+                            <td className="px-5 py-3">
+                              <span className="font-bold text-sm" style={{ color: barColor }}>{g.terpakai}</span>
+                              <span className="text-xs text-gray-400"> / {MAX_CUTI} hari</span>
+                            </td>
+                            <td className="px-5 py-3">
+                              <span className="font-semibold text-sm" style={{ color: g.sisa <= 2 ? '#dc2626' : '#16a34a' }}>{g.sisa} hari</span>
+                            </td>
+                            <td className="px-5 py-3" style={{ minWidth: 120 }}>
+                              <div className="w-full h-1.5 rounded-full bg-gray-100 overflow-hidden">
+                                <div className="h-full rounded-full transition-all"
+                                  style={{ width: `${Math.min(pct, 100)}%`, background: barColor }}/>
+                              </div>
+                              <span className="text-xs text-gray-400 mt-0.5 block">{pct}%</span>
+                            </td>
+                            <td className="px-5 py-3">
+                              {g.pending > 0
+                                ? <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: '#fffbeb', color: '#d97706' }}>{g.pending} pending</span>
+                                : <span className="text-xs text-gray-300">—</span>}
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                  <div className="px-5 py-3 border-t border-gray-50">
+                    <p className="text-xs text-gray-400">Klik nama guru untuk filter pengajuan di bawah.</p>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

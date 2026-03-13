@@ -173,7 +173,7 @@ export default function DashboardPage() {
               {/* Greeting */}
               <div className="fu mb-6">
                 <h2 className="font-bold text-gray-900 text-2xl">
-                  Selamat datang, <span style={{ color: purple }}>{profile?.full_name?.split(' ')[0] || 'Admin'}</span> 👋
+                  Selamat datang, <span style={{ color: purple }}>{profile?.full_name?.split(' ')[0] || 'Admin'}</span>
                 </h2>
                 <p className="text-sm text-gray-400 mt-1">Berikut ringkasan aktivitas hari ini.</p>
               </div>
@@ -281,7 +281,12 @@ export default function DashboardPage() {
                         <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/>
                       </svg>
                     </div>
-                    <p className="text-sm font-semibold text-green-600">Semua sudah hadir! 🎉</p>
+                    <div className="flex items-center gap-2 text-green-600">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                        <path d="M20 6L9 17l-5-5"/>
+                      </svg>
+                      <p className="text-sm font-semibold">Semua sudah hadir!</p>
+                    </div>
                   </div>
                 ) : (
                   <div className="flex flex-wrap gap-2 max-h-36 overflow-y-auto">
