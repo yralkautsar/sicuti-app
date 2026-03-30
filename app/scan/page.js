@@ -142,7 +142,7 @@ export default function ScanPage() {
       .order('scanned_at', { ascending: false }).limit(1)
     const type = (existing?.length > 0 && existing[0].type === 'masuk') ? 'pulang' : 'masuk'
     const { error: ie } = await supabase
-      .from('attendance_students').insert({ student_id: student.id, type, date: today })
+      .from('attendance_students').insert({ student_id: student.id, type, date: today, scanned_at: new Date().toISOString() })
     if (ie) throw ie
     setStatus('success')
     setResult({ name: student.full_name, sub: student.kelas || '', type })
@@ -164,7 +164,7 @@ export default function ScanPage() {
       .order('scanned_at', { ascending: false }).limit(1)
     const type = (existing?.length > 0 && existing[0].type === 'masuk') ? 'pulang' : 'masuk'
     const { error: ie } = await supabase
-      .from('attendance_guru').insert({ profile_id: profile.id, type, date: today })
+      .from('attendance_guru').insert({ profile_id: profile.id, type, date: today, scanned_at: new Date().toISOString() })
     if (ie) throw ie
     setStatus('success')
     setResult({ name: profile.full_name, sub: profile.jabatan || 'Guru', type })
