@@ -29,7 +29,11 @@ export default function LoginPage() {
     })
     setForgotLoading(false)
     if (err) {
-      setError('Gagal kirim email. Pastikan email terdaftar.')
+      if (err.message?.toLowerCase().includes('rate limit') || err.message?.toLowerCase().includes('email rate')) {
+        setError('Terlalu banyak permintaan. Tunggu beberapa menit lalu coba lagi.')
+      } else {
+        setError('Gagal kirim email. Pastikan email terdaftar.')
+      }
     } else {
       setForgotSent(true)
     }
