@@ -326,7 +326,7 @@ export default function ProfilPage() {
                           riwayat.filter(r => r.status === 'Tidak Masuk' && !r.jamMasuk)
                         ).map((r, i) => {
                           const s = statusStyle(r.status)
-                          const tglFmt = new Date(r.tgl + 'T00:00:00').toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short' })
+                          const tglFmt = new Date(r.tgl + 'T08:00:00').toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short' })
                           return (
                             <tr key={i} className="border-b border-gray-50 last:border-0">
                               <td className="px-5 py-3 text-sm text-gray-700" style={{ fontFamily: 'DM Mono' }}>{tglFmt}</td>
