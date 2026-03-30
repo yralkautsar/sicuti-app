@@ -13,11 +13,29 @@ const BATAS_GURU  = '07:00'
 const BULAN = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember']
 
 function getWeekdaysInMonth(year, month) {
+  // Murid: Senin - Jumat
   const days = []
   const d = new Date(year, month, 1)
   while (d.getMonth() === month) {
     const dow = d.getDay()
     if (dow !== 0 && dow !== 6) {
+      const y = d.getFullYear()
+      const m = String(d.getMonth() + 1).padStart(2, '0')
+      const day = String(d.getDate()).padStart(2, '0')
+      days.push(`${y}-${m}-${day}`)
+    }
+    d.setDate(d.getDate() + 1)
+  }
+  return days
+}
+
+function getWorkdaysGuruInMonth(year, month) {
+  // Guru: Senin - Sabtu
+  const days = []
+  const d = new Date(year, month, 1)
+  while (d.getMonth() === month) {
+    const dow = d.getDay()
+    if (dow !== 0) { // exclude Minggu saja
       const y = d.getFullYear()
       const m = String(d.getMonth() + 1).padStart(2, '0')
       const day = String(d.getDate()).padStart(2, '0')
@@ -217,7 +235,7 @@ export default function LaporanPage() {
   }), [hariRowsGuru])
 
   const bulanRowsGuru = useMemo(() => {
-    const hariKerja = getWeekdaysInMonth(tahun, bulan)
+    const hariKerja = getWorkdaysGuruInMonth(tahun, bulan)
     return gurus.map(g => {
       const recs = bulanDataGuru.filter(r => r.profile_id === g.id)
       let hadir = 0, telat = 0, tidakMasuk = 0, totalMenit = 0

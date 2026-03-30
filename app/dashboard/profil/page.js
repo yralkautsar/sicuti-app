@@ -40,12 +40,13 @@ function fmtMenit(total) {
   return `${mnt} mnt`
 }
 
-function getWeekdaysInMonth(year, month) {
+function getWorkdaysGuruInMonth(year, month) {
+  // Guru: Senin - Sabtu
   const days = []
   const d = new Date(year, month, 1)
   while (d.getMonth() === month) {
     const dow = d.getDay()
-    if (dow !== 0 && dow !== 6) {
+    if (dow !== 0) {
       const y = d.getFullYear()
       const m = String(d.getMonth() + 1).padStart(2, '0')
       const day = String(d.getDate()).padStart(2, '0')
@@ -101,7 +102,7 @@ export default function ProfilPage() {
       .lte('date', end)
       .order('date', { ascending: true })
 
-    const hariKerja = getWeekdaysInMonth(tahun, bulan)
+    const hariKerja = getWorkdaysGuruInMonth(tahun, bulan)
     let hadir = 0, telat = 0, tidakMasuk = 0, totalMenit = 0
     const telatDetail = []
     const riwayatList = []
