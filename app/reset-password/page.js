@@ -19,18 +19,26 @@ export default function ResetPasswordPage() {
   const [showPass,    setShowPass]    = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
 
-  // Supabase kirim token via URL hash — perlu di-exchange dulu
   useEffect(() => {
-    const hash = window.location.hash
-    if (hash && hash.includes('type=recovery')) {
-      // Supabase JS v2 otomatis handle token dari hash
-      supabase.auth.onAuthStateChange((event) => {
-        if (event === 'PASSWORD_RECOVERY') {
-          setTokenReady(true)
-        }
+    // Supabase v2 otomatis parse token dari URL hash dan emit PASSWORD_RECOVERY
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setTokenReady(true)
+        setError('')
+      }
+    })
+
+    // Fallback: kalau setelah 4 detik tidak ada event, anggap token invalid
+    const timeout = setTimeout(() => {
+      setTokenReady(prev => {
+        if (!prev) setError('Link reset password tidak valid atau sudah kadaluarsa. Silakan minta link baru.')
+        return prev
       })
-    } else {
-      setError('Link reset password tidak valid atau sudah kadaluarsa. Silakan minta link baru.')
+    }, 4000)
+
+    return () => {
+      subscription.unsubscribe()
+      clearTimeout(timeout)
     }
   }, [])
 
