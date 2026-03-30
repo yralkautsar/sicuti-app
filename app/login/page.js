@@ -11,10 +11,29 @@ const SCHOOL     = 'TK Karakter Mutiara Bunda Bali'
 
 export default function LoginPage() {
   const router = useRouter()
-  const [email, setEmail]       = useState('')
-  const [password, setPassword] = useState('')
-  const [loading, setLoading]   = useState(false)
-  const [error, setError]       = useState('')
+  const [email, setEmail]           = useState('')
+  const [password, setPassword]     = useState('')
+  const [loading, setLoading]       = useState(false)
+  const [error, setError]           = useState('')
+  const [forgotMode, setForgotMode] = useState(false)
+  const [forgotSent, setForgotSent] = useState(false)
+  const [forgotLoading, setForgotLoading] = useState(false)
+
+  const handleForgotPassword = async (e) => {
+    e.preventDefault()
+    if (!email) { setError('Masukkan email kamu dulu.'); return }
+    setForgotLoading(true)
+    setError('')
+    const { error: err } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`
+    })
+    setForgotLoading(false)
+    if (err) {
+      setError('Gagal kirim email. Pastikan email terdaftar.')
+    } else {
+      setForgotSent(true)
+    }
+  }
 
   const handleLogin = async (e) => {
     e.preventDefault()
@@ -59,13 +78,13 @@ export default function LoginPage() {
       `}</style>
 
       {/* LEFT — branding panel */}
-      <div className="hidden lg:flex w-[17%] flex-col justify-between p-10"
+      <div className="hidden lg:flex w-[38%] flex-col justify-between p-10"
         style={{ background: purple }}>
 
         {/* Logo */}
         <div className="fade-up">
           <div className="flex items-center gap-3 mb-12">
-            <img src="/logoborder.png" alt="Logo Sekolah"
+            <img src="/logo.png" alt="Logo Sekolah"
               style={{ width: 40, height: 40, objectFit: 'contain' }} />
             <div>
               <div className="font-semibold text-white text-sm leading-tight">{SCHOOL}</div>
@@ -178,6 +197,15 @@ export default function LoginPage() {
               />
             </div>
 
+          {/* Forgot password link */}
+          <div className="text-right mt-1 mb-1">
+            <button type="button" onClick={() => { setForgotMode(true); setError(''); setForgotSent(false) }}
+              className="text-xs transition-all"
+              style={{ color: purple }}>
+              Lupa password?
+            </button>
+          </div>
+
             {/* Error */}
             {error && (
               <div className="flex items-center gap-3 px-4 py-3 rounded-xl fade-up"
@@ -224,9 +252,8 @@ export default function LoginPage() {
 
           {/* Footer note */}
           <p className="text-center text-xs text-gray-400 mt-8">
-            Lupa password? Hubungi{' '}
-            <span className="font-medium" style={{ color: purple }}>admin sekolah</span>
-            {' '}untuk reset akun.
+            Butuh bantuan? Hubungi{' '}
+            <span className="font-medium" style={{ color: purple }}>admin sekolah</span>.
           </p>
 
           {/* Divider */}
@@ -259,6 +286,68 @@ export default function LoginPage() {
           </p>
         </div>
       </div>
+      {/* Forgot Password Modal */}
+      {forgotMode && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)' }}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-8">
+            {forgotSent ? (
+              <div className="text-center">
+                <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4"
+                  style={{ background: '#f0fdf4' }}>
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round">
+                    <path d="M20 6 9 17l-5-5"/>
+                  </svg>
+                </div>
+                <p className="font-bold text-gray-900 mb-2">Email terkirim!</p>
+                <p className="text-sm text-gray-400 mb-6">
+                  Cek inbox <span className="font-medium text-gray-700">{email}</span> dan klik link untuk reset password.
+                </p>
+                <button onClick={() => { setForgotMode(false); setForgotSent(false) }}
+                  className="w-full py-2.5 rounded-xl text-sm font-semibold text-white"
+                  style={{ background: purple }}>
+                  Kembali ke Login
+                </button>
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="font-bold text-gray-900 text-lg">Reset Password</h3>
+                  <button onClick={() => { setForgotMode(false); setError('') }}
+                    className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-400">
+                    ✕
+                  </button>
+                </div>
+                <p className="text-sm text-gray-400 mb-5">
+                  Masukkan email akun kamu. Kami akan kirim link untuk membuat password baru.
+                </p>
+                <form onSubmit={handleForgotPassword} className="flex flex-col gap-4">
+                  <input
+                    type="email"
+                    required
+                    placeholder="email@sekolah.com"
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    className="w-full px-4 py-3 text-sm rounded-xl transition-all"
+                    style={{
+                      border: `1.5px solid ${email ? purple : '#e5e7eb'}`,
+                      background: email ? purple50 : 'white',
+                    }}
+                  />
+                  {error && (
+                    <p className="text-xs text-red-500">{error}</p>
+                  )}
+                  <button type="submit" disabled={forgotLoading}
+                    className="w-full py-3 rounded-xl text-sm font-semibold text-white transition-all"
+                    style={{ background: forgotLoading ? '#a78bfa' : purple }}>
+                    {forgotLoading ? 'Mengirim...' : 'Kirim Link Reset'}
+                  </button>
+                </form>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
