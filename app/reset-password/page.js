@@ -19,40 +19,46 @@ export default function ResetPasswordPage() {
   const [showPass,    setShowPass]    = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
 
+  const [checking, setChecking] = useState(true)
+
   useEffect(() => {
     let resolved = false
 
-    // Cek apakah URL punya token recovery
     const hash = window.location.hash
-    const hasRecoveryToken = hash.includes('type=recovery') || hash.includes('access_token')
+    const hasToken = hash.includes('access_token') || hash.includes('type=recovery')
 
-    if (!hasRecoveryToken) {
+    if (!hasToken) {
+      setChecking(false)
       setError('Link reset password tidak valid atau sudah kadaluarsa. Silakan minta link baru.')
       return
     }
 
-    // Listen for PASSWORD_RECOVERY event
+    // Listen for PASSWORD_RECOVERY atau SIGNED_IN event
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('Auth event:', event, 'Session:', !!session)
       if (event === 'PASSWORD_RECOVERY' || (event === 'SIGNED_IN' && session)) {
         resolved = true
         setTokenReady(true)
+        setChecking(false)
         setError('')
       }
     })
 
-    // Fallback: cek session langsung setelah 2 detik
+    // Fallback setelah 6 detik
     const timeout = setTimeout(async () => {
       if (!resolved) {
         const { data: { session } } = await supabase.auth.getSession()
         if (session) {
           resolved = true
           setTokenReady(true)
+          setChecking(false)
           setError('')
         } else {
+          setChecking(false)
           setError('Link reset password tidak valid atau sudah kadaluarsa. Silakan minta link baru.')
         }
       }
-    }, 2000)
+    }, 6000)
 
     return () => {
       subscription.unsubscribe()
@@ -119,7 +125,14 @@ export default function ResetPasswordPage() {
           </div>
 
           <div className="px-8 py-6">
-            {success ? (
+            {checking ? (
+            /* Checking token state */
+            <div className="text-center py-8">
+              <div className="w-10 h-10 rounded-full border-2 border-t-transparent animate-spin mx-auto mb-4"
+                style={{ borderColor: `${purple100} ${purple100} ${purple100} ${purple}` }}/>
+              <p className="text-sm text-gray-400">Memverifikasi link...</p>
+            </div>
+          ) : success ? (
               /* Success state */
               <div className="text-center py-4">
                 <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4"
