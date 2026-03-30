@@ -20,21 +20,39 @@ export default function ResetPasswordPage() {
   const [showConfirm, setShowConfirm] = useState(false)
 
   useEffect(() => {
-    // Supabase v2 otomatis parse token dari URL hash dan emit PASSWORD_RECOVERY
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'PASSWORD_RECOVERY') {
+    let resolved = false
+
+    // Cek apakah URL punya token recovery
+    const hash = window.location.hash
+    const hasRecoveryToken = hash.includes('type=recovery') || hash.includes('access_token')
+
+    if (!hasRecoveryToken) {
+      setError('Link reset password tidak valid atau sudah kadaluarsa. Silakan minta link baru.')
+      return
+    }
+
+    // Listen for PASSWORD_RECOVERY event
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY' || (event === 'SIGNED_IN' && session)) {
+        resolved = true
         setTokenReady(true)
         setError('')
       }
     })
 
-    // Fallback: kalau setelah 4 detik tidak ada event, anggap token invalid
-    const timeout = setTimeout(() => {
-      setTokenReady(prev => {
-        if (!prev) setError('Link reset password tidak valid atau sudah kadaluarsa. Silakan minta link baru.')
-        return prev
-      })
-    }, 4000)
+    // Fallback: cek session langsung setelah 2 detik
+    const timeout = setTimeout(async () => {
+      if (!resolved) {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session) {
+          resolved = true
+          setTokenReady(true)
+          setError('')
+        } else {
+          setError('Link reset password tidak valid atau sudah kadaluarsa. Silakan minta link baru.')
+        }
+      }
+    }, 2000)
 
     return () => {
       subscription.unsubscribe()
