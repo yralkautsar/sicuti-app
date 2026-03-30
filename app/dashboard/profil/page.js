@@ -290,7 +290,7 @@ export default function ProfilPage() {
                     <div className="text-sm font-semibold text-gray-700 mb-3">Detail Hari Terlambat</div>
                     <div className="flex flex-wrap gap-2">
                       {rekap.telatDetail.map((t, i) => {
-                        const tglFmt = new Date(t.tgl).toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short' })
+                        const tglFmt = new Date(t.tgl + 'T00:00:00').toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short' })
                         return (
                           <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium"
                             style={{ background: '#fee2e2', color: '#dc2626' }}>
@@ -326,7 +326,7 @@ export default function ProfilPage() {
                           riwayat.filter(r => r.status === 'Tidak Masuk' && !r.jamMasuk)
                         ).map((r, i) => {
                           const s = statusStyle(r.status)
-                          const tglFmt = new Date(r.tgl).toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short' })
+                          const tglFmt = new Date(r.tgl + 'T00:00:00').toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short' })
                           return (
                             <tr key={i} className="border-b border-gray-50 last:border-0">
                               <td className="px-5 py-3 text-sm text-gray-700" style={{ fontFamily: 'DM Mono' }}>{tglFmt}</td>
