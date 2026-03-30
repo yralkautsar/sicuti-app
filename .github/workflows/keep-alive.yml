@@ -1,0 +1,32 @@
+name: Keep Supabase Active
+
+on:
+  schedule:
+    # Setiap tanggal 1, 6, 11, 16, 21, 26 jam 08.00 UTC (15.00 WITA)
+    - cron: "0 8 1,6,11,16,21,26 * *"
+  workflow_dispatch:
+
+jobs:
+  ping-production:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase Production
+        run: |
+          curl -s \
+            -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}" \
+            "${{ secrets.SUPABASE_URL }}/rest/v1/classes?select=id&limit=1" \
+            -o /dev/null -w "Production — Status: %{http_code}\n"
+          echo "Production ping selesai — $(date)"
+
+  ping-staging:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase Staging
+        run: |
+          curl -s \
+            -H "apikey: ${{ secrets.STAGING_SUPABASE_ANON_KEY }}" \
+            -H "Authorization: Bearer ${{ secrets.STAGING_SUPABASE_ANON_KEY }}" \
+            "${{ secrets.STAGING_SUPABASE_URL }}/rest/v1/classes?select=id&limit=1" \
+            -o /dev/null -w "Staging — Status: %{http_code}\n"
+          echo "Staging ping selesai — $(date)"
