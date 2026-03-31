@@ -158,7 +158,8 @@ export default function LaporanPage() {
   const fetchBulanan = async () => {
     setLoading(true)
     const start = `${tahun}-${String(bulan + 1).padStart(2, '0')}-01`
-    const end   = new Date(tahun, bulan + 1, 0).toISOString().slice(0, 10)
+    const lastDay = new Date(tahun, bulan + 1, 0).getDate()
+    const end = `${tahun}-${String(bulan + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`
     if (subjectTab === 'murid') {
       const { data } = await supabase.from('attendance_students').select('student_id,type,scanned_at,date').gte('date', start).lte('date', end)
       setBulanDataMurid(data || [])

@@ -112,8 +112,9 @@ export default function ProfilPage() {
   const fetchRekap = async () => {
     if (!profile) return
     setRekapLoading(true)
-    const start = `${tahun}-${String(bulan + 1).padStart(2, '0')}-01`
-    const end   = new Date(tahun, bulan + 1, 0).toISOString().slice(0, 10)
+    const start   = `${tahun}-${String(bulan + 1).padStart(2, '0')}-01`
+    const lastDay = new Date(tahun, bulan + 1, 0).getDate()
+    const end     = `${tahun}-${String(bulan + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`
 
     const { data: recs } = await supabase
       .from('attendance_guru')
