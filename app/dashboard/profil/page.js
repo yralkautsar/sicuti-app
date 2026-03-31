@@ -40,6 +40,13 @@ function fmtMenit(total) {
   return `${mnt} mnt`
 }
 
+function hitungHariCuti(start, end) {
+  if (!start || !end) return 1
+  const s = new Date(start + 'T00:00:00')
+  const e = new Date(end + 'T00:00:00')
+  return Math.max(1, Math.round((e - s) / (1000 * 60 * 60 * 24)) + 1)
+}
+
 function getWorkdaysGuruInMonth(year, month) {
   // Guru: Senin - Sabtu
   const days = []
@@ -73,6 +80,10 @@ export default function ProfilPage() {
   // Riwayat absensi harian bulan ini
   const [riwayat, setRiwayat]     = useState([])
 
+  // Ringkasan cuti
+  const [cutiList, setCutiList]   = useState([])
+  const [cutiLoading, setCutiLoading] = useState(false)
+
   useEffect(() => {
     const init = async () => {
       const { data: { user } } = await supabase.auth.getUser()
@@ -80,6 +91,16 @@ export default function ProfilPage() {
       const { data: prof } = await supabase.from('profiles').select('*').eq('id', user.id).single()
       setProfile(prof)
       setLoading(false)
+      // Fetch cuti
+      setCutiLoading(true)
+      const { data: cuti } = await supabase
+        .from('leave_requests')
+        .select('*')
+        .eq('profile_id', user.id)
+        .eq('status', 'approved')
+        .order('date_start', { ascending: false })
+      setCutiList(cuti || [])
+      setCutiLoading(false)
     }
     init()
   }, [])
@@ -351,6 +372,100 @@ export default function ProfilPage() {
                 </div>
               </>
             )}
+
+            {/* ── RINGKASAN CUTI ── */}
+            <div className="fu bg-white rounded-2xl border border-gray-100 overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-50 flex items-center justify-between">
+                <h3 className="font-semibold text-gray-900">Ringkasan Cuti</h3>
+                {cutiLoading && (
+                  <div className="w-4 h-4 rounded-full border-2 border-t-transparent animate-spin"
+                    style={{ borderColor: `${purple100} ${purple100} ${purple100} ${purple}` }}/>
+                )}
+              </div>
+
+              {/* Kuota summary */}
+              <div className="px-6 py-5 grid grid-cols-3 gap-4 border-b border-gray-50">
+                {(() => {
+                  const kuota    = profile?.kuota_cuti ?? 12
+                  const terpakai = cutiList.reduce((s, c) => s + hitungHariCuti(c.date_start, c.date_end), 0)
+                  const sisa     = Math.max(0, kuota - terpakai)
+                  return [
+                    { label: 'Total Kuota',  val: kuota,    color: purple,    bg: purple50  },
+                    { label: 'Terpakai',     val: terpakai, color: '#d97706', bg: '#fffbeb' },
+                    { label: 'Sisa',         val: sisa,     color: sisa > 0 ? '#16a34a' : '#dc2626', bg: sisa > 0 ? '#f0fdf4' : '#fef2f2' },
+                  ].map(({ label, val, color, bg }) => (
+                    <div key={label} className="rounded-xl p-4 text-center" style={{ background: bg }}>
+                      <div className="text-2xl font-bold mb-0.5" style={{ color }}>{val}</div>
+                      <div className="text-xs font-semibold uppercase tracking-wider" style={{ color, fontFamily: 'DM Mono' }}>{label}</div>
+                      <div className="text-xs text-gray-400 mt-0.5">hari</div>
+                    </div>
+                  ))
+                })()}
+              </div>
+
+              {/* Progress bar */}
+              {(() => {
+                const kuota    = profile?.kuota_cuti ?? 12
+                const terpakai = cutiList.reduce((s, c) => s + hitungHariCuti(c.date_start, c.date_end), 0)
+                const pct      = kuota > 0 ? Math.min(100, Math.round((terpakai / kuota) * 100)) : 0
+                return (
+                  <div className="px-6 py-3 border-b border-gray-50">
+                    <div className="flex justify-between text-xs text-gray-400 mb-1.5">
+                      <span>Penggunaan kuota</span>
+                      <span style={{ fontFamily: 'DM Mono' }}>{pct}%</span>
+                    </div>
+                    <div className="h-2 rounded-full overflow-hidden" style={{ background: '#f3f4f6' }}>
+                      <div className="h-2 rounded-full transition-all"
+                        style={{ width: `${pct}%`, background: pct >= 100 ? '#dc2626' : pct >= 70 ? '#f59e0b' : '#16a34a' }}/>
+                    </div>
+                  </div>
+                )
+              })()}
+
+              {/* Tabel list cuti */}
+              {cutiList.length === 0 ? (
+                <div className="px-6 py-8 text-center text-sm text-gray-400">
+                  Belum ada cuti yang disetujui
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr style={{ background: '#fafafa', borderBottom: '1px solid #f3f4f6' }}>
+                        {['Tanggal', 'Durasi', 'Alasan'].map(h => (
+                          <th key={h} className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider"
+                            style={{ fontFamily: 'DM Mono' }}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {cutiList.map((c, i) => {
+                        const hari   = hitungHariCuti(c.date_start, c.date_end)
+                        const tglStart = new Date(c.date_start + 'T00:00:00').toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+                        const tglEnd   = c.date_end !== c.date_start
+                          ? new Date(c.date_end + 'T00:00:00').toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+                          : null
+                        return (
+                          <tr key={i} className="border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors">
+                            <td className="px-5 py-3 text-sm text-gray-700" style={{ fontFamily: 'DM Mono' }}>
+                              {tglStart}{tglEnd ? ` — ${tglEnd}` : ''}
+                            </td>
+                            <td className="px-5 py-3">
+                              <span className="text-xs font-semibold px-2.5 py-1 rounded-full"
+                                style={{ background: purple50, color: purple }}>
+                                {hari} hari
+                              </span>
+                            </td>
+                            <td className="px-5 py-3 text-sm text-gray-600">{c.reason || '—'}</td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
           </div>
         </div>
       </main>

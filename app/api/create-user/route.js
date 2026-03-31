@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server'
 
 export async function POST(request) {
   try {
-    const { email, password, full_name, nip, jabatan, no_hp, role } = await request.json()
+    const { email, password, full_name, nip, jabatan, no_hp, role, kuota_cuti } = await request.json()
 
     // Validate
     if (!email || !password || !full_name) {
@@ -40,11 +40,12 @@ export async function POST(request) {
       .insert({
         id: userId,
         full_name,
-        nip: nip || null,
-        jabatan: jabatan || null,
-        no_hp: no_hp || null,
-        role: role || 'guru',
+        nip:        nip || null,
+        jabatan:    jabatan || null,
+        no_hp:      no_hp || null,
+        role:       role || 'guru',
         qr_code,
+        kuota_cuti: Number(kuota_cuti) || 12,
       })
 
     if (profileError) {

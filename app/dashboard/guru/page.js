@@ -11,7 +11,7 @@ const purple100  = '#ede9fe'
 const SCHOOL     = 'TK Karakter Mutiara Bunda Bali'
 
 
-const EMPTY_FORM = { full_name: '', email: '', password: '', nip: '', jabatan: '', no_hp: '', role: 'guru' }
+const EMPTY_FORM = { full_name: '', email: '', password: '', nip: '', jabatan: '', no_hp: '', role: 'guru', kuota_cuti: 12 }
 
 export default function GuruPage() {
   const router = useRouter()
@@ -108,11 +108,12 @@ export default function GuruPage() {
         const { error } = await supabase
           .from('profiles')
           .update({
-            full_name: form.full_name,
-            nip:       form.nip || null,
-            jabatan:   form.jabatan || null,
-            no_hp:     form.no_hp || null,
-            role:      form.role || 'guru',
+            full_name:   form.full_name,
+            nip:         form.nip || null,
+            jabatan:     form.jabatan || null,
+            no_hp:       form.no_hp || null,
+            role:        form.role || 'guru',
+            kuota_cuti:  Number(form.kuota_cuti) || 12,
           })
           .eq('id', editGuru.id)
         if (error) throw error
@@ -125,13 +126,14 @@ export default function GuruPage() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            email:     form.email,
-            password:  form.password,
-            full_name: form.full_name,
-            nip:       form.nip || null,
-            jabatan:   form.jabatan || null,
-            no_hp:     form.no_hp || null,
-            role:      form.role || 'guru',
+            email:      form.email,
+            password:   form.password,
+            full_name:  form.full_name,
+            nip:        form.nip || null,
+            jabatan:    form.jabatan || null,
+            no_hp:      form.no_hp || null,
+            role:       form.role || 'guru',
+            kuota_cuti: Number(form.kuota_cuti) || 12,
           }),
         })
         const result = await res.json()
@@ -150,7 +152,7 @@ export default function GuruPage() {
 
   const openEdit = (guru) => {
     setEditGuru(guru)
-    setForm({ full_name: guru.full_name, nip: guru.nip || '', jabatan: guru.jabatan || '', no_hp: guru.no_hp || '' })
+    setForm({ full_name: guru.full_name, nip: guru.nip || '', jabatan: guru.jabatan || '', no_hp: guru.no_hp || '', role: guru.role || 'guru', kuota_cuti: guru.kuota_cuti ?? 12 })
     setShowModal(true)
   }
 
@@ -393,6 +395,18 @@ export default function GuruPage() {
                   <option value="guru">Guru — akses terbatas</option>
                   <option value="admin">Admin — akses penuh</option>
                 </select>
+              </div>
+
+              {/* Kuota Cuti */}
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-widest text-gray-400 mb-1.5" style={{ fontFamily: 'DM Mono' }}>
+                  Kuota Cuti <span className="text-gray-300">(hari/tahun)</span>
+                </label>
+                <input type="number" min="0" max="365" value={form.kuota_cuti}
+                  onChange={e => setForm(p => ({ ...p, kuota_cuti: e.target.value }))}
+                  className="w-full px-4 py-3 text-sm border rounded-xl transition-all"
+                  style={{ border: `1.5px solid ${purple}`, background: purple50, color: '#111' }}
+                />
               </div>
 
               {/* Email + Password — hanya saat tambah baru */}
