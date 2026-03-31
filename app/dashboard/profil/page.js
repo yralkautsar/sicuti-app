@@ -322,9 +322,7 @@ export default function ProfilPage() {
                         </tr>
                       </thead>
                       <tbody>
-                        {riwayat.filter(r => r.status !== 'Tidak Masuk' || r.jamMasuk).concat(
-                          riwayat.filter(r => r.status === 'Tidak Masuk' && !r.jamMasuk)
-                        ).map((r, i) => {
+                        {riwayat.map((r, i) => {
                           const s = statusStyle(r.status)
                           const tglFmt = new Date(r.tgl + 'T00:00:00').toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short' })
                           return (
