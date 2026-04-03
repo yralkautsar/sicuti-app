@@ -17,19 +17,74 @@ const TYPE_CONFIG = {
   kegiatan:       { label: 'Kegiatan',        color: '#0891b2', bg: '#ecfeff', border: '#a5f3fc' },
 }
 
+const LIBUR_FALLBACK = {
+  2025: [
+    { tanggal: '2025-01-01', judul: 'Tahun Baru Masehi' },
+    { tanggal: '2025-01-27', judul: 'Isra Mikraj Nabi Muhammad SAW' },
+    { tanggal: '2025-01-29', judul: 'Tahun Baru Imlek' },
+    { tanggal: '2025-03-29', judul: 'Hari Suci Nyepi' },
+    { tanggal: '2025-03-31', judul: 'Idul Fitri 1446 H' },
+    { tanggal: '2025-04-01', judul: 'Idul Fitri 1446 H' },
+    { tanggal: '2025-04-18', judul: 'Wafat Yesus Kristus' },
+    { tanggal: '2025-04-20', judul: 'Paskah' },
+    { tanggal: '2025-05-01', judul: 'Hari Buruh Internasional' },
+    { tanggal: '2025-05-12', judul: 'Hari Raya Waisak' },
+    { tanggal: '2025-05-29', judul: 'Kenaikan Yesus Kristus' },
+    { tanggal: '2025-06-01', judul: 'Hari Lahir Pancasila' },
+    { tanggal: '2025-06-06', judul: 'Idul Adha 1446 H' },
+    { tanggal: '2025-06-27', judul: 'Tahun Baru Islam 1447 H' },
+    { tanggal: '2025-08-17', judul: 'Hari Kemerdekaan RI' },
+    { tanggal: '2025-09-05', judul: 'Maulid Nabi Muhammad SAW' },
+    { tanggal: '2025-12-25', judul: 'Hari Raya Natal' },
+  ],
+  2026: [
+    { tanggal: '2026-01-01', judul: 'Tahun Baru Masehi' },
+    { tanggal: '2026-01-16', judul: 'Isra Mikraj Nabi Muhammad SAW' },
+    { tanggal: '2026-02-17', judul: 'Tahun Baru Imlek' },
+    { tanggal: '2026-03-19', judul: 'Hari Suci Nyepi' },
+    { tanggal: '2026-03-21', judul: 'Idul Fitri 1447 H' },
+    { tanggal: '2026-03-22', judul: 'Idul Fitri 1447 H' },
+    { tanggal: '2026-04-03', judul: 'Wafat Yesus Kristus' },
+    { tanggal: '2026-04-05', judul: 'Paskah' },
+    { tanggal: '2026-05-01', judul: 'Hari Buruh Internasional' },
+    { tanggal: '2026-05-14', judul: 'Kenaikan Yesus Kristus' },
+    { tanggal: '2026-05-27', judul: 'Idul Adha 1447 H' },
+    { tanggal: '2026-05-31', judul: 'Hari Raya Waisak' },
+    { tanggal: '2026-06-01', judul: 'Hari Lahir Pancasila' },
+    { tanggal: '2026-06-17', judul: 'Tahun Baru Islam 1448 H' },
+    { tanggal: '2026-08-17', judul: 'Hari Kemerdekaan RI' },
+    { tanggal: '2026-08-25', judul: 'Maulid Nabi Muhammad SAW' },
+    { tanggal: '2026-12-25', judul: 'Hari Raya Natal' },
+  ]
+}
+
 async function fetchLiburNasional(year) {
   try {
-    const res = await fetch(`https://dayoffapi.vercel.app/api?year=${year}`)
-    if (!res.ok) return []
+    const res = await fetch(`https://api-hari-libur.vercel.app/api?year=${year}`, { cache: 'no-store' })
+    if (!res.ok) throw new Error('API error')
     const data = await res.json()
-    return data.map(d => ({
-      id: `nasional-${d.tanggal}`,
-      tanggal: d.tanggal,
-      judul: d.keterangan,
-      type: 'libur_nasional',
-      _source: 'api'
+    if (!Array.isArray(data) && data?.data) {
+      return data.data.map(d => ({
+        id: `nasional-${d.date}`, tanggal: d.date, judul: d.description,
+        type: 'libur_nasional', _source: 'api'
+      }))
+    }
+    if (Array.isArray(data)) {
+      return data.map(d => ({
+        id: `nasional-${d.date || d.tanggal}`,
+        tanggal: d.date || d.tanggal,
+        judul: d.description || d.keterangan,
+        type: 'libur_nasional', _source: 'api'
+      }))
+    }
+    throw new Error('Unknown format')
+  } catch {
+    const fallback = LIBUR_FALLBACK[year] || []
+    return fallback.map(d => ({
+      id: `nasional-${d.tanggal}`, tanggal: d.tanggal, judul: d.judul,
+      type: 'libur_nasional', _source: 'fallback'
     }))
-  } catch { return [] }
+  }
 }
 
 export default function KalendarPublikPage() {
