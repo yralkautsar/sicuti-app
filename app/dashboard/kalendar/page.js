@@ -57,24 +57,6 @@ export default function KalendarPage() {
   const [formError, setFormError] = useState('')
   const [selectedDay, setSelectedDay] = useState(null)
 
-  useEffect(() => {
-    const init = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { router.push('/login'); return }
-      const { data: prof } = await supabase.from('profiles').select('*').eq('id', user.id).single()
-      setProfile(prof)
-      setIsAdmin(prof?.role === 'admin' || prof?.jabatan === 'Kepala Sekolah')
-      setLoading(false)
-    }
-    init()
-  }, [])
-
-  useEffect(() => {
-    fetchEvents()
-    fetchLibNas()
-    fetchCutiGuru()
-  }, [bulan, tahun])
-
   const fetchEvents = async () => {
     const start = `${tahun}-${String(bulan + 1).padStart(2, '0')}-01`
     const lastDay = new Date(tahun, bulan + 1, 0).getDate()
@@ -108,6 +90,24 @@ export default function KalendarPage() {
       .gte('date_end', start)
     setCutiGuru(data || [])
   }
+
+  useEffect(() => {
+    const init = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { router.push('/login'); return }
+      const { data: prof } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+      setProfile(prof)
+      setIsAdmin(prof?.role === 'admin' || prof?.jabatan === 'Kepala Sekolah')
+      setLoading(false)
+    }
+    init()
+  }, [])
+
+  useEffect(() => {
+    fetchEvents()
+    fetchLibNas()
+    fetchCutiGuru()
+  }, [bulan, tahun])
 
   // Gabung semua events per tanggal
   const allEvents = useMemo(() => {
