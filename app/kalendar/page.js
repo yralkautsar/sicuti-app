@@ -41,10 +41,6 @@ export default function KalendarPublikPage() {
   const [loading, setLoading] = useState(true)
   const [selectedDay, setSelectedDay] = useState(null)
 
-  useEffect(() => {
-    fetchAll()
-  }, [bulan, tahun])
-
   const fetchAll = async () => {
     setLoading(true)
     const start   = `${tahun}-${String(bulan + 1).padStart(2, '0')}-01`
@@ -64,6 +60,10 @@ export default function KalendarPublikPage() {
     setLibNas(libData.filter(d => d.tanggal >= start && d.tanggal <= end))
     setLoading(false)
   }
+
+  useEffect(() => {
+    fetchAll()
+  }, [bulan, tahun])
 
   const allEvents = useMemo(() => {
     const map = {}
