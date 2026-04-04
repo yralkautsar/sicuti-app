@@ -154,21 +154,6 @@ export default function KelasPage() {
     await fetchClasses()
   }
 
-
-  const tahunanList = [...new Set(classes.map(c => c.tahun_ajaran))].sort().reverse()
-
-  // Group by nama_kelas
-  const grouped = classes.reduce((acc, k) => {
-    if (!acc[k.nama_kelas]) acc[k.nama_kelas] = []
-    acc[k.nama_kelas].push(k)
-    return acc
-  }, {})
-
-  // Sort angkatan dalam tiap grup by tahun_ajaran desc
-  Object.values(grouped).forEach(arr =>
-    arr.sort((a, b) => (b.tahun_ajaran > a.tahun_ajaran ? 1 : -1))
-  )
-
   // Count murid per kelas
   const [muridCounts, setMuridCounts] = useState({})
   useEffect(() => {
@@ -190,7 +175,6 @@ export default function KelasPage() {
   // Accordion — semua grup expanded by default
   const [expanded, setExpanded]         = useState({})
   const toggleExpand = (nama) => setExpanded(p => ({ ...p, [nama]: !p[nama] }))
-  // Default expand semua saat classes pertama kali load
   useEffect(() => {
     if (classes.length > 0) {
       const init = {}
@@ -207,9 +191,22 @@ export default function KelasPage() {
     return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`
   })
   const [absensiMurids, setAbsensiMurids] = useState([])
-  const [absensiData,   setAbsensiData]   = useState({}) // { student_id: { status, id } }
+  const [absensiData,   setAbsensiData]   = useState({})
   const [absensiLoading, setAbsensiLoading] = useState(false)
   const [absensiSaving,  setAbsensiSaving]  = useState(false)
+
+  // Computed values — setelah semua useState
+  const tahunanList = [...new Set(classes.map(c => c.tahun_ajaran))].sort().reverse()
+
+  const grouped = classes.reduce((acc, k) => {
+    if (!acc[k.nama_kelas]) acc[k.nama_kelas] = []
+    acc[k.nama_kelas].push(k)
+    return acc
+  }, {})
+
+  Object.values(grouped).forEach(arr =>
+    arr.sort((a, b) => (b.tahun_ajaran > a.tahun_ajaran ? 1 : -1))
+  )
 
   const STATUS_OPTIONS = [
     { value: 'hadir',  label: 'Hadir',  color: '#16a34a', bg: '#f0fdf4' },
@@ -515,6 +512,7 @@ export default function KelasPage() {
                                 </svg>
                                 Absensi
                               </button>
+                              <button onClick={() => openDetail(kelas)}
                                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
                                 style={{ background: purple50, color: purple }}>
                                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
