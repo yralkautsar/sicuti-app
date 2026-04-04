@@ -19,7 +19,7 @@ const TYPE_CONFIG = {
   cuti_guru:      { label: 'Cuti Guru',       color: purple,    bg: purple50,  border: purple100 },
 }
 
-const EMPTY_FORM = { judul: '', deskripsi: '', tanggal: '', type: 'kegiatan', tampil_publik: true }
+const EMPTY_FORM = { judul: '', deskripsi: '', tanggal: '', type: 'kegiatan', tampil_publik: true, waktu: '', tempat: '' }
 
 // Data fallback hardcoded 2025-2026 (SKB 3 Menteri)
 const LIBUR_FALLBACK = {
@@ -217,6 +217,8 @@ export default function KalendarPage() {
           tanggal: form.tanggal,
           type: form.type,
           tampil_publik: form.tampil_publik,
+          waktu: form.waktu || null,
+          tempat: form.tempat || null,
         }).eq('id', editEvent.id)
         if (error) throw error
       } else {
@@ -226,6 +228,8 @@ export default function KalendarPage() {
           tanggal: form.tanggal,
           type: form.type,
           tampil_publik: form.tampil_publik,
+          waktu: form.waktu || null,
+          tempat: form.tempat || null,
           created_by: profile?.id,
         })
         if (error) throw error
@@ -255,7 +259,7 @@ export default function KalendarPage() {
 
   const openEdit = (ev) => {
     setEditEvent(ev)
-    setForm({ judul: ev.judul, deskripsi: ev.deskripsi || '', tanggal: ev.tanggal, type: ev.type, tampil_publik: ev.tampil_publik })
+    setForm({ judul: ev.judul, deskripsi: ev.deskripsi || '', tanggal: ev.tanggal, type: ev.type, tampil_publik: ev.tampil_publik, waktu: ev.waktu || '', tempat: ev.tempat || '' })
     setShowModal(true)
     setSelectedDay(null)
   }
@@ -459,6 +463,26 @@ export default function KalendarPage() {
                             <div>
                               <div className="text-sm font-semibold" style={{ color: cfg.color }}>{ev.judul}</div>
                               {ev.deskripsi && <div className="text-xs text-gray-500 mt-0.5">{ev.deskripsi}</div>}
+                              {(ev.waktu || ev.tempat) && (
+                                <div className="flex items-center gap-3 mt-1 flex-wrap">
+                                  {ev.waktu && (
+                                    <span className="flex items-center gap-1 text-xs text-gray-500">
+                                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                                        <circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/>
+                                      </svg>
+                                      {ev.waktu}
+                                    </span>
+                                  )}
+                                  {ev.tempat && (
+                                    <span className="flex items-center gap-1 text-xs text-gray-500">
+                                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+                                      </svg>
+                                      {ev.tempat}
+                                    </span>
+                                  )}
+                                </div>
+                              )}
                               <div className="text-xs mt-1" style={{ color: cfg.color, fontFamily: 'DM Mono', opacity: 0.7 }}>{cfg.label}</div>
                             </div>
                           </div>
@@ -554,6 +578,30 @@ export default function KalendarPage() {
                   style={{ border: `1.5px solid ${form.deskripsi ? purple : '#e5e7eb'}`, background: form.deskripsi ? purple50 : 'white', color: '#111' }}
                 />
               </div>
+
+              {/* Waktu & Tempat — hanya untuk kegiatan */}
+              {form.type === 'kegiatan' && (
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold uppercase tracking-widest text-gray-400 mb-1.5"
+                      style={{ fontFamily: 'DM Mono' }}>Waktu (opsional)</label>
+                    <input type="text" placeholder="contoh: 08.00 WITA"
+                      value={form.waktu} onChange={e => setForm(p => ({ ...p, waktu: e.target.value }))}
+                      className="w-full px-4 py-3 text-sm border rounded-xl transition-all"
+                      style={{ border: `1.5px solid ${form.waktu ? purple : '#e5e7eb'}`, background: form.waktu ? purple50 : 'white', color: '#111' }}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold uppercase tracking-widest text-gray-400 mb-1.5"
+                      style={{ fontFamily: 'DM Mono' }}>Tempat (opsional)</label>
+                    <input type="text" placeholder="contoh: Aula Sekolah"
+                      value={form.tempat} onChange={e => setForm(p => ({ ...p, tempat: e.target.value }))}
+                      className="w-full px-4 py-3 text-sm border rounded-xl transition-all"
+                      style={{ border: `1.5px solid ${form.tempat ? purple : '#e5e7eb'}`, background: form.tempat ? purple50 : 'white', color: '#111' }}
+                    />
+                  </div>
+                </div>
+              )}
 
               {/* Tampil publik */}
               <div className="flex items-center justify-between p-4 rounded-xl" style={{ background: '#f9fafb' }}>
