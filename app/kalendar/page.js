@@ -292,6 +292,26 @@ export default function KalendarPublikPage() {
                       <div key={i} className="p-3 rounded-xl" style={{ background: cfg.bg, border: `1px solid ${cfg.border}` }}>
                         <div className="text-sm font-semibold" style={{ color: cfg.color }}>{ev.judul}</div>
                         {ev.deskripsi && <div className="text-xs text-gray-500 mt-0.5">{ev.deskripsi}</div>}
+                        {(ev.waktu || ev.tempat) && (
+                          <div className="flex items-center gap-3 mt-1.5 flex-wrap">
+                            {ev.waktu && (
+                              <span className="flex items-center gap-1 text-xs text-gray-500">
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                                  <circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/>
+                                </svg>
+                                {ev.waktu}
+                              </span>
+                            )}
+                            {ev.tempat && (
+                              <span className="flex items-center gap-1 text-xs text-gray-500">
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+                                </svg>
+                                {ev.tempat}
+                              </span>
+                            )}
+                          </div>
+                        )}
                         <div className="text-xs mt-1" style={{ color: cfg.color, fontFamily: 'DM Mono', opacity: 0.7 }}>{cfg.label}</div>
                       </div>
                     )
@@ -321,6 +341,26 @@ export default function KalendarPublikPage() {
                     <div className="flex-1 pt-1">
                       <div className="text-sm font-semibold text-gray-900">{ev.judul}</div>
                       {ev.deskripsi && <div className="text-xs text-gray-400 mt-0.5">{ev.deskripsi}</div>}
+                      {(ev.waktu || ev.tempat) && (
+                        <div className="flex items-center gap-3 mt-1 flex-wrap">
+                          {ev.waktu && (
+                            <span className="flex items-center gap-1 text-xs text-gray-400">
+                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                                <circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/>
+                              </svg>
+                              {ev.waktu}
+                            </span>
+                          )}
+                          {ev.tempat && (
+                            <span className="flex items-center gap-1 text-xs text-gray-400">
+                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+                              </svg>
+                              {ev.tempat}
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </div>
                     <span className="text-xs font-semibold px-2 py-0.5 rounded-full flex-shrink-0 mt-1"
                       style={{ background: cfg.bg, color: cfg.color }}>
