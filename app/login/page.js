@@ -69,7 +69,7 @@ export default function LoginPage() {
       `}</style>
 
       {/* ── LEFT — branding panel ── */}
-      <div className="hidden lg:flex w-[40%] flex-col justify-between p-10 relative overflow-hidden"
+      <div className="hidden lg:flex w-[25%] flex-col justify-between p-10 relative overflow-hidden"
         style={{ background: accent }}>
 
         {/* Decorative circles */}
@@ -96,7 +96,7 @@ export default function LoginPage() {
         <div className="relative z-10">
           <div className="fu1 text-xs font-semibold uppercase tracking-[0.2em] mb-4"
             style={{ color: primary, fontFamily: 'DM Mono' }}>
-            SiCuti — v1.0
+            SiCuti
           </div>
           <h1 className="fu2 font-bold leading-tight mb-6"
             style={{ fontSize: 42, color: 'white', letterSpacing: '-0.02em', fontFamily: "'Rubik', sans-serif" }}>
@@ -111,7 +111,7 @@ export default function LoginPage() {
         {/* Feature list */}
         <div className="fu4 flex flex-col gap-3 relative z-10">
           {[
-            { icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><circle cx="12" cy="12" r="3"/></svg>, label: 'Absensi via QR Code — murid & guru' },
+            { icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><circle cx="12" cy="12" r="3"/></svg>, label: 'Absensi via QR Code untuk murid & guru' },
             { icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>, label: 'Pengajuan & persetujuan cuti online' },
             { icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>, label: 'Dashboard laporan & rekap kehadiran' },
           ].map((f, i) => (
