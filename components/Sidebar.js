@@ -3,8 +3,15 @@
 import { usePathname, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 
-const purple   = '#6d28d9'
-const purple50 = '#f5f3ff'
+// ── New Design System ──
+const C = {
+  primary:  '#A78BFA',
+  accent:   '#442F78',
+  surface:  '#FFFFFF',
+  bg:       '#FAFAFA',
+  border:   '#EAB6FF',
+  primaryBg: 'rgba(167,139,250,0.12)',
+}
 
 const ALL_NAV = [
   {
@@ -78,14 +85,17 @@ export default function Sidebar({ profile, pendingCuti = 0, className = '' }) {
   }
 
   return (
-    <aside className={`w-60 flex flex-col border-r border-gray-100 bg-white flex-shrink-0 ${className}`}>
+    <aside className={`w-60 flex flex-col flex-shrink-0 ${className}`}
+      style={{ background: C.surface, borderRight: `1px solid ${C.border}`, fontFamily: "'Karla', sans-serif" }}>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700;800&family=Karla:wght@300;400;500;600;700&display=swap');`}</style>
+
       {/* Logo */}
-      <div className="px-5 py-5 border-b border-gray-100">
+      <div className="px-5 py-5" style={{ borderBottom: `1px solid ${C.border}` }}>
         <div className="flex items-center gap-3">
           <img src="/logoborder.png" alt="Logo" style={{ width: 36, height: 36, objectFit: 'contain' }} />
           <div>
-            <div className="font-bold text-gray-900 text-xs leading-tight">Mutiara Bunda</div>
-            <div className="text-gray-400 text-xs" style={{ fontFamily: 'DM Mono', letterSpacing: '0.05em' }}>SiCuti v1.0</div>
+            <div className="font-bold text-xs leading-tight" style={{ fontFamily: "'Rubik', sans-serif", color: C.accent }}>Mutiara Bunda</div>
+            <div className="text-xs" style={{ color: C.primary, letterSpacing: '0.05em' }}>SiCuti v1.0</div>
           </div>
         </div>
       </div>
@@ -97,8 +107,10 @@ export default function Sidebar({ profile, pendingCuti = 0, className = '' }) {
           return (
             <a key={href} href={href}
               className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
-              style={active ? { background: purple50, color: purple } : { color: '#6b7280' }}>
-              <span style={{ color: active ? purple : '#9ca3af' }}>{icon}</span>
+              style={active
+                ? { background: C.primaryBg, color: C.accent, fontWeight: 600 }
+                : { color: '#6b7280' }}>
+              <span style={{ color: active ? C.primary : '#9ca3af' }}>{icon}</span>
               {label}
               {label === 'Cuti Guru' && pendingCuti > 0 && isAdmin && (
                 <span className="ml-auto text-xs font-bold px-1.5 py-0.5 rounded-full text-white"
@@ -114,9 +126,9 @@ export default function Sidebar({ profile, pendingCuti = 0, className = '' }) {
       {/* Scan tablet shortcut */}
       <div className="px-3 pb-3">
         <a href="/scan" target="_blank"
-          className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium"
-          style={{ background: purple50, color: purple }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+          className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
+          style={{ background: C.primaryBg, color: C.accent }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.primary} strokeWidth="2" strokeLinecap="round">
             <path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/>
             <circle cx="12" cy="12" r="3"/>
           </svg>
@@ -125,21 +137,24 @@ export default function Sidebar({ profile, pendingCuti = 0, className = '' }) {
       </div>
 
       {/* User info + logout */}
-      <div className="px-4 py-4 border-t border-gray-100">
+      <div className="px-4 py-4" style={{ borderTop: `1px solid ${C.border}` }}>
         <div className="flex items-center gap-3 mb-3">
           <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
-            style={{ background: purple }}>
+            style={{ background: `linear-gradient(135deg, ${C.primary}, ${C.accent})` }}>
             {profile?.full_name?.[0] || 'A'}
           </div>
           <div className="min-w-0">
-            <div className="text-xs font-semibold text-gray-900 truncate">{profile?.full_name || 'Admin'}</div>
-            <div className="text-xs text-gray-400 truncate" style={{ fontFamily: 'DM Mono' }}>
+            <div className="text-xs font-semibold truncate" style={{ color: C.accent, fontFamily: "'Rubik', sans-serif" }}>{profile?.full_name || 'Admin'}</div>
+            <div className="text-xs truncate" style={{ color: C.primary }}>
               {profile?.jabatan || profile?.role || 'admin'}
             </div>
           </div>
         </div>
         <button onClick={handleLogout}
-          className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all">
+          className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-all"
+          style={{ color: '#9ca3af' }}
+          onMouseEnter={e => { e.currentTarget.style.color = '#ef4444'; e.currentTarget.style.background = '#fef2f2' }}
+          onMouseLeave={e => { e.currentTarget.style.color = '#9ca3af'; e.currentTarget.style.background = 'transparent' }}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>
           </svg>
