@@ -258,8 +258,12 @@ export default function KelasPage() {
         m.qr_code        || '',
       ])
       const csvContent = [headers, ...rows]
-        .map(row => row.map(cell => `"${String(cell).replace(/"/g, \'\'\'\')}"` ).join(','))
-        .join('\n')
+      .map(row =>
+        row
+          .map(cell => `"${String(cell ?? '').replace(/"/g, '""')}"`)
+          .join(',')
+      )
+      .join('\n')
       const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' })
       const url  = URL.createObjectURL(blob)
       const a    = document.createElement('a')
