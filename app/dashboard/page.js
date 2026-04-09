@@ -175,7 +175,7 @@ export default function DashboardPage() {
               {/* Greeting */}
               <div className="fu mb-6">
                 <h2 className="font-bold text-2xl" style={{ fontFamily: "'Rubik', sans-serif", color: '#442F78' }}>
-                  Selamat datang, <span style={{ color: '#A78BFA' }}>{profile?.full_name?.split(' ')[0] || 'Admin'}</span> 👋
+                  Selamat datang, <span style={{ color: '#A78BFA' }}>{profile?.full_name?.split(' ')[0] || 'Admin'}</span>
                 </h2>
                 <p className="text-sm mt-1" style={{ color: '#9ca3af' }}>Berikut ringkasan aktivitas hari ini.</p>
               </div>
