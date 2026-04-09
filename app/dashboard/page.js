@@ -5,10 +5,10 @@ import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import Sidebar from '@/components/Sidebar'
 
-const purple      = '#6d28d9'
-const purple50    = '#f5f3ff'
-const purple100   = '#ede9fe'
-const purple600   = '#7c3aed'
+const purple      = '#A78BFA'
+const purple50    = 'rgba(167,139,250,0.12)'
+const purple100   = '#EAB6FF'
+const purple600   = '#442F78'
 const SCHOOL      = 'TK Karakter Mutiara Bunda Bali'
 
 
@@ -120,10 +120,10 @@ export default function DashboardPage() {
   const pct = stats.murid > 0 ? Math.round((stats.hadirHari / stats.murid) * 100) : 0
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden"
-      style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+    <div className="flex h-screen overflow-hidden"
+      style={{ fontFamily: "'Karla', sans-serif", background: '#FAFAFA' }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=DM+Mono:wght@300;400&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700;800&family=Karla:wght@300;400;500;600;700&display=swap');
         @keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
         .fu  { animation: fadeUp .4s ease both; }
         .fu1 { animation: fadeUp .4s ease .08s both; }
@@ -135,6 +135,7 @@ export default function DashboardPage() {
         .pulse { animation: pulse 2s ease-in-out infinite; }
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-thumb { background: ${purple100}; border-radius: 4px; }
+        h1,h2,h3 { font-family: 'Rubik', sans-serif; }
       `}</style>
 
       {/* ── SIDEBAR ── */}
@@ -144,18 +145,19 @@ export default function DashboardPage() {
       <main className="flex-1 flex flex-col overflow-hidden">
 
         {/* Top bar */}
-        <header className="bg-white border-b border-gray-100 px-8 py-4 flex items-center justify-between flex-shrink-0">
+        <header className="px-8 py-4 flex items-center justify-between flex-shrink-0"
+          style={{ background: '#FFFFFF', borderBottom: `1px solid #EAB6FF` }}>
           <div>
-            <h1 className="font-bold text-gray-900 text-lg">Dashboard</h1>
-            <p className="text-xs text-gray-400">{date}</p>
+            <h1 className="font-bold text-lg" style={{ fontFamily: "'Rubik', sans-serif", color: '#442F78' }}>Dashboard</h1>
+            <p className="text-xs" style={{ color: '#A78BFA' }}>{date}</p>
           </div>
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1.5">
               <div className="w-1.5 h-1.5 rounded-full bg-green-400 pulse"/>
-              <span className="text-xs text-gray-400" style={{ fontFamily: 'DM Mono' }}>Live · Realtime</span>
+              <span className="text-xs" style={{ color: '#A78BFA' }}>Live · Realtime</span>
             </div>
-            <div className="font-bold tabular-nums text-lg" style={{ color: purple, fontFamily: 'DM Mono' }}>
-              {time} <span className="text-xs font-normal text-gray-400">WITA</span>
+            <div className="font-bold tabular-nums text-lg" style={{ color: '#442F78', fontFamily: "'Rubik', sans-serif" }}>
+              {time} <span className="text-xs font-normal" style={{ color: '#A78BFA' }}>WITA</span>
             </div>
           </div>
         </header>
@@ -166,16 +168,16 @@ export default function DashboardPage() {
           {loading ? (
             <div className="flex items-center justify-center h-64">
               <div className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin"
-                style={{ borderColor: `${purple100} ${purple100} ${purple100} ${purple}` }}/>
+                style={{ borderColor: `#EAB6FF #EAB6FF #EAB6FF #A78BFA` }}/>
             </div>
           ) : (
             <>
               {/* Greeting */}
               <div className="fu mb-6">
-                <h2 className="font-bold text-gray-900 text-2xl">
-                  Selamat datang, <span style={{ color: purple }}>{profile?.full_name?.split(' ')[0] || 'Admin'}</span>
+                <h2 className="font-bold text-2xl" style={{ fontFamily: "'Rubik', sans-serif", color: '#442F78' }}>
+                  Selamat datang, <span style={{ color: '#A78BFA' }}>{profile?.full_name?.split(' ')[0] || 'Admin'}</span> 👋
                 </h2>
-                <p className="text-sm text-gray-400 mt-1">Berikut ringkasan aktivitas hari ini.</p>
+                <p className="text-sm mt-1" style={{ color: '#9ca3af' }}>Berikut ringkasan aktivitas hari ini.</p>
               </div>
 
               {/* ── STAT CARDS ── */}
@@ -184,8 +186,8 @@ export default function DashboardPage() {
                   {
                     cls: 'fu1', label: 'Total Guru', value: stats.guru,
                     sub: 'terdaftar di sistem',
-                    color: purple,
-                    bg: purple50,
+                    color: '#442F78',
+                    bg: 'rgba(167,139,250,0.12)',
                     icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                   },
                   {
@@ -210,8 +212,8 @@ export default function DashboardPage() {
                     icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
                   },
                 ].map(({ cls, label, value, sub, color, bg, icon }) => (
-                  <div key={label} className={`${cls} bg-white rounded-2xl p-5 border border-gray-100
-                    hover:shadow-md transition-shadow`}>
+                  <div key={label} className={`${cls} rounded-2xl p-5 hover:shadow-md transition-shadow`}
+                    style={{ background: '#FFFFFF', border: '1px solid #EAB6FF' }}>
                     <div className="flex items-start justify-between mb-4">
                       <div className="w-10 h-10 rounded-xl flex items-center justify-center"
                         style={{ background: bg, color }}>
