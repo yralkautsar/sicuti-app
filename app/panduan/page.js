@@ -1,8 +1,9 @@
 'use client'
 
-const purple    = '#6d28d9'
-const purple50  = '#f5f3ff'
-const purple100 = '#ede9fe'
+const primary   = '#A78BFA'
+const accent    = '#442F78'
+const purple50  = '#F5F0FF'
+const purple100 = '#EAB6FF'
 const SCHOOL    = 'TK Karakter Mutiara Bunda Bali'
 
 const stepsMurid = [
@@ -139,9 +140,10 @@ const faqs = [
   },
 ]
 
-function StepCard({ step, color, bg }) {
+function StepCard({ step, color, bg, borderClr }) {
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 p-5 flex items-start gap-4">
+    <div className="rounded-2xl p-5 flex items-start gap-4"
+      style={{ background: '#FFFFFF', border: `1px solid ${borderClr || '#EAB6FF'}` }}>
       <div className="flex-shrink-0">
         <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: bg, color }}>
           {step.icon}
@@ -150,31 +152,31 @@ function StepCard({ step, color, bg }) {
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1">
           <span className="text-xs font-bold" style={{ color, fontFamily: 'DM Mono' }}>{step.num}</span>
-          <h3 className="font-bold text-gray-900 text-sm">{step.title}</h3>
+          <h3 className="font-semibold text-sm" style={{ fontFamily: "'Rubik', sans-serif", color: '#111827' }}>{step.title}</h3>
         </div>
-        <p className="text-sm text-gray-500 leading-relaxed">{step.desc}</p>
+        <p className="text-sm leading-relaxed" style={{ color: '#6b7280' }}>{step.desc}</p>
       </div>
     </div>
   )
 }
 
-function SectionHeader({ icon, title, color }) {
+function SectionHeader({ icon, title, color, bg }) {
   return (
-    <div className="flex items-center gap-3 mb-6">
-      <div className="w-8 h-8 rounded-xl flex items-center justify-center text-white flex-shrink-0"
+    <div className="flex items-center gap-3 mb-5">
+      <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white flex-shrink-0"
         style={{ background: color }}>
         {icon}
       </div>
-      <h2 className="font-bold text-gray-900 text-xl">{title}</h2>
+      <h2 className="font-bold text-xl" style={{ fontFamily: "'Rubik', sans-serif", color: '#111827' }}>{title}</h2>
     </div>
   )
 }
 
 export default function PanduanPage() {
   return (
-    <div className="min-h-screen bg-gray-50" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+    <div className="min-h-screen" style={{ fontFamily: "'Karla', sans-serif", background: '#FAFAFA' }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=DM+Mono:wght@300;400&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&family=Karla:wght@300;400;500;600;700&family=DM+Mono:wght@300;400&display=swap');
         @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
         .fu{animation:fadeUp .4s ease both}
         ::-webkit-scrollbar{width:4px}
@@ -182,18 +184,20 @@ export default function PanduanPage() {
       `}</style>
 
       {/* HEADER */}
-      <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
+      <header className="sticky top-0 z-10"
+        style={{ background: '#FFFFFF', borderBottom: `1px solid ${purple100}` }}>
         <div className="max-w-3xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img src="/logoborder.png" alt="Logo" className="w-9 h-9 object-contain" />
             <div>
-              <div className="font-bold text-gray-900 text-sm leading-tight">{SCHOOL}</div>
-              <div className="text-xs" style={{ color: purple, fontFamily: 'DM Mono' }}>SiCuti — Panduan</div>
+              <div className="font-semibold text-sm leading-tight"
+                style={{ fontFamily: "'Rubik', sans-serif", color: accent }}>{SCHOOL}</div>
+              <div className="text-xs" style={{ color: primary, fontFamily: 'DM Mono' }}>SiCuti — Panduan</div>
             </div>
           </div>
           <a href="/scan"
             className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold text-white transition-all"
-            style={{ background: purple }}>
+            style={{ background: accent, fontFamily: "'Rubik', sans-serif" }}>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
               <path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/>
               <circle cx="12" cy="12" r="3"/>
@@ -208,30 +212,30 @@ export default function PanduanPage() {
         {/* HERO */}
         <div className="fu text-center">
           <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4"
-            style={{ background: purple50 }}>
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke={purple} strokeWidth="1.5" strokeLinecap="round">
+            style={{ background: purple50, border: `1px solid ${purple100}` }}>
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke={primary} strokeWidth="1.5" strokeLinecap="round">
               <path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/>
               <circle cx="12" cy="12" r="3"/>
             </svg>
           </div>
-          <h1 className="font-bold text-gray-900 mb-2" style={{ fontSize: 28, letterSpacing: '-0.02em' }}>
+          <h1 className="font-bold mb-2" style={{ fontSize: 28, letterSpacing: '-0.02em', fontFamily: "'Rubik', sans-serif", color: accent }}>
             Panduan Penggunaan SiCuti
           </h1>
-          <p className="text-gray-400 text-sm max-w-md mx-auto leading-relaxed">
+          <p className="text-sm max-w-md mx-auto leading-relaxed" style={{ color: '#9ca3af' }}>
             Panduan lengkap absensi QR, pengajuan cuti, dan penggunaan dashboard untuk guru dan admin.
           </p>
 
           {/* Quick nav */}
           <div className="flex flex-wrap justify-center gap-2 mt-5">
             {[
-              { label: 'Absensi Murid', href: '#murid', color: purple },
-              { label: 'Absensi Guru',  href: '#guru',  color: '#0891b2' },
-              { label: 'Pengajuan Cuti', href: '#cuti', color: '#16a34a' },
-              { label: 'FAQ',            href: '#faq',  color: '#d97706' },
+              { label: 'Absensi Murid', href: '#murid', color: accent,    bg: purple50,   border: purple100 },
+              { label: 'Absensi Guru',  href: '#guru',  color: '#0e7490', bg: '#ecfeff',  border: '#a5f3fc' },
+              { label: 'Pengajuan Cuti', href: '#cuti', color: '#15803d', bg: '#f0fdf4',  border: '#bbf7d0' },
+              { label: 'FAQ',            href: '#faq',  color: '#92400e', bg: '#fffbeb',  border: '#fde68a' },
             ].map(n => (
               <a key={n.href} href={n.href}
                 className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
-                style={{ background: '#f3f4f6', color: n.color }}>
+                style={{ background: n.bg, color: n.color, border: `1px solid ${n.border}`, fontFamily: "'Rubik', sans-serif" }}>
                 {n.label}
               </a>
             ))}
@@ -242,22 +246,25 @@ export default function PanduanPage() {
         <div className="fu" id="murid">
           <SectionHeader
             title="Cara Absensi Murid"
-            color={purple}
+            color={accent}
             icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>}
           />
           <div className="flex flex-col gap-3">
             {stepsMurid.map((step, i) => (
-              <StepCard key={i} step={step} color={purple} bg={purple50} />
+              <StepCard key={i} step={step} color={accent} bg={purple50} borderClr={purple100} />
             ))}
           </div>
-          <div className="mt-4 p-4 rounded-2xl flex items-start gap-4" style={{ background: '#f0fdf4', border: '1px solid #bbf7d0' }}>
-            <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: '#dcfce7' }}>
+          <div className="mt-4 p-4 rounded-2xl flex items-start gap-4"
+            style={{ background: '#f0fdf4', border: '1px solid #bbf7d0' }}>
+            <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
+              style={{ background: '#dcfce7' }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round">
                 <path d="M20 6L9 17l-5-5"/>
               </svg>
             </div>
             <div>
-              <div className="text-sm font-bold text-green-700 mb-0.5">Batas tepat waktu murid: 07.30 WITA</div>
+              <div className="text-sm font-semibold text-green-700 mb-0.5"
+                style={{ fontFamily: "'Rubik', sans-serif" }}>Batas tepat waktu murid: 07.30 WITA</div>
               <div className="text-xs text-green-600">Scan setelah jam 07.30 WITA otomatis tercatat sebagai terlambat beserta jumlah menitnya.</div>
             </div>
           </div>
@@ -272,18 +279,22 @@ export default function PanduanPage() {
           />
           <div className="flex flex-col gap-3">
             {stepsGuru.map((step, i) => (
-              <StepCard key={i} step={step} color="#0891b2" bg="#ecfeff" />
+              <StepCard key={i} step={step} color="#0891b2" bg="#ecfeff" borderClr="#a5f3fc" />
             ))}
           </div>
-          <div className="mt-4 p-4 rounded-2xl flex items-start gap-4" style={{ background: '#ecfeff', border: '1px solid #a5f3fc' }}>
-            <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: '#cffafe' }}>
+          <div className="mt-4 p-4 rounded-2xl flex items-start gap-4"
+            style={{ background: '#ecfeff', border: '1px solid #a5f3fc' }}>
+            <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
+              style={{ background: '#cffafe' }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0891b2" strokeWidth="2" strokeLinecap="round">
                 <circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/>
               </svg>
             </div>
             <div>
-              <div className="text-sm font-bold mb-0.5" style={{ color: '#0e7490' }}>Batas tepat waktu guru: 07.00 WITA</div>
-              <div className="text-xs" style={{ color: '#0891b2' }}>Hari kerja guru: Senin — Sabtu. Scan setelah jam 07.00 WITA tercatat terlambat beserta jumlah menitnya.</div>
+              <div className="text-sm font-semibold mb-0.5" style={{ color: '#0e7490', fontFamily: "'Rubik', sans-serif" }}>
+                Batas tepat waktu guru: 07.00 WITA</div>
+              <div className="text-xs" style={{ color: '#0891b2' }}>
+                Hari kerja guru: Senin — Sabtu. Scan setelah jam 07.00 WITA tercatat terlambat beserta jumlah menitnya.</div>
             </div>
           </div>
         </div>
@@ -297,18 +308,22 @@ export default function PanduanPage() {
           />
           <div className="flex flex-col gap-3">
             {stepsCuti.map((step, i) => (
-              <StepCard key={i} step={step} color="#16a34a" bg="#f0fdf4" />
+              <StepCard key={i} step={step} color="#16a34a" bg="#f0fdf4" borderClr="#bbf7d0" />
             ))}
           </div>
-          <div className="mt-4 p-4 rounded-2xl flex items-start gap-4" style={{ background: '#f0fdf4', border: '1px solid #bbf7d0' }}>
-            <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: '#dcfce7' }}>
+          <div className="mt-4 p-4 rounded-2xl flex items-start gap-4"
+            style={{ background: '#f0fdf4', border: '1px solid #bbf7d0' }}>
+            <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
+              style={{ background: '#dcfce7' }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2" strokeLinecap="round">
                 <circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/>
               </svg>
             </div>
             <div>
-              <div className="text-sm font-bold text-green-700 mb-0.5">Cuti dihitung berdasarkan hari kalender</div>
-              <div className="text-xs text-green-600">Kuota cuti per guru ditentukan oleh admin sekolah. Hanya cuti yang sudah disetujui yang mengurangi kuota.</div>
+              <div className="text-sm font-semibold text-green-700 mb-0.5"
+                style={{ fontFamily: "'Rubik', sans-serif" }}>Cuti dihitung berdasarkan hari kalender</div>
+              <div className="text-xs text-green-600">
+                Kuota cuti per guru ditentukan oleh admin sekolah. Hanya cuti yang sudah disetujui yang mengurangi kuota.</div>
             </div>
           </div>
         </div>
@@ -322,16 +337,17 @@ export default function PanduanPage() {
           />
           <div className="flex flex-col gap-3">
             {faqs.map((faq, i) => (
-              <div key={i} className="bg-white rounded-2xl border border-gray-100 p-5">
+              <div key={i} className="rounded-2xl p-5"
+                style={{ background: '#FFFFFF', border: `1px solid ${purple100}` }}>
                 <div className="flex items-start gap-3">
                   <span className="text-xs font-bold px-2 py-0.5 rounded-lg flex-shrink-0 mt-0.5"
                     style={{ background: '#fffbeb', color: '#d97706', fontFamily: 'DM Mono' }}>Q</span>
-                  <p className="text-sm font-semibold text-gray-900">{faq.q}</p>
+                  <p className="text-sm font-semibold" style={{ color: '#111827', fontFamily: "'Rubik', sans-serif" }}>{faq.q}</p>
                 </div>
                 <div className="flex items-start gap-3 mt-3">
                   <span className="text-xs font-bold px-2 py-0.5 rounded-lg flex-shrink-0 mt-0.5"
                     style={{ background: '#f0fdf4', color: '#16a34a', fontFamily: 'DM Mono' }}>A</span>
-                  <p className="text-sm text-gray-500 leading-relaxed">{faq.a}</p>
+                  <p className="text-sm leading-relaxed" style={{ color: '#6b7280' }}>{faq.a}</p>
                 </div>
               </div>
             ))}
@@ -340,19 +356,19 @@ export default function PanduanPage() {
 
         {/* FOOTER */}
         <div className="fu text-center pb-6">
-          <div className="h-px bg-gray-200 mb-6" />
+          <div className="h-px mb-6" style={{ background: purple100 }} />
           <img src="/logoborder.png" alt="Logo" className="w-10 h-10 object-contain mx-auto mb-3" />
-          <p className="text-xs text-gray-400">{SCHOOL}</p>
-          <p className="text-xs text-gray-300 mt-1" style={{ fontFamily: 'DM Mono' }}>SiCuti — Sistem Absensi Digital</p>
-          <div className="flex items-center justify-center gap-3 mt-4">
+          <p className="text-xs" style={{ color: '#9ca3af' }}>{SCHOOL}</p>
+          <p className="text-xs mt-1" style={{ color: '#d1d5db', fontFamily: 'DM Mono' }}>SiCuti — Sistem Absensi Digital</p>
+          <div className="flex items-center justify-center gap-3 mt-5">
             <a href="/scan"
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all"
-              style={{ background: purple, boxShadow: `0 4px 14px ${purple}30` }}>
+              style={{ background: accent, boxShadow: `0 4px 14px ${accent}30`, fontFamily: "'Rubik', sans-serif" }}>
               Mulai Absensi →
             </a>
             <a href="/login"
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all"
-              style={{ background: purple50, color: purple, border: `1px solid ${purple100}` }}>
+              style={{ background: purple50, color: accent, border: `1px solid ${purple100}`, fontFamily: "'Rubik', sans-serif" }}>
               Login Dashboard
             </a>
           </div>
