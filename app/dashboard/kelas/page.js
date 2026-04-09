@@ -4,8 +4,6 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import Sidebar from '@/components/Sidebar'
-import * as XLSX from 'xlsx'
-
 const primary    = '#A78BFA'
 const accent     = '#442F78'
 const purple50   = '#F5F0FF'
@@ -242,29 +240,33 @@ export default function KelasPage() {
     setDetailLoading(false)
   }
 
-  const exportKelasExcel = async () => {
+  const exportKelasCSV = () => {
     if (!showDetail) return
     setExporting(true)
     try {
-      const wb = XLSX.utils.book_new()
-      const rows = detailMurids.map((m, i) => ({
-        'No': i + 1,
-        'Nama Lengkap':  m.full_name      || '',
-        'NISN':          m.nisn           || '',
-        'Jenis Kelamin': m.jenis_kelamin  || '',
-        'Tanggal Lahir': m.tanggal_lahir ? new Date(m.tanggal_lahir).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '',
-        'Alamat':        m.alamat         || '',
-        'Nama Wali':     m.wali_name      || '',
-        'No HP Wali':    m.wali_phone     || '',
-        'Status':        m.active ? 'Aktif' : 'Nonaktif',
-        'QR Code':       m.qr_code        || '',
-      }))
-      const ws = XLSX.utils.json_to_sheet(rows)
-      ws['!cols'] = [{ wch: 4 }, { wch: 28 }, { wch: 16 }, { wch: 14 }, { wch: 22 }, { wch: 36 }, { wch: 24 }, { wch: 18 }, { wch: 10 }, { wch: 18 }]
-      const sheetName = `${showDetail.nama_kelas} ${showDetail.tahun_ajaran}`.slice(0, 31)
-      XLSX.utils.book_append_sheet(wb, ws, sheetName)
-      const fileName = `Data_Murid_${showDetail.nama_kelas}_${showDetail.tahun_ajaran}.xlsx`.replace(/\//g, '-').replace(/ /g, '_')
-      XLSX.writeFile(wb, fileName)
+      const headers = ['No', 'Nama Lengkap', 'NISN', 'Jenis Kelamin', 'Tanggal Lahir', 'Alamat', 'Nama Wali', 'No HP Wali', 'Status', 'QR Code']
+      const rows = detailMurids.map((m, i) => [
+        i + 1,
+        m.full_name      || '',
+        m.nisn           || '',
+        m.jenis_kelamin  || '',
+        m.tanggal_lahir ? new Date(m.tanggal_lahir).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '',
+        m.alamat         || '',
+        m.wali_name      || '',
+        m.wali_phone     || '',
+        m.active ? 'Aktif' : 'Nonaktif',
+        m.qr_code        || '',
+      ])
+      const csvContent = [headers, ...rows]
+        .map(row => row.map(cell => `"${String(cell).replace(/"/g, \'\'\'\')}"` ).join(','))
+        .join('\n')
+      const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' })
+      const url  = URL.createObjectURL(blob)
+      const a    = document.createElement('a')
+      a.href     = url
+      a.download = `Data_Murid_${showDetail.nama_kelas}_${showDetail.tahun_ajaran}.csv`.replace(/\//g, '-').replace(/ /g, '_')
+      a.click()
+      URL.revokeObjectURL(url)
     } catch (err) {
       alert('Gagal export. Silakan coba lagi.')
     }
@@ -677,7 +679,7 @@ export default function KelasPage() {
                     <div className="text-xs" style={{ color: '#9ca3af' }}>Nonaktif</div>
                   </div>
                 </div>
-                <button onClick={exportKelasExcel} disabled={exporting || detailLoading || detailMurids.length === 0}
+                <button onClick={exportKelasCSV} disabled={exporting || detailLoading || detailMurids.length === 0}
                   className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white transition-all"
                   style={{ background: exporting ? primary : accent, opacity: detailMurids.length === 0 ? 0.5 : 1, fontFamily: "'Rubik', sans-serif" }}>
                   {exporting ? (
