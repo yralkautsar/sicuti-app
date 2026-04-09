@@ -100,20 +100,20 @@ export default function LoginPage() {
           </div>
           <h1 className="fu2 font-bold leading-tight mb-6"
             style={{ fontSize: 42, color: 'white', letterSpacing: '-0.02em', fontFamily: "'Rubik', sans-serif" }}>
-            Sistem Absensi<br/>& Cuti Digital.
+            Platform Pengelolaan<br/>Operasional Sekolah.
           </h1>
           <p className="fu3 text-base leading-relaxed"
             style={{ color: 'rgba(255,255,255,0.5)', maxWidth: 340 }}>
-            Kelola absensi murid, kehadiran guru, dan pengajuan cuti dalam satu platform yang mudah digunakan.
+            Absensi murid, kehadiran guru, dan pengajuan cuti dikelola dalam satu sistem yang sederhana.
           </p>
         </div>
 
         {/* Feature list */}
         <div className="fu4 flex flex-col gap-3 relative z-10">
           {[
-            { icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><circle cx="12" cy="12" r="3"/></svg>, label: 'Absensi via QR Code untuk murid & guru' },
-            { icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>, label: 'Pengajuan & persetujuan cuti online' },
-            { icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>, label: 'Dashboard laporan & rekap kehadiran' },
+            { icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><circle cx="12" cy="12" r="3"/></svg>, label: 'Absensi murid & guru via QR Code' },
+            { icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>, label: 'Pengajuan dan persetujuan cuti online' },
+            { icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>, label: 'Laporan dan rekap kehadiran' },
           ].map((f, i) => (
             <div key={i} className="flex items-center gap-3">
               <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
@@ -142,7 +142,7 @@ export default function LoginPage() {
               Selamat datang
             </div>
             <h2 className="font-bold mb-1" style={{ fontSize: 30, color: accent, fontFamily: "'Rubik', sans-serif" }}>
-              Masuk ke SiCuti
+              Masuk ke Dashboard
             </h2>
             <p className="text-sm mb-8" style={{ color: '#78716C' }}>
               Gunakan email dan password yang diberikan oleh admin sekolah.
@@ -220,7 +220,7 @@ export default function LoginPage() {
                 {loading ? (
                   <><div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin"/>Masuk...</>
                 ) : (
-                  <>Masuk ke Dashboard <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></>
+                  <>Masuk <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></>
                 )}
               </button>
             </div>
