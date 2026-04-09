@@ -104,7 +104,7 @@ export default function LoginPage() {
           </h1>
           <p className="fu3 text-base leading-relaxed"
             style={{ color: 'rgba(255,255,255,0.5)', maxWidth: 340 }}>
-            Absensi murid, kehadiran guru, dan pengajuan cuti dikelola dalam satu sistem yang sederhana.
+            Absensi murid, kehadiran guru, dan pengajuan cuti dikelola dalam satu sistem.
           </p>
         </div>
 
