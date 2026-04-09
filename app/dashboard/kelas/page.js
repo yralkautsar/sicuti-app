@@ -6,8 +6,6 @@ import { useRouter } from 'next/navigation'
 import Sidebar from '@/components/Sidebar'
 import * as XLSX from 'xlsx'
 
-import * as XLSX from 'xlsx'
-
 const primary    = '#A78BFA'
 const accent     = '#442F78'
 const purple50   = '#F5F0FF'
