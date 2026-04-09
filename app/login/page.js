@@ -157,6 +157,7 @@ export default function LoginPage() {
                 style={{ color: '#A8A29E', fontFamily: 'DM Mono' }}>Email</label>
               <input
                 type="email" required
+                autoFocus
                 value={email} onChange={e => setEmail(e.target.value)}
                 placeholder="nama@mutiarabunda.sch.id"
                 className="w-full px-4 py-3.5 text-sm rounded-xl transition-all"
@@ -208,12 +209,12 @@ export default function LoginPage() {
 
             {/* Submit */}
             <div className="fu4 mt-1">
-              <button type="submit" disabled={loading}
+              <button type="submit" disabled={loading || !email || !password}
                 className="w-full py-4 rounded-xl font-semibold text-white text-sm transition-all flex items-center justify-center gap-2"
                 style={{
                   background: loading ? primary : accent,
                   boxShadow: loading ? 'none' : `0 4px 20px rgba(68,47,120,0.35)`,
-                  cursor: loading ? 'not-allowed' : 'pointer',
+                  cursor: loading || !email || !password ? 'not-allowed' : 'pointer',
                   fontFamily: "'Rubik', sans-serif",
                 }}>
                 {loading ? (
