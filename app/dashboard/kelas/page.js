@@ -4,6 +4,9 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import Sidebar from '@/components/Sidebar'
+import * as XLSX from 'xlsx'
+
+import * as XLSX from 'xlsx'
 
 const primary    = '#A78BFA'
 const accent     = '#442F78'
@@ -20,16 +23,6 @@ const STATUS_OPTIONS = [
   { value: 'alpha',  label: 'Alpha',  color: '#dc2626', bg: '#fef2f2' },
 ]
 
-function loadXLSX() {
-  return new Promise((resolve, reject) => {
-    if (window.XLSX) { resolve(window.XLSX); return }
-    const s = document.createElement('script')
-    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'
-    s.onload = () => resolve(window.XLSX)
-    s.onerror = reject
-    document.head.appendChild(s)
-  })
-}
 
 function FieldLabel({ children }) {
   return (
@@ -255,8 +248,7 @@ export default function KelasPage() {
     if (!showDetail) return
     setExporting(true)
     try {
-      const XLSX = await loadXLSX()
-      const wb   = XLSX.utils.book_new()
+      const wb = XLSX.utils.book_new()
       const rows = detailMurids.map((m, i) => ({
         'No': i + 1,
         'Nama Lengkap':  m.full_name      || '',
