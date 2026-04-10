@@ -328,7 +328,7 @@ export default function KalendarPage() {
                   <path d="M15 18l-6-6 6-6"/>
                 </svg>
               </button>
-              <h2 className="font-bold text-xl" style={{ fontFamily: "'Rubik', sans-serif", color: accent }} style={{ minWidth: 200, textAlign: 'center' }}>
+              <h2 className="font-bold text-xl" style={{ minWidth: 200, textAlign: 'center', fontFamily: "'Rubik', sans-serif", color: accent }}>
                 {BULAN[bulan]} {tahun}
               </h2>
               <button onClick={() => {

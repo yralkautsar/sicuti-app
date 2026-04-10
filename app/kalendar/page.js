@@ -155,7 +155,7 @@ export default function KalendarPublikPage() {
   const today = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`
 
   return (
-    <div className="min-h-screen" style={{ background: '#FAFAFA' }} style={{ fontFamily: "'Karla', sans-serif" }}>
+    <div className="min-h-screen" style={{ background: '#FAFAFA', fontFamily: "'Karla', sans-serif" }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&family=Karla:wght@300;400;500;600;700&family=DM+Mono:wght@300;400&display=swap');
         ::-webkit-scrollbar{width:4px}
@@ -376,7 +376,7 @@ export default function KalendarPublikPage() {
 
         {/* Footer */}
         <div className="text-center pb-4">
-          <p className="text-xs" style={{ color: '#d1d5db' }} style={{ fontFamily: 'DM Mono' }}>
+          <p className="text-xs" style={{ color: '#d1d5db', fontFamily: 'DM Mono' }}>
             SiCuti · {SCHOOL}
           </p>
         </div>
