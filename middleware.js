@@ -10,7 +10,6 @@ export async function middleware(request) {
     return NextResponse.next()
   }
 
-  // Check session
   let response = NextResponse.next({ request })
 
   const supabase = createServerClient(
@@ -29,10 +28,11 @@ export async function middleware(request) {
     }
   )
 
-  const { data: { user } } = await supabase.auth.getUser()
+  // getSession() reads from cookie — no network call, much faster than getUser()
+  // getUser() hits Supabase API every request → adds ~1-1.4s latency
+  const { data: { session } } = await supabase.auth.getSession()
 
-  // Not logged in — redirect to login
-  if (!user) {
+  if (!session) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
