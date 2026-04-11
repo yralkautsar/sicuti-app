@@ -11,7 +11,7 @@ const purple50   = '#F5F0FF'
 const purple100  = '#EAB6FF'
 
 const BULAN = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember']
-const HARI  = ['Min','Sen','Sel','Rab','Kam','Jum','Sab']
+const HARI  = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu']
 
 const TYPE_CONFIG = {
   libur_nasional: { label: 'Libur Nasional', color: '#dc2626', bg: '#fef2f2', border: '#fecaca' },
@@ -362,8 +362,7 @@ export default function KalendarPage() {
             {/* Day headers */}
             <div className="grid grid-cols-7" style={{ borderBottom: `1px solid ${purple100}` }}>
               {HARI.map(h => (
-                <div key={h} className="py-3 text-center text-xs font-semibold uppercase tracking-wider" style={{ color: accent }}
-                  style={{ fontFamily: 'DM Mono' }}>
+                <div key={h} className="py-3 text-center text-xs font-semibold uppercase tracking-wider" style={{ color: accent, fontFamily: 'DM Mono' }}>
                   {h}
                 </div>
               ))}
