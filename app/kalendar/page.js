@@ -59,32 +59,40 @@ const LIBUR_FALLBACK = {
   ]
 }
 
+const _libCache = {}
+
 async function fetchLiburNasional(year) {
+  if (_libCache[year]) return _libCache[year]
   try {
     const res = await fetch(`https://api-hari-libur.vercel.app/api?year=${year}`, { cache: 'no-store' })
     if (!res.ok) throw new Error('API error')
     const data = await res.json()
+    let result
     if (!Array.isArray(data) && data?.data) {
-      return data.data.map(d => ({
+      result = data.data.map(d => ({
         id: `nasional-${d.date}`, tanggal: d.date, judul: d.description,
         type: 'libur_nasional', _source: 'api'
       }))
-    }
-    if (Array.isArray(data)) {
-      return data.map(d => ({
+    } else if (Array.isArray(data)) {
+      result = data.map(d => ({
         id: `nasional-${d.date || d.tanggal}`,
         tanggal: d.date || d.tanggal,
         judul: d.description || d.keterangan,
         type: 'libur_nasional', _source: 'api'
       }))
+    } else {
+      throw new Error('Unknown format')
     }
-    throw new Error('Unknown format')
+    _libCache[year] = result
+    return result
   } catch {
     const fallback = LIBUR_FALLBACK[year] || []
-    return fallback.map(d => ({
+    const r = fallback.map(d => ({
       id: `nasional-${d.tanggal}`, tanggal: d.tanggal, judul: d.judul,
       type: 'libur_nasional', _source: 'fallback'
     }))
+    _libCache[year] = r
+    return r
   }
 }
 
