@@ -176,7 +176,6 @@ export default function PanduanPage() {
   return (
     <div className="min-h-screen" style={{ fontFamily: "'Karla', sans-serif", background: '#FAFAFA' }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&family=Karla:wght@300;400;500;600;700&family=DM+Mono:wght@300;400&display=swap');
         @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
         .fu{animation:fadeUp .4s ease both}
         ::-webkit-scrollbar{width:4px}

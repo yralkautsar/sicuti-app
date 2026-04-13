@@ -105,8 +105,7 @@ export default function ResetPasswordPage() {
     <div className="min-h-screen flex items-center justify-center p-4"
       style={{ background: purple50, fontFamily: "'Karla', sans-serif" }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&family=Karla:wght@300;400;500;600;700&family=DM+Mono:wght@300;400&display=swap');
-        input:focus { outline: none; }
+                input:focus { outline: none; }
       `}</style>
 
       <div className="w-full max-w-md">

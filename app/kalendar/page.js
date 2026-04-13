@@ -157,7 +157,7 @@ export default function KalendarPublikPage() {
   return (
     <div className="min-h-screen" style={{ background: '#FAFAFA', fontFamily: "'Karla', sans-serif" }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&family=Karla:wght@300;400;500;600;700&family=DM+Mono:wght@300;400&display=swap');
+        
         ::-webkit-scrollbar{width:4px}
         ::-webkit-scrollbar-thumb{background:${purple100};border-radius:4px}
       `}</style>

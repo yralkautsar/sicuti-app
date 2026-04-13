@@ -184,8 +184,7 @@ export default function ScanPage() {
     <div className="h-screen flex flex-col overflow-hidden"
       style={{ fontFamily: "'Karla', sans-serif", background: '#FAFAFA' }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&family=Karla:wght@300;400;500;600;700&family=DM+Mono:wght@300;400&display=swap');
-
+        
         /* Hide ALL html5-qrcode UI elements */
         #qr-reader-container { width:100%!important; height:100%!important; border:none!important; background:transparent!important; }
         #qr-reader-container video { width:100%!important; height:100%!important; object-fit:cover!important; display:block!important; }

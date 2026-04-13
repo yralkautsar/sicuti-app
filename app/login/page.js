@@ -57,7 +57,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex" style={{ fontFamily: "'Karla', sans-serif", background: '#FAFAFA' }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700;800&family=Karla:wght@300;400;500;600;700&family=DM+Mono:wght@300;400&display=swap');
+        
         @keyframes fadeUp { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
         .fu  { animation: fadeUp 0.5s ease forwards; }
         .fu1 { animation: fadeUp 0.5s ease 0.1s forwards; opacity:0; }

@@ -232,7 +232,7 @@ export default function QRMassalPage() {
     <div className="flex h-screen overflow-hidden"
       style={{ background: '#FAFAFA', fontFamily: "'Karla', sans-serif" }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&family=Karla:wght@300;400;500;600;700&family=DM+Mono:wght@300;400&display=swap');
+        
         @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
         .fu{animation:fadeUp .35s ease both}
         input:focus,select:focus{outline:none}
