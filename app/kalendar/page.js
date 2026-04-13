@@ -3,14 +3,13 @@
 import { useEffect, useState, useMemo } from 'react'
 import { supabase } from '@/lib/supabase'
 
-const primary    = '#A78BFA'
-const accent     = '#442F78'
-const purple50   = '#F5F0FF'
-const purple100  = '#EAB6FF'
+const purple    = '#6d28d9'
+const purple50  = '#f5f3ff'
+const purple100 = '#ede9fe'
 const SCHOOL    = 'TK Karakter Mutiara Bunda Bali'
 
 const BULAN = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember']
-const HARI  = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu']
+const HARI  = ['Min','Sen','Sel','Rab','Kam','Jum','Sab']
 
 const TYPE_CONFIG = {
   libur_nasional: { label: 'Libur Nasional', color: '#dc2626', bg: '#fef2f2', border: '#fecaca' },
@@ -64,7 +63,7 @@ const _libCache = {}
 async function fetchLiburNasional(year) {
   if (_libCache[year]) return _libCache[year]
   try {
-    const res = await fetch(`https://api-hari-libur.vercel.app/api?year=${year}`, { cache: 'no-store' })
+    const res = await fetch(`https://api-hari-libur.vercel.app/api?year=${year}`)
     if (!res.ok) throw new Error('API error')
     const data = await res.json()
     let result
@@ -86,13 +85,12 @@ async function fetchLiburNasional(year) {
     _libCache[year] = result
     return result
   } catch {
-    const fallback = LIBUR_FALLBACK[year] || []
-    const r = fallback.map(d => ({
+    const fallback = (LIBUR_FALLBACK[year] || []).map(d => ({
       id: `nasional-${d.tanggal}`, tanggal: d.tanggal, judul: d.judul,
       type: 'libur_nasional', _source: 'fallback'
     }))
-    _libCache[year] = r
-    return r
+    _libCache[year] = fallback
+    return fallback
   }
 }
 
@@ -163,26 +161,26 @@ export default function KalendarPublikPage() {
   const today = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`
 
   return (
-    <div className="min-h-screen" style={{ background: '#FAFAFA', fontFamily: "'Karla', sans-serif" }}>
+    <div className="min-h-screen bg-gray-50" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
       <style>{`
-        
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=DM+Mono:wght@300;400&display=swap');
         ::-webkit-scrollbar{width:4px}
         ::-webkit-scrollbar-thumb{background:${purple100};border-radius:4px}
       `}</style>
 
       {/* Header */}
-      <header className="sticky top-0 z-10" style={{ background: '#FFFFFF', borderBottom: `1px solid ${purple100}` }}>
+      <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
         <div className="max-w-2xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img src="/logoborder.png" alt="Logo" className="w-9 h-9 object-contain" />
             <div>
-              <div className="font-bold text-sm leading-tight" style={{ fontFamily: "'Rubik', sans-serif", color: accent }}>{SCHOOL}</div>
-              <div className="text-xs" style={{ color: primary, fontFamily: 'DM Mono' }}>Kalendar Sekolah</div>
+              <div className="font-bold text-gray-900 text-sm leading-tight">{SCHOOL}</div>
+              <div className="text-xs" style={{ color: purple, fontFamily: 'DM Mono' }}>Kalendar Sekolah</div>
             </div>
           </div>
           <a href="/panduan"
             className="text-xs font-medium transition-all px-3 py-1.5 rounded-lg"
-            style={{ color: accent, background: purple50, border: `1px solid ${purple100}` }}>
+            style={{ color: purple, background: purple50 }}>
             Panduan
           </a>
         </div>
@@ -195,16 +193,16 @@ export default function KalendarPublikPage() {
           <button onClick={() => {
             if (bulan === 0) { setBulan(11); setTahun(t => t - 1) }
             else setBulan(b => b - 1)
-          }} className="w-9 h-9 rounded-xl flex items-center justify-center transition-all" style={{ background: '#FFFFFF', border: `1px solid ${purple100}` }}>
+          }} className="w-9 h-9 rounded-xl flex items-center justify-center bg-white border border-gray-200 hover:border-gray-400 transition-all">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <path d="M15 18l-6-6 6-6"/>
             </svg>
           </button>
-          <h2 className="font-bold text-xl" style={{ fontFamily: "'Rubik', sans-serif", color: accent }}>{BULAN[bulan]} {tahun}</h2>
+          <h2 className="font-bold text-gray-900 text-xl">{BULAN[bulan]} {tahun}</h2>
           <button onClick={() => {
             if (bulan === 11) { setBulan(0); setTahun(t => t + 1) }
             else setBulan(b => b + 1)
-          }} className="w-9 h-9 rounded-xl flex items-center justify-center transition-all" style={{ background: '#FFFFFF', border: `1px solid ${purple100}` }}>
+          }} className="w-9 h-9 rounded-xl flex items-center justify-center bg-white border border-gray-200 hover:border-gray-400 transition-all">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <path d="M9 18l6-6-6-6"/>
             </svg>
@@ -222,23 +220,24 @@ export default function KalendarPublikPage() {
         </div>
 
         {/* Calendar */}
-        <div className="rounded-2xl overflow-hidden" style={{ background: '#FFFFFF', border: `1px solid ${purple100}` }}>
+        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
           {/* Day headers */}
-          <div className="grid grid-cols-7" style={{ borderBottom: `1px solid ${purple100}` }}>
+          <div className="grid grid-cols-7 border-b border-gray-100">
             {HARI.map(h => (
-              <div key={h} className="py-3 text-center text-xs font-semibold uppercase tracking-wider" style={{ color: accent, fontFamily: 'DM Mono' }}>{h}</div>
+              <div key={h} className="py-3 text-center text-xs font-semibold text-gray-400 uppercase tracking-wider"
+                style={{ fontFamily: 'DM Mono' }}>{h}</div>
             ))}
           </div>
 
           {loading ? (
             <div className="flex items-center justify-center h-48">
               <div className="w-7 h-7 rounded-full border-2 border-t-transparent animate-spin"
-                style={{ borderColor: `${purple100} ${purple100} ${purple100} ${primary}` }}/>
+                style={{ borderColor: `${purple100} ${purple100} ${purple100} ${purple}` }}/>
             </div>
           ) : (
             <div className="grid grid-cols-7">
               {calendarDays.map((day, i) => {
-                if (!day) return <div key={`empty-${i}`} className="min-h-16 p-0" style={{ borderBottom: `1px solid ${purple100}`, borderRight: `1px solid ${purple100}`, background: '#FAFAFA' }}/>
+                if (!day) return <div key={`empty-${i}`} className="min-h-16 border-b border-r border-gray-50 bg-gray-50/30"/>
                 const isToday    = day.tgl === today
                 const isSunday   = new Date(day.tgl + 'T00:00:00').getDay() === 0
                 const isSaturday = new Date(day.tgl + 'T00:00:00').getDay() === 6
@@ -247,13 +246,13 @@ export default function KalendarPublikPage() {
 
                 return (
                   <div key={day.tgl}
-                    className="min-h-16 p-1 cursor-pointer transition-colors" style={{ borderBottom: `1px solid ${purple100}`, borderRight: `1px solid ${purple100}` }}
-                    style={{ background: isSelected ? purple50 : hasLibur ? '#fff7ed' : isSunday ? '#FAFAFA' : '#FFFFFF' }}
+                    className="min-h-16 border-b border-r border-gray-50 p-1 cursor-pointer transition-colors"
+                    style={{ background: isSelected ? purple50 : hasLibur ? '#fff7ed' : isSunday ? '#fafafa' : 'white' }}
                     onClick={() => setSelectedDay(isSelected ? null : day.tgl)}>
                     <div className="flex justify-center mb-1">
                       <span className={`text-sm font-bold w-7 h-7 flex items-center justify-center rounded-full ${
                         isToday ? 'text-white' : isSunday ? 'text-red-400' : isSaturday ? 'text-blue-400' : 'text-gray-700'
-                      }`} style={{ background: isToday ? accent : 'transparent' }}>
+                      }`} style={{ background: isToday ? purple : 'transparent' }}>
                         {day.day}
                       </span>
                     </div>
@@ -285,9 +284,9 @@ export default function KalendarPublikPage() {
           const dayEvents = allEvents[selectedDay] || []
           const tglFmt = new Date(selectedDay + 'T00:00:00').toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
           return (
-            <div className="rounded-2xl p-5" style={{ background: '#FFFFFF', border: `1px solid ${purple100}` }}>
+            <div className="bg-white rounded-2xl border border-gray-100 p-5">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="font-bold text-sm" style={{ fontFamily: "'Rubik', sans-serif", color: accent }}>{tglFmt}</h3>
+                <h3 className="font-bold text-gray-900 text-sm">{tglFmt}</h3>
                 <button onClick={() => setSelectedDay(null)} className="text-gray-400 hover:text-gray-700">✕</button>
               </div>
               {dayEvents.length === 0 ? (
@@ -332,16 +331,16 @@ export default function KalendarPublikPage() {
 
         {/* Event list bulan ini */}
         {eventList.length > 0 && (
-          <div className="rounded-2xl overflow-hidden" style={{ background: '#FFFFFF', border: `1px solid ${purple100}` }}>
+          <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
             <div className="px-5 py-4 border-b border-gray-50">
-              <h3 className="font-bold text-sm" style={{ fontFamily: "'Rubik', sans-serif", color: accent }}>Agenda {BULAN[bulan]} {tahun}</h3>
+              <h3 className="font-bold text-gray-900 text-sm">Agenda {BULAN[bulan]} {tahun}</h3>
             </div>
             <div className="flex flex-col">
               {eventList.map((ev, i) => {
                 const cfg  = TYPE_CONFIG[ev.type] || TYPE_CONFIG.kegiatan
                 const tgl  = new Date(ev.tanggal + 'T00:00:00')
                 return (
-                  <div key={i} className="flex items-start gap-4 px-5 py-3.5" style={{ borderBottom: `1px solid ${purple100}` }}>
+                  <div key={i} className="flex items-start gap-4 px-5 py-3.5 border-b border-gray-50 last:border-0">
                     <div className="text-center flex-shrink-0 w-10">
                       <div className="text-lg font-bold text-gray-900">{tgl.getDate()}</div>
                       <div className="text-xs text-gray-400" style={{ fontFamily: 'DM Mono' }}>{HARI[tgl.getDay()]}</div>
@@ -383,7 +382,7 @@ export default function KalendarPublikPage() {
 
         {/* Footer */}
         <div className="text-center pb-4">
-          <p className="text-xs" style={{ color: '#d1d5db', fontFamily: 'DM Mono' }}>
+          <p className="text-xs text-gray-300" style={{ fontFamily: 'DM Mono' }}>
             SiCuti · {SCHOOL}
           </p>
         </div>

@@ -5,19 +5,18 @@ import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import Sidebar from '@/components/Sidebar'
 
-const primary    = '#A78BFA'
-const accent     = '#442F78'
-const purple50   = '#F5F0FF'
-const purple100  = '#EAB6FF'
+const purple    = '#6d28d9'
+const purple50  = '#f5f3ff'
+const purple100 = '#ede9fe'
 
 const BULAN = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember']
-const HARI  = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu']
+const HARI  = ['Min','Sen','Sel','Rab','Kam','Jum','Sab']
 
 const TYPE_CONFIG = {
   libur_nasional: { label: 'Libur Nasional', color: '#dc2626', bg: '#fef2f2', border: '#fecaca' },
   libur_sekolah:  { label: 'Libur Sekolah',  color: '#d97706', bg: '#fffbeb', border: '#fde68a' },
   kegiatan:       { label: 'Kegiatan',        color: '#0891b2', bg: '#ecfeff', border: '#a5f3fc' },
-  cuti_guru:      { label: 'Cuti Guru',       color: accent,    bg: purple50,  border: purple100 },
+  cuti_guru:      { label: 'Cuti Guru',       color: purple,    bg: purple50,  border: purple100 },
 }
 
 const EMPTY_FORM = { judul: '', deskripsi: '', tanggal: '', type: 'kegiatan', tampil_publik: true, waktu: '', tempat: '' }
@@ -64,15 +63,15 @@ const LIBUR_FALLBACK = {
   ]
 }
 
+// In-memory cache — persist selama session, tidak hit API berulang
 const _libCache = {}
 
 async function fetchLiburNasional(year) {
   if (_libCache[year]) return _libCache[year]
   try {
-    const res = await fetch(`https://api-hari-libur.vercel.app/api?year=${year}`, { cache: 'no-store' })
+    const res = await fetch(`https://api-hari-libur.vercel.app/api?year=${year}`)
     if (!res.ok) throw new Error('API error')
     const data = await res.json()
-    // Format: { date: '2026-01-01', description: '...' }
     let result
     if (!Array.isArray(data) && data?.data) {
       result = data.data.map(d => ({
@@ -92,14 +91,12 @@ async function fetchLiburNasional(year) {
     _libCache[year] = result
     return result
   } catch {
-    // Fallback ke data hardcoded
-    const fallback = LIBUR_FALLBACK[year] || []
-    const r = fallback.map(d => ({
+    const fallback = (LIBUR_FALLBACK[year] || []).map(d => ({
       id: `nasional-${d.tanggal}`, tanggal: d.tanggal, judul: d.judul,
       type: 'libur_nasional', tampil_publik: true, _source: 'fallback'
     }))
-    _libCache[year] = r
-    return r
+    _libCache[year] = fallback
+    return fallback
   }
 }
 
@@ -276,16 +273,16 @@ export default function KalendarPage() {
   const today = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`
 
   return (
-    <div className="flex h-screen overflow-hidden"
-      style={{ background: '#FAFAFA', fontFamily: "'Karla', sans-serif" }}>
+    <div className="flex h-screen bg-gray-50 overflow-hidden"
+      style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
       <style>{`
-        
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=DM+Mono:wght@300;400&display=swap');
         @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
         .fu{animation:fadeUp .35s ease both}
         input:focus,select:focus,textarea:focus{outline:none}
         ::-webkit-scrollbar{width:4px}
         ::-webkit-scrollbar-thumb{background:${purple100};border-radius:4px}
-        .overlay{position:fixed;inset:0;background:rgba(67,47,120,0.3);backdrop-filter:blur(4px);z-index:50;display:flex;align-items:center;justify-content:center}
+        .overlay{position:fixed;inset:0;background:rgba(0,0,0,0.4);backdrop-filter:blur(4px);z-index:50;display:flex;align-items:center;justify-content:center}
         @keyframes modalIn{from{opacity:0;transform:scale(0.95)}to{opacity:1;transform:scale(1)}}
         .modal{animation:modalIn .2s ease both}
       `}</style>
@@ -294,16 +291,15 @@ export default function KalendarPage() {
 
       <main className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
-        <header className="flex-shrink-0 flex items-center justify-between px-8 py-4"
-          style={{ background: '#FFFFFF', borderBottom: `1px solid ${purple100}` }}>
+        <header className="bg-white border-b border-gray-100 px-8 py-4 flex items-center justify-between flex-shrink-0">
           <div>
-            <h1 className="font-bold text-lg" style={{ fontFamily: "'Rubik', sans-serif", color: accent }}>Kalendar Sekolah</h1>
-            <p className="text-xs" style={{ color: '#9ca3af' }}>Kegiatan, libur, dan cuti guru</p>
+            <h1 className="font-bold text-gray-900 text-lg">Kalendar Sekolah</h1>
+            <p className="text-xs text-gray-400">Kegiatan, libur, dan cuti guru</p>
           </div>
           <div className="flex items-center gap-3">
             <a href="/kalendar" target="_blank"
               className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium transition-all"
-              style={{ background: purple50, color: accent, border: `1px solid ${purple100}` }}>
+              style={{ background: purple50, color: purple, border: `1px solid ${purple100}` }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                 <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
                 <polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
@@ -313,7 +309,7 @@ export default function KalendarPage() {
             {isAdmin && (
               <button onClick={() => openAdd()}
                 className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all"
-                style={{ background: accent, boxShadow: `0 4px 14px ${accent}30`, fontFamily: "'Rubik', sans-serif" }}>
+                style={{ background: purple, boxShadow: `0 4px 14px ${purple}30` }}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
                   <path d="M12 5v14M5 12h14"/>
                 </svg>
@@ -331,25 +327,25 @@ export default function KalendarPage() {
               <button onClick={() => {
                 if (bulan === 0) { setBulan(11); setTahun(t => t - 1) }
                 else setBulan(b => b - 1)
-              }} className="w-9 h-9 rounded-xl flex items-center justify-center transition-all" style={{ background: '#FFFFFF', border: `1px solid ${purple100}` }}>
+              }} className="w-9 h-9 rounded-xl flex items-center justify-center bg-white border border-gray-200 hover:border-gray-400 transition-all">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                   <path d="M15 18l-6-6 6-6"/>
                 </svg>
               </button>
-              <h2 className="font-bold text-xl" style={{ minWidth: 200, textAlign: 'center', fontFamily: "'Rubik', sans-serif", color: accent }}>
+              <h2 className="font-bold text-gray-900 text-xl" style={{ minWidth: 200, textAlign: 'center' }}>
                 {BULAN[bulan]} {tahun}
               </h2>
               <button onClick={() => {
                 if (bulan === 11) { setBulan(0); setTahun(t => t + 1) }
                 else setBulan(b => b + 1)
-              }} className="w-9 h-9 rounded-xl flex items-center justify-center transition-all" style={{ background: '#FFFFFF', border: `1px solid ${purple100}` }}>
+              }} className="w-9 h-9 rounded-xl flex items-center justify-center bg-white border border-gray-200 hover:border-gray-400 transition-all">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                   <path d="M9 18l6-6-6-6"/>
                 </svg>
               </button>
               <button onClick={() => { setBulan(now.getMonth()); setTahun(now.getFullYear()) }}
                 className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
-                style={{ background: purple50, color: accent }}>
+                style={{ background: purple50, color: purple }}>
                 Hari Ini
               </button>
             </div>
@@ -366,11 +362,12 @@ export default function KalendarPage() {
           </div>
 
           {/* Calendar grid */}
-          <div className="fu rounded-2xl overflow-hidden" style={{ background: '#FFFFFF', border: `1px solid ${purple100}` }}>
+          <div className="fu bg-white rounded-2xl border border-gray-100 overflow-hidden">
             {/* Day headers */}
-            <div className="grid grid-cols-7" style={{ borderBottom: `1px solid ${purple100}` }}>
+            <div className="grid grid-cols-7 border-b border-gray-100">
               {HARI.map(h => (
-                <div key={h} className="py-3 text-center text-xs font-semibold uppercase tracking-wider" style={{ color: accent, fontFamily: 'DM Mono' }}>
+                <div key={h} className="py-3 text-center text-xs font-semibold text-gray-400 uppercase tracking-wider"
+                  style={{ fontFamily: 'DM Mono' }}>
                   {h}
                 </div>
               ))}
@@ -379,7 +376,7 @@ export default function KalendarPage() {
             {/* Days */}
             <div className="grid grid-cols-7">
               {calendarDays.map((day, i) => {
-                if (!day) return <div key={`empty-${i}`} className="min-h-24" style={{ borderBottom: `1px solid ${purple100}`, borderRight: `1px solid ${purple100}`, background: '#FAFAFA' }}/>
+                if (!day) return <div key={`empty-${i}`} className="min-h-24 border-b border-r border-gray-50 bg-gray-50/30"/>
                 const isToday    = day.tgl === today
                 const isSunday   = new Date(day.tgl + 'T00:00:00').getDay() === 0
                 const isSaturday = new Date(day.tgl + 'T00:00:00').getDay() === 6
@@ -388,21 +385,21 @@ export default function KalendarPage() {
 
                 return (
                   <div key={day.tgl}
-                    className="min-h-24 p-1.5 cursor-pointer transition-colors" style={{ borderBottom: `1px solid ${purple100}`, borderRight: `1px solid ${purple100}` }}
-                    style={{ background: isSelected ? purple50 : hasLibur ? '#fff7ed' : isSunday ? '#FAFAFA' : '#FFFFFF' }}
+                    className="min-h-24 border-b border-r border-gray-50 p-1.5 cursor-pointer transition-colors"
+                    style={{ background: isSelected ? purple50 : hasLibur ? '#fff7ed' : isSunday ? '#fafafa' : 'white' }}
                     onClick={() => setSelectedDay(isSelected ? null : day.tgl)}>
 
                     {/* Day number */}
                     <div className="flex items-center justify-between mb-1">
                       <span className={`text-sm font-bold w-7 h-7 flex items-center justify-center rounded-full transition-all ${
                         isToday ? 'text-white' : isSunday ? 'text-red-400' : isSaturday ? 'text-blue-400' : 'text-gray-700'
-                      }`} style={{ background: isToday ? accent : 'transparent' }}>
+                      }`} style={{ background: isToday ? purple : 'transparent' }}>
                         {day.day}
                       </span>
                       {isAdmin && (
                         <button onClick={e => { e.stopPropagation(); openAdd(day.tgl) }}
                           className="w-5 h-5 rounded flex items-center justify-center opacity-0 hover:opacity-100 group-hover:opacity-100 transition-opacity"
-                          style={{ color: primary }}>
+                          style={{ color: purple }}>
                           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round">
                             <path d="M12 5v14M5 12h14"/>
                           </svg>
@@ -438,14 +435,14 @@ export default function KalendarPage() {
             const dayEvents = allEvents[selectedDay] || []
             const tglFmt = new Date(selectedDay + 'T00:00:00').toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
             return (
-              <div className="fu mt-4 rounded-2xl p-5" style={{ background: '#FFFFFF', border: `1px solid ${purple100}` }}>
+              <div className="fu mt-4 bg-white rounded-2xl border border-gray-100 p-5">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-bold" style={{ fontFamily: "'Rubik', sans-serif", color: accent }}>{tglFmt}</h3>
+                  <h3 className="font-bold text-gray-900">{tglFmt}</h3>
                   <div className="flex items-center gap-2">
                     {isAdmin && (
                       <button onClick={() => openAdd(selectedDay)}
                         className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
-                        style={{ background: purple50, color: accent }}>
+                        style={{ background: purple50, color: purple }}>
                         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
                           <path d="M12 5v14M5 12h14"/>
                         </svg>
@@ -528,13 +525,13 @@ export default function KalendarPage() {
       {/* Modal tambah/edit event */}
       {showModal && isAdmin && (
         <div className="overlay" onClick={e => e.target === e.currentTarget && setShowModal(false)}>
-          <div className="modal w-full max-w-md mx-4 overflow-hidden rounded-2xl" style={{ background: '#FFFFFF', boxShadow: `0 24px 64px ${accent}25` }}>
-            <div className="px-6 py-5 flex items-center justify-between" style={{ borderBottom: `1px solid ${purple100}` }}>
-              <h2 className="font-bold text-lg" style={{ fontFamily: "'Rubik', sans-serif", color: accent }}>
+          <div className="modal bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+            <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
+              <h2 className="font-bold text-gray-900 text-lg">
                 {editEvent ? 'Edit Event' : 'Tambah Event'}
               </h2>
               <button onClick={() => setShowModal(false)}
-                className="w-8 h-8 flex items-center justify-center rounded-lg text-sm" style={{ color: '#9ca3af', background: purple50 }}>✕</button>
+                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-400">✕</button>
             </div>
 
             <form onSubmit={handleSave} className="px-6 py-5 flex flex-col gap-4">
@@ -548,7 +545,7 @@ export default function KalendarPage() {
                 <input type="text" required placeholder="contoh: Hari Raya Idul Fitri"
                   value={form.judul} onChange={e => setForm(p => ({ ...p, judul: e.target.value }))}
                   className="w-full px-4 py-3 text-sm border rounded-xl transition-all"
-                  style={{ border: `1.5px solid ${form.judul ? primary : purple100}`, background: form.judul ? purple50 : '#FFFFFF', color: '#111827' }}
+                  style={{ border: `1.5px solid ${form.judul ? purple : '#e5e7eb'}`, background: form.judul ? purple50 : 'white', color: '#111' }}
                 />
               </div>
 
@@ -561,7 +558,7 @@ export default function KalendarPage() {
                 <input type="date" required value={form.tanggal}
                   onChange={e => setForm(p => ({ ...p, tanggal: e.target.value }))}
                   className="w-full px-4 py-3 text-sm border rounded-xl transition-all"
-                  style={{ border: `1.5px solid ${form.tanggal ? primary : purple100}`, background: form.tanggal ? purple50 : '#FFFFFF', color: '#111827' }}
+                  style={{ border: `1.5px solid ${form.tanggal ? purple : '#e5e7eb'}`, background: form.tanggal ? purple50 : 'white', color: '#111' }}
                 />
               </div>
 
@@ -571,7 +568,7 @@ export default function KalendarPage() {
                   style={{ fontFamily: 'DM Mono' }}>Tipe</label>
                 <select value={form.type} onChange={e => setForm(p => ({ ...p, type: e.target.value }))}
                   className="w-full px-4 py-3 text-sm border rounded-xl transition-all appearance-none"
-                  style={{ border: `1.5px solid ${primary}`, background: purple50, color: '#111827' }}>
+                  style={{ border: `1.5px solid ${purple}`, background: purple50, color: '#111' }}>
                   <option value="kegiatan">Kegiatan Sekolah</option>
                   <option value="libur_sekolah">Libur Sekolah</option>
                 </select>
@@ -584,7 +581,7 @@ export default function KalendarPage() {
                 <textarea rows={2} placeholder="Keterangan tambahan..."
                   value={form.deskripsi} onChange={e => setForm(p => ({ ...p, deskripsi: e.target.value }))}
                   className="w-full px-4 py-3 text-sm border rounded-xl transition-all resize-none"
-                  style={{ border: `1.5px solid ${form.deskripsi ? primary : purple100}`, background: form.deskripsi ? purple50 : '#FFFFFF', color: '#111827' }}
+                  style={{ border: `1.5px solid ${form.deskripsi ? purple : '#e5e7eb'}`, background: form.deskripsi ? purple50 : 'white', color: '#111' }}
                 />
               </div>
 
@@ -597,7 +594,7 @@ export default function KalendarPage() {
                     <input type="text" placeholder="contoh: 08.00 WITA"
                       value={form.waktu} onChange={e => setForm(p => ({ ...p, waktu: e.target.value }))}
                       className="w-full px-4 py-3 text-sm border rounded-xl transition-all"
-                      style={{ border: `1.5px solid ${form.waktu ? primary : purple100}`, background: form.waktu ? purple50 : '#FFFFFF', color: '#111827' }}
+                      style={{ border: `1.5px solid ${form.waktu ? purple : '#e5e7eb'}`, background: form.waktu ? purple50 : 'white', color: '#111' }}
                     />
                   </div>
                   <div>
@@ -606,21 +603,21 @@ export default function KalendarPage() {
                     <input type="text" placeholder="contoh: Aula Sekolah"
                       value={form.tempat} onChange={e => setForm(p => ({ ...p, tempat: e.target.value }))}
                       className="w-full px-4 py-3 text-sm border rounded-xl transition-all"
-                      style={{ border: `1.5px solid ${form.tempat ? primary : purple100}`, background: form.tempat ? purple50 : '#FFFFFF', color: '#111827' }}
+                      style={{ border: `1.5px solid ${form.tempat ? purple : '#e5e7eb'}`, background: form.tempat ? purple50 : 'white', color: '#111' }}
                     />
                   </div>
                 </div>
               )}
 
               {/* Tampil publik */}
-              <div className="flex items-center justify-between p-4 rounded-xl" style={{ background: purple50, border: `1px solid ${purple100}` }}>
+              <div className="flex items-center justify-between p-4 rounded-xl" style={{ background: '#f9fafb' }}>
                 <div>
-                  <div className="text-sm font-semibold" style={{ color: accent }}>Tampilkan di Kalendar Publik</div>
+                  <div className="text-sm font-semibold text-gray-700">Tampilkan di Kalendar Publik</div>
                   <div className="text-xs text-gray-400 mt-0.5">Wali murid bisa melihat event ini</div>
                 </div>
                 <button type="button" onClick={() => setForm(p => ({ ...p, tampil_publik: !p.tampil_publik }))}
                   className="w-11 h-6 rounded-full transition-all flex-shrink-0"
-                  style={{ background: form.tampil_publik ? accent : '#d1d5db' }}>
+                  style={{ background: form.tampil_publik ? purple : '#d1d5db' }}>
                   <div className="w-5 h-5 bg-white rounded-full shadow transition-all mx-0.5"
                     style={{ transform: form.tampil_publik ? 'translateX(20px)' : 'translateX(0)' }}/>
                 </button>
@@ -634,12 +631,12 @@ export default function KalendarPage() {
 
               <div className="flex gap-3 pt-1">
                 <button type="button" onClick={() => setShowModal(false)}
-                  className="flex-1 py-3 rounded-xl text-sm font-semibold transition-all" style={{ background: purple50, color: accent, border: `1px solid ${purple100}`, fontFamily: "'Rubik', sans-serif" }}>
+                  className="flex-1 py-3 rounded-xl text-sm font-semibold text-gray-500 bg-gray-100 hover:bg-gray-200 transition-all">
                   Batal
                 </button>
                 <button type="submit" disabled={saving}
                   className="flex-1 py-3 rounded-xl text-sm font-semibold text-white transition-all"
-                  style={{ background: saving ? primary : accent, fontFamily: "'Rubik', sans-serif" }}>
+                  style={{ background: saving ? '#a78bfa' : purple }}>
                   {saving ? 'Menyimpan...' : editEvent ? 'Simpan Perubahan' : 'Tambah Event'}
                 </button>
               </div>
