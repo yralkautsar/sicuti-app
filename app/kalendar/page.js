@@ -9,7 +9,7 @@ const purple100 = '#ede9fe'
 const SCHOOL    = 'TK Karakter Mutiara Bunda Bali'
 
 const BULAN = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember']
-const HARI  = ['Min','Sen','Sel','Rab','Kam','Jum','Sab']
+const HARI  = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu']
 
 const TYPE_CONFIG = {
   libur_nasional: { label: 'Libur Nasional', color: '#dc2626', bg: '#fef2f2', border: '#fecaca' },
