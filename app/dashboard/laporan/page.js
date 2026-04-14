@@ -176,11 +176,14 @@ export default function LaporanPage() {
 
   // ── MURID computed ──
   const hariRowsMurid = useMemo(() => {
+    // Pre-index harian: Map<student_id+type, record>
+    const idx = new Map()
+    hariDataMurid.forEach(r => idx.set(`${r.student_id}|${r.type}`, r))
+
     const filtered = murids.filter(m => !filterKelas || m.class_id === filterKelas)
     return filtered.map(m => {
-      const recs      = hariDataMurid.filter(r => r.student_id === m.id)
-      const masukRec  = recs.find(r => r.type === 'masuk')
-      const pulangRec = recs.find(r => r.type === 'pulang')
+      const masukRec  = idx.get(`${m.id}|masuk`)
+      const pulangRec = idx.get(`${m.id}|pulang`)
       const jamMasuk  = fmtTime(masukRec?.scanned_at)
       const jamPulang = fmtTime(pulangRec?.scanned_at)
       let status = 'Tidak Masuk'
@@ -208,13 +211,25 @@ export default function LaporanPage() {
   const bulanRowsMurid = useMemo(() => {
     const hariKerja = getWeekdaysInMonth(tahun, bulan)
     const filtered  = murids.filter(m => !filterKelas || m.class_id === filterKelas)
+
+    // Pre-index: Map<student_id+date, record> — O(n) build, O(1) lookup
+    const idx = new Map()
+    bulanDataMurid.forEach(r => {
+      if (r.type === 'masuk') idx.set(`${r.student_id}|${r.date}`, r)
+    })
+
     return filtered.map(m => {
-      const recs = bulanDataMurid.filter(r => r.student_id === m.id)
-      let hadir = 0, telat = 0, tidakMasuk = 0, totalMenit = 0
+      let hadir = 0, telat = 0, izin = 0, sakit = 0, alpha = 0, tidakMasuk = 0, totalMenit = 0
       const telatDetail = []
       hariKerja.forEach(tgl => {
-        const masukRec = recs.find(r => r.date === tgl && r.type === 'masuk')
+        const masukRec = idx.get(`${m.id}|${tgl}`)
         if (!masukRec) { tidakMasuk++; return }
+        // Cek status manual (izin/sakit/alpha) sebelum cek jam
+        const s = masukRec.status
+        if (s === 'izin')  { izin++;  return }
+        if (s === 'sakit') { sakit++; return }
+        if (s === 'alpha') { alpha++; return }
+        // Status hadir — cek apakah telat
         const jam = fmtTime(masukRec.scanned_at)
         if (isLate(jam, BATAS_MURID)) {
           telat++
@@ -223,16 +238,19 @@ export default function LaporanPage() {
           telatDetail.push({ tgl, jam, mnt })
         } else hadir++
       })
-      return { ...m, hadir, telat, tidakMasuk, total: hariKerja.length, telatDetail, totalMenit }
+      return { ...m, hadir, telat, izin, sakit, alpha, tidakMasuk, total: hariKerja.length, telatDetail, totalMenit }
     })
   }, [bulanDataMurid, murids, filterKelas, bulan, tahun])
 
   // ── GURU computed ──
   const hariRowsGuru = useMemo(() => {
+    // Pre-index harian: Map<profile_id+type, record>
+    const idx = new Map()
+    hariDataGuru.forEach(r => idx.set(`${r.profile_id}|${r.type}`, r))
+
     return gurus.map(g => {
-      const recs      = hariDataGuru.filter(r => r.profile_id === g.id)
-      const masukRec  = recs.find(r => r.type === 'masuk')
-      const pulangRec = recs.find(r => r.type === 'pulang')
+      const masukRec  = idx.get(`${g.id}|masuk`)
+      const pulangRec = idx.get(`${g.id}|pulang`)
       const jamMasuk  = fmtTime(masukRec?.scanned_at)
       const jamPulang = fmtTime(pulangRec?.scanned_at)
       let status = 'Tidak Masuk'
@@ -250,12 +268,18 @@ export default function LaporanPage() {
 
   const bulanRowsGuru = useMemo(() => {
     const hariKerja = getWorkdaysGuruInMonth(tahun, bulan)
+
+    // Pre-index: Map<profile_id+date, record> — O(n) build, O(1) lookup
+    const idx = new Map()
+    bulanDataGuru.forEach(r => {
+      if (r.type === 'masuk') idx.set(`${r.profile_id}|${r.date}`, r)
+    })
+
     return gurus.map(g => {
-      const recs = bulanDataGuru.filter(r => r.profile_id === g.id)
       let hadir = 0, telat = 0, tidakMasuk = 0, totalMenit = 0
       const telatDetail = []
       hariKerja.forEach(tgl => {
-        const masukRec = recs.find(r => r.date === tgl && r.type === 'masuk')
+        const masukRec = idx.get(`${g.id}|${tgl}`)
         if (!masukRec) { tidakMasuk++; return }
         const jam = fmtTime(masukRec.scanned_at)
         if (isLate(jam, BATAS_GURU)) {
@@ -296,25 +320,28 @@ export default function LaporanPage() {
         ]
       })
     } else {
-      headers  = ['No', 'Nama', isMurid ? 'Kelas' : 'Jabatan', 'Hari Kerja', 'Hadir', 'Telat', 'Tidak Masuk', '% Hadir', 'Total Hari Telat', 'Total Menit Telat', 'Detail Keterlambatan']
+      if (isMurid) {
+        headers = ['No', 'Nama', 'Kelas', 'Hari Kerja', 'Hadir', 'Telat', 'Izin', 'Sakit', 'Alpha', '% Hadir', 'Total Hari Telat', 'Total Menit Telat', 'Detail Keterlambatan']
+      } else {
+        headers = ['No', 'Nama', 'Jabatan', 'Hari Kerja', 'Hadir', 'Telat', 'Tidak Masuk', '% Hadir', 'Total Hari Telat', 'Total Menit Telat', 'Detail Keterlambatan']
+      }
       csvRows  = rows.map((r, i) => {
         const pct = r.total > 0 ? Math.round(((r.hadir + r.telat) / r.total) * 100) : 0
         const detail = (r.telatDetail || []).map(t => {
           const tglFmt = new Date(t.tgl).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })
           return `${tglFmt} (${t.mnt} mnt)`
         }).join(', ')
+        if (isMurid) {
+          return [
+            i + 1, r.full_name, r.classes?.nama_kelas || '',
+            r.total, r.hadir, r.telat, r.izin || 0, r.sakit || 0, r.alpha || 0,
+            pct + '%', r.telat || 0, r.totalMenit ? fmtMenit(r.totalMenit) : '', detail,
+          ]
+        }
         return [
-          i + 1,
-          r.full_name,
-          isMurid ? (r.classes?.nama_kelas || '') : (r.jabatan || ''),
-          r.total,
-          r.hadir,
-          r.telat,
-          r.tidakMasuk,
-          pct + '%',
-          r.telat || 0,
-          r.totalMenit ? fmtMenit(r.totalMenit) : '',
-          detail,
+          i + 1, r.full_name, r.jabatan || '',
+          r.total, r.hadir, r.telat, r.tidakMasuk,
+          pct + '%', r.telat || 0, r.totalMenit ? fmtMenit(r.totalMenit) : '', detail,
         ]
       })
     }
@@ -418,7 +445,7 @@ export default function LaporanPage() {
             </div>
 
             {/* Mode: Harian | Bulanan */}
-            <div className="flex p-1 rounded-xl" style={{ background: '#f3f4f6' }}>
+            <div className="flex p-1 rounded-xl" style={{ background: purple50, border: `1px solid ${purple100}` }}>
               {[{ key: 'harian', label: 'Harian' }, { key: 'bulanan', label: 'Bulanan' }].map(t => (
                 <button key={t.key} onClick={() => setMode(t.key)}
                   className="px-4 py-2 rounded-lg text-sm font-semibold transition-all"
@@ -432,8 +459,8 @@ export default function LaporanPage() {
 
             {mode === 'harian' && (
               <input type="date" value={tanggal} onChange={e => setTanggal(e.target.value)}
-                className="px-4 py-2 text-sm border border-gray-200 rounded-xl bg-white"
-                style={{ color: '#111' }}/>
+                className="px-4 py-2 text-sm rounded-xl transition-all"
+                style={{ border: `1.5px solid ${primary}`, background: purple50, color: '#111827' }}/>
             )}
 
             {mode === 'bulanan' && (
@@ -451,8 +478,8 @@ export default function LaporanPage() {
 
             {subjectTab === 'murid' && (
               <select value={filterKelas} onChange={e => setFilterKelas(e.target.value)}
-                className="px-4 py-2 text-sm border border-gray-200 rounded-xl bg-white appearance-none"
-                style={{ color: filterKelas ? '#111' : '#9ca3af' }}>
+                className="px-4 py-2 text-sm rounded-xl appearance-none transition-all"
+                style={{ border: `1.5px solid ${filterKelas ? primary : purple100}`, background: filterKelas ? purple50 : '#FFFFFF', color: filterKelas ? '#111827' : '#9ca3af' }}>
                 <option value="">Semua Kelas</option>
                 {classes.map(k => (
                   <option key={k.id} value={k.id}>{k.nama_kelas} — {k.tahun_ajaran}</option>
@@ -604,7 +631,10 @@ export default function LaporanPage() {
                     <table className="w-full">
                       <thead>
                         <tr style={{ background: purple50, borderBottom: `1px solid ${purple100}` }}>
-                          {['', 'No', subjectTab === 'murid' ? 'Nama Murid' : 'Nama Guru', subjectTab === 'murid' ? 'Kelas' : 'Jabatan', 'Hari Kerja', 'Hadir', 'Telat', 'Tidak Masuk', '% Hadir', 'Total Terlambat'].map(h => (
+                          {(subjectTab === 'murid'
+                            ? ['', 'No', 'Nama Murid', 'Kelas', 'Hari Kerja', 'Hadir', 'Telat', 'Izin', 'Sakit', 'Alpha', '% Hadir', 'Total Terlambat']
+                            : ['', 'No', 'Nama Guru', 'Jabatan', 'Hari Kerja', 'Hadir', 'Telat', 'Tidak Masuk', '% Hadir', 'Total Terlambat']
+                          ).map(h => (
                             <th key={h} className="text-left px-4 py-3.5 text-xs font-semibold uppercase tracking-wider" style={{ color: accent, fontFamily: 'DM Mono' }}>{h}</th>
                           ))}
                         </tr>
@@ -640,7 +670,15 @@ export default function LaporanPage() {
                                 <td className="px-4 py-3.5 text-sm text-gray-600">{row.total}</td>
                                 <td className="px-4 py-3.5"><span className="text-sm font-semibold" style={{ color: '#16a34a' }}>{row.hadir}</span></td>
                                 <td className="px-4 py-3.5"><span className="text-sm font-semibold" style={{ color: '#d97706' }}>{row.telat}</span></td>
-                                <td className="px-4 py-3.5"><span className="text-sm font-semibold" style={{ color: '#dc2626' }}>{row.tidakMasuk}</span></td>
+                                {subjectTab === 'murid' ? (
+                                  <>
+                                    <td className="px-4 py-3.5"><span className="text-sm font-semibold" style={{ color: '#d97706' }}>{row.izin || 0}</span></td>
+                                    <td className="px-4 py-3.5"><span className="text-sm font-semibold" style={{ color: '#0891b2' }}>{row.sakit || 0}</span></td>
+                                    <td className="px-4 py-3.5"><span className="text-sm font-semibold" style={{ color: '#dc2626' }}>{row.alpha || 0}</span></td>
+                                  </>
+                                ) : (
+                                  <td className="px-4 py-3.5"><span className="text-sm font-semibold" style={{ color: '#dc2626' }}>{row.tidakMasuk}</span></td>
+                                )}
                                 <td className="px-4 py-3.5">
                                   <div className="flex items-center gap-2">
                                     <div className="w-16 h-1.5 rounded-full overflow-hidden" style={{ background: purple50 }}>
@@ -662,7 +700,7 @@ export default function LaporanPage() {
                               </tr>
                               {expanded && hasDetail && (
                                 <tr style={{ background: purple50 }}>
-                                  <td colSpan={10} className="px-8 pb-4 pt-1">
+                                  <td colSpan={subjectTab === 'murid' ? 12 : 10} className="px-8 pb-4 pt-1">
                                     <div className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: accent, fontFamily: 'DM Mono' }}>
                                       Detail Keterlambatan — {row.full_name}
                                     </div>
