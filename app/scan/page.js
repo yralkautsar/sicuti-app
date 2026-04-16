@@ -5,10 +5,10 @@ import { supabase } from '@/lib/supabase'
 
 const SCHOOL_NAME   = 'TK Karakter Mutiara Bunda Bali'
 const SCAN_COOLDOWN = 3000
-const primary       = '#A78BFA'
-const accent        = '#442F78'
-const purple50      = '#F5F0FF'
-const purple100     = '#EAB6FF'
+const primary    = '#A78BFA'
+const accent     = '#442F78'
+const primaryBg  = 'rgba(167,139,250,0.12)'
+const border     = '#EAB6FF'
 
 export default function ScanPage() {
   const qrInstanceRef      = useRef(null)
@@ -16,14 +16,14 @@ export default function ScanPage() {
   const lastScannedTimeRef = useRef(0)
   const scanModeRef        = useRef('murid')
 
-  const [status, setStatus]               = useState('idle')
-  const [result, setResult]               = useState(null)
-  const [time, setTime]                   = useState('')
-  const [date, setDate]                   = useState('')
-  const [scanMode, setScanMode]           = useState('murid')
+  const [status, setStatus]             = useState('idle')
+  const [result, setResult]             = useState(null)
+  const [time, setTime]                 = useState('')
+  const [date, setDate]                 = useState('')
+  const [scanMode, setScanMode]         = useState('murid')
   const [cameraStarted, setCameraStarted] = useState(false)
-  const [cameraError, setCameraError]     = useState('')
-  const [starting, setStarting]           = useState(false)
+  const [cameraError, setCameraError]   = useState('')
+  const [starting, setStarting]         = useState(false)
 
   useEffect(() => { scanModeRef.current = scanMode }, [scanMode])
 
@@ -63,12 +63,15 @@ export default function ScanPage() {
     try {
       const { Html5Qrcode } = await import('html5-qrcode')
 
+      // Request camera permission via native browser API first
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } })
-      stream.getTracks().forEach(t => t.stop())
+      stream.getTracks().forEach(t => t.stop()) // stop stream, just needed permission
 
+      // Get available cameras
       const cameras = await Html5Qrcode.getCameras()
       if (!cameras || cameras.length === 0) throw new Error('Tidak ada kamera ditemukan.')
 
+      // Pick back camera if available, else first
       const back = cameras.find(c => /front|user|depan|facing front/i.test(c.label))
       const cameraId = (back || cameras[cameras.length - 1]).id
 
@@ -177,17 +180,16 @@ export default function ScanPage() {
   const isError = status === 'error'
   const isMurid = scanMode === 'murid'
 
-  const borderColor = success ? '#86efac' : isError ? '#fca5a5' : cameraStarted ? primary : purple100
+  const borderColor = success ? '#86efac' : isError ? '#fca5a5' : cameraStarted ? primary : border
   const shadowColor = success ? '#4ade8020' : isError ? '#f8717120' : `${primary}15`
 
   return (
     <div className="h-screen flex flex-col overflow-hidden"
-      style={{ fontFamily: "'Karla', sans-serif", background: '#FAFAFA' }}>
+      style={{ background: '#FAFAFA' }}>
       <style>{`
-        
         /* Hide ALL html5-qrcode UI elements */
         #qr-reader-container { width:100%!important; height:100%!important; border:none!important; background:transparent!important; }
-        #qr-reader-container video { width:100%!important; height:100%!important; object-fit:cover!important; display:block!important; }
+        #qr-reader-container video { width:100%!important; height:100%!important; object-fit:cover!important; display:block!important; transform:scaleX(-1)!important; }
         #qr-reader-container img { display:none!important; }
         #qr-reader-container__scan_region { border:none!important; padding:0!important; height:100%!important; }
         #qr-reader-container__scan_region > img { display:none!important; }
@@ -206,7 +208,7 @@ export default function ScanPage() {
           height: 2px;
           z-index: 10;
           pointer-events: none;
-          background: linear-gradient(90deg, transparent, ${primary} 30%, ${purple100} 70%, transparent);
+          background: linear-gradient(90deg, transparent, ${primary} 30%, ${border} 70%, transparent);
           box-shadow: 0 0 16px 3px ${primary}60;
           animation: sweep 2.8s ease-in-out infinite;
         }
@@ -215,19 +217,16 @@ export default function ScanPage() {
           50% { opacity: 0.5; }
         }
         .corner { animation: cornerPulse 2s ease-in-out infinite; }
-
         @keyframes popIn {
           from { opacity: 0; transform: scale(0.92); }
           to   { opacity: 1; transform: scale(1); }
         }
         .pop-in { animation: popIn 0.25s ease both; }
-
         @keyframes fadeUp {
           from { opacity: 0; transform: translateY(10px); }
           to   { opacity: 1; transform: translateY(0); }
         }
         .fade-up { animation: fadeUp 0.3s ease both; }
-
         @media (orientation: portrait) {
           .header-school-name { display: none; }
           .header-date { display: none; }
@@ -239,31 +238,27 @@ export default function ScanPage() {
       `}</style>
 
       {/* HEADER */}
-      <header className="flex-shrink-0 flex items-center justify-between px-5 py-3"
-        style={{ background: '#FFFFFF', borderBottom: `1px solid ${purple100}` }}>
+      <header className="flex-shrink-0 flex items-center justify-between px-4 py-2.5"
+        style={{ background: '#FFFFFF', borderBottom: `1px solid ${border}` }}>
         <div className="flex items-center gap-3">
           <img src="/logoborder.png" alt="Logo" className="w-8 h-8 object-contain flex-shrink-0" />
           <div>
-            <div className="header-school-name font-semibold text-sm leading-tight"
-              style={{ fontFamily: "'Rubik', sans-serif", color: accent }}>{SCHOOL_NAME}</div>
-            <div className="header-date text-xs" style={{ color: '#9ca3af', fontFamily: 'DM Mono' }}>{date}</div>
+            <div className="header-school-name font-bold text-sm leading-tight" style={{ color: accent }}>{SCHOOL_NAME}</div>
+            <div className="header-date text-xs" style={{ color: primary, fontFamily: 'DM Mono' }}>{date}</div>
           </div>
         </div>
         <div className="flex items-center gap-3">
           <div className="text-right">
-            <div className="header-time font-bold tabular-nums"
-              style={{ fontSize: 20, color: accent, fontFamily: 'DM Mono' }}>{time}</div>
-            <div className="text-xs" style={{ color: '#9ca3af' }}>WITA</div>
+            <div className="header-time font-bold tabular-nums" style={{ fontSize: 20, color: accent }}>{time}</div>
+            <div className="text-xs" style={{ color: primary }}>WITA</div>
           </div>
           <a href="/panduan" target="_blank"
             className="no-print flex items-center justify-center w-9 h-9 rounded-xl text-sm font-bold transition-all"
-            style={{ background: purple50, color: primary }}
-            title="Panduan Penggunaan">
-            ?
-          </a>
+            style={{ background: primaryBg, color: accent }}
+            title="Panduan Penggunaan">?</a>
           <a href="/login"
             className="header-login flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold transition-all"
-            style={{ background: accent, color: '#FFFFFF' }}>
+            style={{ background: primaryBg, color: accent }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/>
             </svg>
@@ -274,7 +269,7 @@ export default function ScanPage() {
 
       {/* MODE TOGGLE */}
       <div className="flex justify-center pt-4 pb-3 flex-shrink-0">
-        <div className="flex p-1 rounded-2xl" style={{ background: purple50, border: `1px solid ${purple100}` }}>
+        <div className="flex p-1 rounded-2xl" style={{ background: primaryBg }}>
           {[
             { key: 'murid', label: 'Absensi Murid', icon: (
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
@@ -290,8 +285,8 @@ export default function ScanPage() {
             <button key={key} onClick={() => handleModeChange(key)}
               className="flex items-center gap-2 px-7 py-2.5 rounded-xl text-sm font-semibold transition-all"
               style={scanMode === key
-                ? { background: accent, color: 'white', boxShadow: `0 4px 14px ${accent}40`, fontFamily: "'Rubik', sans-serif" }
-                : { color: primary, fontFamily: "'Rubik', sans-serif" }}>
+                ? { background: accent, color: 'white', boxShadow: `0 4px 14px ${accent}40` }
+                : { color: accent }}>
               {icon}{label}
             </button>
           ))}
@@ -303,21 +298,15 @@ export default function ScanPage() {
         <div className="relative w-full h-full max-w-xl"
           style={{
             borderRadius: 24,
-            border: `2px solid ${borderColor}`,
-            background: '#FFFFFF',
+            border: `2.5px solid ${borderColor}`,
+            background: '#f8f8f8',
             overflow: 'hidden',
             transition: 'border-color .3s, box-shadow .3s',
             boxShadow: `0 0 0 5px ${shadowColor}`,
           }}>
 
-          {/* QR reader div */}
           <div id="qr-reader-container"
-            style={{
-              position: 'absolute', inset: 0,
-              opacity: cameraStarted && idle ? 1 : 0,
-              transition: 'opacity .3s',
-              zIndex: 1,
-            }}
+            style={{ position: 'absolute', inset: 0, opacity: cameraStarted && idle ? 1 : 0, transition: 'opacity .3s', zIndex: 1 }}
           />
 
           {/* Corner brackets */}
@@ -336,21 +325,20 @@ export default function ScanPage() {
             </>
           )}
 
-          {/* IDLE — belum mulai */}
+          {/* IDLE */}
           {!cameraStarted && idle && (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-5 fade-up"
               style={{ zIndex: 10, background: '#FAFAFA' }}>
               <div className="w-20 h-20 rounded-2xl flex items-center justify-center"
-                style={{ background: purple50, border: `1px solid ${purple100}` }}>
+                style={{ background: primaryBg }}>
                 <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke={primary} strokeWidth="1.5" strokeLinecap="round">
                   <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
                   <circle cx="12" cy="13" r="4"/>
                 </svg>
               </div>
               <div className="text-center px-8">
-                <div className="font-semibold text-base mb-1"
-                  style={{ fontFamily: "'Rubik', sans-serif", color: accent }}>Kamera Belum Aktif</div>
-                <div className="text-sm leading-relaxed" style={{ color: '#9ca3af' }}>
+                <div className="font-bold text-base mb-1" style={{ color: accent }}>Kamera Belum Aktif</div>
+                <div className="text-sm leading-relaxed" style={{ color: '#78716C' }}>
                   Klik tombol di bawah untuk mulai scan {isMurid ? 'kartu absensi murid' : 'kartu absensi guru'}
                 </div>
                 {cameraError && (
@@ -360,26 +348,16 @@ export default function ScanPage() {
                 )}
               </div>
               <button onClick={startCamera} disabled={starting}
-                className="flex items-center gap-2.5 px-8 py-3.5 rounded-2xl text-sm font-semibold text-white transition-all"
+                className="flex items-center gap-2.5 px-8 py-3.5 rounded-2xl text-sm font-bold text-white transition-all"
                 style={{
                   background: starting ? primary : accent,
                   boxShadow: `0 6px 20px ${accent}40`,
                   opacity: starting ? 0.8 : 1,
-                  fontFamily: "'Rubik', sans-serif",
                 }}>
                 {starting ? (
-                  <>
-                    <div className="w-4 h-4 rounded-full border-2 border-white/40 border-t-white animate-spin" />
-                    Memulai...
-                  </>
+                  <><div className="w-4 h-4 rounded-full border-2 border-white/40 border-t-white animate-spin" />Memulai...</>
                 ) : (
-                  <>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                      <path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/>
-                      <circle cx="12" cy="12" r="3"/>
-                    </svg>
-                    Mulai Scan
-                  </>
+                  <><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><circle cx="12" cy="12" r="3"/></svg>Mulai Scan</>
                 )}
               </button>
             </div>
@@ -390,8 +368,8 @@ export default function ScanPage() {
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 fade-up"
               style={{ zIndex: 20, background: 'rgba(255,255,255,0.96)' }}>
               <div className="w-12 h-12 rounded-full border-[3px] border-t-transparent animate-spin"
-                style={{ borderColor: `${purple100} ${purple100} ${purple100} ${primary}` }} />
-              <span className="text-sm font-medium" style={{ color: '#9ca3af', fontFamily: 'DM Mono' }}>
+                style={{ borderColor: `${border} ${border} ${border} ${primary}` }} />
+              <span className="text-sm font-medium" style={{ color: primary, fontFamily: 'DM Mono' }}>
                 Memproses kartu...
               </span>
             </div>
@@ -401,8 +379,7 @@ export default function ScanPage() {
           {success && result && (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-5 pop-in"
               style={{ background: '#f0fdf4', zIndex: 20 }}>
-              <div className="w-20 h-20 rounded-full flex items-center justify-center"
-                style={{ background: '#dcfce7' }}>
+              <div className="w-20 h-20 rounded-full flex items-center justify-center" style={{ background: '#dcfce7' }}>
                 <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round">
                   <path d="M20 6L9 17l-5-5"/>
                 </svg>
@@ -412,16 +389,15 @@ export default function ScanPage() {
                   style={{ color: '#15803d', fontFamily: 'DM Mono' }}>
                   {result.type === 'masuk' ? '— Selamat Datang —' : '— Sampai Jumpa —'}
                 </div>
-                <div className="font-bold leading-tight mb-1"
-                  style={{ fontSize: 32, fontFamily: "'Rubik', sans-serif", color: '#111827' }}>
+                <div className="font-bold text-gray-900 leading-tight mb-1" style={{ fontSize: 32 }}>
                   {result.name}
                 </div>
-                {result.sub && <div className="text-base" style={{ color: '#9ca3af' }}>{result.sub}</div>}
+                {result.sub && <div className="text-base" style={{ color: '#78716C' }}>{result.sub}</div>}
               </div>
-              <div className="px-7 py-2.5 rounded-full text-sm font-semibold"
+              <div className="px-7 py-2.5 rounded-full text-sm font-bold"
                 style={result.type === 'masuk'
                   ? { background: '#dcfce7', color: '#15803d' }
-                  : { background: purple50, color: primary }}>
+                  : { background: primaryBg, color: accent }}>
                 {result.type === 'masuk' ? '✓  Absen Masuk Tercatat' : '✓  Absen Pulang Tercatat'}
               </div>
             </div>
@@ -431,24 +407,20 @@ export default function ScanPage() {
           {isError && result && (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-5 pop-in"
               style={{ background: '#fff7f7', zIndex: 20 }}>
-              <div className="w-20 h-20 rounded-full flex items-center justify-center"
-                style={{ background: '#fee2e2' }}>
+              <div className="w-20 h-20 rounded-full flex items-center justify-center" style={{ background: '#fee2e2' }}>
                 <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2.5" strokeLinecap="round">
-                  <circle cx="12" cy="12" r="10"/>
-                  <path d="M12 8v4M12 16h.01"/>
+                  <circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/>
                 </svg>
               </div>
               <div className="text-center px-6">
                 <div className="text-xs font-bold uppercase tracking-[0.2em] mb-3"
-                  style={{ color: '#dc2626', fontFamily: 'DM Mono' }}>
-                  Scan Gagal
-                </div>
-                <div className="text-base leading-relaxed" style={{ color: '#6b7280' }}>{result.message}</div>
+                  style={{ color: '#dc2626', fontFamily: 'DM Mono' }}>Scan Gagal</div>
+                <div className="text-base leading-relaxed" style={{ color: '#78716C' }}>{result.message}</div>
               </div>
             </div>
           )}
 
-          {/* Instruction overlay saat kamera aktif */}
+          {/* Instruction overlay */}
           {idle && cameraStarted && (
             <div className="absolute bottom-0 left-0 right-0 flex justify-center pb-5" style={{ zIndex: 6 }}>
               <div className="px-5 py-2 rounded-full text-xs font-semibold"
@@ -468,8 +440,8 @@ export default function ScanPage() {
       </div>
 
       {/* BOTTOM STRIP */}
-      <div className="flex-shrink-0 px-5 py-2.5 flex items-center justify-between"
-        style={{ background: '#FFFFFF', borderTop: `1px solid ${purple100}` }}>
+      <div className="flex-shrink-0 px-4 py-2 flex items-center justify-between"
+        style={{ borderTop: `1px solid ${border}`, background: '#FFFFFF' }}>
         <div className="footer-steps flex items-center gap-5">
           {[
             { label: 'Ambil kartu QR' },
@@ -477,17 +449,17 @@ export default function ScanPage() {
             { label: 'Layar hijau = berhasil' },
           ].map((s, i) => (
             <div key={i} className="flex items-center gap-1.5">
-              <span className="text-xs font-bold" style={{ color: primary, fontFamily: 'DM Mono' }}>0{i + 1}</span>
-              <span className="text-xs" style={{ color: '#9ca3af' }}>{s.label}</span>
-              {i < 2 && <div className="w-3 h-px ml-1" style={{ background: purple100 }} />}
+              <span className="text-xs font-semibold" style={{ color: primary, fontFamily: 'DM Mono' }}>0{i + 1}</span>
+              <span className="text-xs" style={{ color: '#A8A29E' }}>{s.label}</span>
+              {i < 2 && <div className="w-3 h-px ml-1" style={{ background: border }} />}
             </div>
           ))}
         </div>
         <div className="flex items-center gap-3">
-          <span className="footer-hint text-xs" style={{ color: '#d1d5db' }}>Kartu hilang? Hubungi guru piket.</span>
+          <span className="footer-hint text-xs" style={{ color: '#D6D3D1' }}>Kartu hilang? Hubungi guru piket.</span>
           <div className="flex items-center gap-1.5">
             <div className="w-1.5 h-1.5 rounded-full bg-green-400" />
-            <span className="text-xs" style={{ color: '#9ca3af', fontFamily: 'DM Mono' }}>Sistem Aktif</span>
+            <span className="text-xs" style={{ color: '#A8A29E', fontFamily: 'DM Mono' }}>Sistem Aktif</span>
           </div>
         </div>
       </div>
