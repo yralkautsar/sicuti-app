@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import Sidebar from '@/components/Sidebar'
@@ -94,6 +94,13 @@ export default function DashboardPage() {
     setLoading(false)
   }
 
+  // Debounce ref — cegah re-fetch berulang saat banyak scan masuk sekaligus
+  const debounceRef = useRef(null)
+  const triggerFetch = () => {
+    clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(fetchData, 1000)
+  }
+
   // Init + realtime subscription
   useEffect(() => {
     const init = async () => {
@@ -105,15 +112,18 @@ export default function DashboardPage() {
     }
     init()
 
-    // Subscribe realtime — attendance_students & leave_requests
+    // Subscribe realtime — debounced 1s untuk cegah burst re-fetch
     const channel = supabase
       .channel('dashboard-realtime')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'attendance_students' }, () => { fetchData() })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'attendance_guru' },     () => { fetchData() })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'leave_requests' },      () => { fetchData() })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'attendance_students' }, triggerFetch)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'attendance_guru' },     triggerFetch)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'leave_requests' },      triggerFetch)
       .subscribe()
 
-    return () => { supabase.removeChannel(channel) }
+    return () => {
+      clearTimeout(debounceRef.current)
+      supabase.removeChannel(channel)
+    }
   }, [])
 
 
@@ -121,9 +131,8 @@ export default function DashboardPage() {
 
   return (
     <div className="flex h-screen overflow-hidden"
-      style={{ fontFamily: "'Karla', sans-serif", background: '#FAFAFA' }}>
+      style={{ background: '#FAFAFA' }}>
       <style>{`
-        
         @keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
         .fu  { animation: fadeUp .4s ease both; }
         .fu1 { animation: fadeUp .4s ease .08s both; }
@@ -148,7 +157,7 @@ export default function DashboardPage() {
         <header className="px-8 py-4 flex items-center justify-between flex-shrink-0"
           style={{ background: '#FFFFFF', borderBottom: `1px solid #EAB6FF` }}>
           <div>
-            <h1 className="font-bold text-lg" style={{ fontFamily: "'Rubik', sans-serif", color: '#442F78' }}>Dashboard</h1>
+            <h1 className="font-bold text-lg" style={{ color: '#442F78' }}>Dashboard</h1>
             <p className="text-xs" style={{ color: '#A78BFA' }}>{date}</p>
           </div>
           <div className="flex items-center gap-3">
@@ -156,7 +165,7 @@ export default function DashboardPage() {
               <div className="w-1.5 h-1.5 rounded-full bg-green-400 pulse"/>
               <span className="text-xs" style={{ color: '#A78BFA' }}>Live · Realtime</span>
             </div>
-            <div className="font-bold tabular-nums text-lg" style={{ color: '#442F78', fontFamily: "'Rubik', sans-serif" }}>
+            <div className="font-bold tabular-nums text-lg" style={{ color: '#442F78' }}>
               {time} <span className="text-xs font-normal" style={{ color: '#A78BFA' }}>WITA</span>
             </div>
           </div>
@@ -174,7 +183,7 @@ export default function DashboardPage() {
             <>
               {/* Greeting */}
               <div className="fu mb-6">
-                <h2 className="font-bold text-2xl" style={{ fontFamily: "'Rubik', sans-serif", color: '#442F78' }}>
+                <h2 className="font-bold text-2xl" style={{ color: '#442F78' }}>
                   Selamat datang, <span style={{ color: '#A78BFA' }}>{profile?.full_name?.split(' ')[0] || 'Admin'}</span>
                 </h2>
                 <p className="text-sm mt-1" style={{ color: '#9ca3af' }}>Berikut ringkasan aktivitas hari ini.</p>
