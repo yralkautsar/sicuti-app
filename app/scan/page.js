@@ -15,6 +15,7 @@ export default function ScanPage() {
   const lastScannedRef     = useRef(null)
   const lastScannedTimeRef = useRef(0)
   const scanModeRef        = useRef('murid')
+  const isProcessingRef    = useRef(false) // lock saat sedang proses scan
 
   const [status, setStatus]             = useState('idle')
   const [result, setResult]             = useState(null)
@@ -81,7 +82,9 @@ export default function ScanPage() {
       const handleDecode = async (decodedText) => {
         const cleanQR = decodedText.trim()
         const now = Date.now()
+        if (isProcessingRef.current) return  // lock — sedang proses scan lain
         if (cleanQR === lastScannedRef.current && now - lastScannedTimeRef.current < SCAN_COOLDOWN) return
+        isProcessingRef.current = true
         lastScannedRef.current = cleanQR
         lastScannedTimeRef.current = now
         setStatus('loading')
@@ -92,6 +95,8 @@ export default function ScanPage() {
           setStatus('error')
           setResult({ message: 'Terjadi kesalahan sistem. Coba lagi.' })
           setTimeout(() => { setStatus('idle'); setResult(null) }, 3000)
+        } finally {
+          isProcessingRef.current = false  // selalu unlock setelah selesai
         }
       }
 
