@@ -4,13 +4,14 @@ import { useEffect, useState, useMemo } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import Sidebar from '@/components/Sidebar'
+import { useProfile } from '@/lib/ProfileContext'
 
 const purple    = '#6d28d9'
 const purple50  = '#f5f3ff'
 const purple100 = '#ede9fe'
 
 const BULAN = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember']
-const HARI  = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu']
+const HARI  = ['Min','Sen','Sel','Rab','Kam','Jum','Sab']
 
 const TYPE_CONFIG = {
   libur_nasional: { label: 'Libur Nasional', color: '#dc2626', bg: '#fef2f2', border: '#fecaca' },
@@ -101,10 +102,10 @@ async function fetchLiburNasional(year) {
 }
 
 export default function KalendarPage() {
+  const { profile, setProfile } = useProfile()
   const router = useRouter()
   const now    = new Date()
 
-  const [profile,   setProfile]   = useState(null)
   const [isAdmin,   setIsAdmin]   = useState(false)
   const [bulan,     setBulan]     = useState(now.getMonth())
   const [tahun,     setTahun]     = useState(now.getFullYear())
@@ -155,10 +156,6 @@ export default function KalendarPage() {
 
   useEffect(() => {
     const init = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { router.push('/login'); return }
-      const { data: prof } = await supabase.from('profiles').select('*').eq('id', user.id).single()
-      setProfile(prof)
       setIsAdmin(prof?.role === 'admin' || prof?.jabatan === 'Kepala Sekolah')
       setLoading(false)
     }
@@ -274,9 +271,8 @@ export default function KalendarPage() {
 
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden"
-      style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+      style={{ background: '#FAFAFA' }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=DM+Mono:wght@300;400&display=swap');
         @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
         .fu{animation:fadeUp .35s ease both}
         input:focus,select:focus,textarea:focus{outline:none}

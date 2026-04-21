@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import { useRouter } from 'next/navigation'
 import Sidebar from '@/components/Sidebar'
+import { useProfile } from '@/lib/ProfileContext'
 
 const purple    = '#6d28d9'
 const purple50  = '#f5f3ff'
@@ -24,8 +24,7 @@ function loadXLSX() {
 }
 
 export default function KelasPage() {
-  const router = useRouter()
-  const [profile, setProfile]     = useState(null)
+  const { profile, setProfile } = useProfile()
   const [classes, setClasses]     = useState([])
   const [gurus, setGurus]         = useState([])
   const [loading, setLoading]     = useState(true)
@@ -37,10 +36,6 @@ export default function KelasPage() {
 
   useEffect(() => {
     const init = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { router.push('/login'); return }
-      const { data: prof } = await supabase.from('profiles').select('*').eq('id', user.id).single()
-      setProfile(prof)
       await Promise.all([fetchClasses(), fetchGurus()])
     }
     init()

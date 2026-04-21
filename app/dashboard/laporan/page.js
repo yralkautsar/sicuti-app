@@ -2,8 +2,8 @@
 
 import React, { useEffect, useState, useMemo } from 'react'
 import { supabase } from '@/lib/supabase'
-import { useRouter } from 'next/navigation'
 import Sidebar from '@/components/Sidebar'
+import { useProfile } from '@/lib/ProfileContext'
 
 const primary     = '#A78BFA'
 const accent      = '#442F78'
@@ -104,9 +104,8 @@ const statusStyle = (s) => {
 }
 
 export default function LaporanPage() {
-  const router = useRouter()
+  const { profile, setProfile } = useProfile()
 
-  const [profile, setProfile]         = useState(null)
   const [subjectTab, setSubjectTab]   = useState('murid')
   const [mode, setMode]               = useState('harian')
   const [classes, setClasses]         = useState([])
@@ -128,10 +127,6 @@ export default function LaporanPage() {
 
   useEffect(() => {
     const init = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { router.push('/login'); return }
-      const { data: prof } = await supabase.from('profiles').select('*').eq('id', user.id).single()
-      setProfile(prof)
       const { data: cls } = await supabase.from('classes').select('id,nama_kelas,tahun_ajaran').eq('active', true).order('nama_kelas')
       setClasses(cls || [])
       const { data: mrd } = await supabase.from('students').select('id,full_name,class_id,classes(nama_kelas)').eq('active', true).order('full_name')
@@ -366,7 +361,7 @@ export default function LaporanPage() {
 
   return (
     <div className="flex h-screen overflow-hidden"
-      style={{ background: '#FAFAFA', fontFamily: "'Karla', sans-serif" }}>
+      style={{ background: '#FAFAFA' }}>
       <style>{`
         
         @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
@@ -387,7 +382,7 @@ export default function LaporanPage() {
         <header className="flex-shrink-0 flex items-center justify-between px-8 py-4 no-print"
           style={{ background: '#FFFFFF', borderBottom: `1px solid ${purple100}` }}>
           <div>
-            <h1 className="font-bold text-lg" style={{ fontFamily: "'Rubik', sans-serif", color: accent }}>Laporan Absensi</h1>
+            <h1 className="font-bold text-lg" style={{ color: accent }}>Laporan Absensi</h1>
             <p className="text-xs" style={{ color: '#9ca3af' }}>Batas tepat waktu: Murid {BATAS_MURID} · Guru {BATAS_GURU} · Senin–Jumat</p>
           </div>
           <div className="flex items-center gap-3">
@@ -404,7 +399,7 @@ export default function LaporanPage() {
             </button>
             <button onClick={printLaporan}
               className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all"
-              style={{ background: accent, boxShadow: `0 4px 14px ${accent}30`, fontFamily: "'Rubik', sans-serif" }}>
+              style={{ background: accent, boxShadow: `0 4px 14px ${accent}30` }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                 <polyline points="6 9 6 2 18 2 18 9"/>
                 <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
@@ -437,7 +432,7 @@ export default function LaporanPage() {
                 <button key={t.key} onClick={() => setSubjectTab(t.key)}
                   className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-all"
                   style={subjectTab === t.key
-                    ? { background: accent, color: '#FFFFFF', fontFamily: "'Rubik', sans-serif" }
+                    ? { background: accent, color: '#FFFFFF' }
                     : { color: accent }}>
                   {t.icon}{t.label}
                 </button>
@@ -445,12 +440,12 @@ export default function LaporanPage() {
             </div>
 
             {/* Mode: Harian | Bulanan */}
-            <div className="flex p-1 rounded-xl" style={{ background: purple50, border: `1px solid ${purple100}` }}>
+            <div className="flex p-1 rounded-xl" style={{ background: '#f3f4f6' }}>
               {[{ key: 'harian', label: 'Harian' }, { key: 'bulanan', label: 'Bulanan' }].map(t => (
                 <button key={t.key} onClick={() => setMode(t.key)}
                   className="px-4 py-2 rounded-lg text-sm font-semibold transition-all"
                   style={mode === t.key
-                    ? { background: accent, color: '#FFFFFF', fontFamily: "'Rubik', sans-serif" }
+                    ? { background: accent, color: '#FFFFFF' }
                     : { color: accent }}>
                   {t.label}
                 </button>
@@ -459,8 +454,8 @@ export default function LaporanPage() {
 
             {mode === 'harian' && (
               <input type="date" value={tanggal} onChange={e => setTanggal(e.target.value)}
-                className="px-4 py-2 text-sm rounded-xl transition-all"
-                style={{ border: `1.5px solid ${primary}`, background: purple50, color: '#111827' }}/>
+                className="px-4 py-2 text-sm border border-gray-200 rounded-xl bg-white"
+                style={{ color: '#111' }}/>
             )}
 
             {mode === 'bulanan' && (
@@ -478,8 +473,8 @@ export default function LaporanPage() {
 
             {subjectTab === 'murid' && (
               <select value={filterKelas} onChange={e => setFilterKelas(e.target.value)}
-                className="px-4 py-2 text-sm rounded-xl appearance-none transition-all"
-                style={{ border: `1.5px solid ${filterKelas ? primary : purple100}`, background: filterKelas ? purple50 : '#FFFFFF', color: filterKelas ? '#111827' : '#9ca3af' }}>
+                className="px-4 py-2 text-sm border border-gray-200 rounded-xl bg-white appearance-none"
+                style={{ color: filterKelas ? '#111' : '#9ca3af' }}>
                 <option value="">Semua Kelas</option>
                 {classes.map(k => (
                   <option key={k.id} value={k.id}>{k.nama_kelas} — {k.tahun_ajaran}</option>

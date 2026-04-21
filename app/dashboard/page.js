@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import Sidebar from '@/components/Sidebar'
+import { useProfile } from '@/lib/ProfileContext'
 
 const purple      = '#A78BFA'
 const purple50    = 'rgba(167,139,250,0.12)'
@@ -13,8 +14,8 @@ const SCHOOL      = 'TK Karakter Mutiara Bunda Bali'
 
 
 export default function DashboardPage() {
+  const { profile, setProfile } = useProfile()
   const router = useRouter()
-  const [profile, setProfile]   = useState(null)
   const [stats, setStats]       = useState({ guru: 0, murid: 0, hadirHari: 0, cutiPending: 0 })
   const [recentAbs, setRecentAbs] = useState([])
   const [pendingLeave, setPendingLeave] = useState([])
@@ -97,10 +98,6 @@ export default function DashboardPage() {
   // Init + realtime subscription
   useEffect(() => {
     const init = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { router.push('/login'); return }
-      const { data: prof } = await supabase.from('profiles').select('*').eq('id', user.id).single()
-      setProfile(prof)
       await fetchData()
     }
     init()
@@ -177,7 +174,7 @@ export default function DashboardPage() {
               {/* Greeting */}
               <div className="fu mb-6">
                 <h2 className="font-bold text-2xl" style={{ color: '#442F78' }}>
-                  Selamat datang, <span style={{ color: '#A78BFA' }}>{profile?.full_name?.split(' ')[0] || 'Admin'}</span> 
+                  Selamat datang, <span style={{ color: '#A78BFA' }}>{profile?.full_name?.split(' ')[0] || 'Admin'}</span>
                 </h2>
                 <p className="text-sm mt-1" style={{ color: '#9ca3af' }}>Berikut ringkasan aktivitas hari ini.</p>
               </div>
