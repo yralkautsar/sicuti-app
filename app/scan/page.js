@@ -134,46 +134,36 @@ export default function ScanPage() {
   }
 
   const handleStudentScan = async (qrCode) => {
-    const { data: student, error } = await supabase
-      .from('students').select('*').eq('qr_code', qrCode).eq('active', true).single()
-    if (error || !student) {
+    const scannedAt = new Date().toISOString()
+    const { data, error } = await supabase.rpc('record_student_attendance', {
+      p_qr: qrCode,
+      p_scanned_at: scannedAt,
+    })
+    if (error || !data || data.error) {
       setStatus('error')
-      setResult({ message: 'Kartu tidak dikenali. Hubungi admin.' })
+      setResult({ message: data?.error === 'not_found' ? 'Kartu tidak dikenali. Hubungi admin.' : 'Terjadi kesalahan sistem. Coba lagi.' })
       resetAfterDelay()
       return
     }
-    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Makassar' })
-    const { data: existing } = await supabase
-      .from('attendance_students').select('*').eq('student_id', student.id).eq('date', today)
-      .order('scanned_at', { ascending: false }).limit(1)
-    const type = (existing?.length > 0 && existing[0].type === 'masuk') ? 'pulang' : 'masuk'
-    const { error: ie } = await supabase
-      .from('attendance_students').insert({ student_id: student.id, type, date: today, scanned_at: new Date().toISOString() })
-    if (ie) throw ie
     setStatus('success')
-    setResult({ name: student.full_name, sub: student.kelas || '', type })
+    setResult({ name: data.name, sub: data.kelas || '', type: data.type })
     resetAfterDelay()
   }
 
   const handleGuruScan = async (qrCode) => {
-    const { data: profile, error } = await supabase
-      .from('profiles').select('*').eq('qr_code', qrCode).single()
-    if (error || !profile) {
+    const scannedAt = new Date().toISOString()
+    const { data, error } = await supabase.rpc('record_guru_attendance', {
+      p_qr: qrCode,
+      p_scanned_at: scannedAt,
+    })
+    if (error || !data || data.error) {
       setStatus('error')
-      setResult({ message: 'Kartu guru tidak dikenali. Hubungi admin.' })
+      setResult({ message: data?.error === 'not_found' ? 'Kartu guru tidak dikenali. Hubungi admin.' : 'Terjadi kesalahan sistem. Coba lagi.' })
       resetAfterDelay()
       return
     }
-    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Makassar' })
-    const { data: existing } = await supabase
-      .from('attendance_guru').select('*').eq('profile_id', profile.id).eq('date', today)
-      .order('scanned_at', { ascending: false }).limit(1)
-    const type = (existing?.length > 0 && existing[0].type === 'masuk') ? 'pulang' : 'masuk'
-    const { error: ie } = await supabase
-      .from('attendance_guru').insert({ profile_id: profile.id, type, date: today, scanned_at: new Date().toISOString() })
-    if (ie) throw ie
     setStatus('success')
-    setResult({ name: profile.full_name, sub: profile.jabatan || 'Guru', type })
+    setResult({ name: data.name, sub: data.jabatan || 'Guru', type: data.type })
     resetAfterDelay()
   }
 
