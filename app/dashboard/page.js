@@ -44,10 +44,9 @@ export default function DashboardPage() {
     const [
       { count: guruCount },
       { count: muridCount },
-      { count: hadirCount },
       { count: cutiCount },
       { data: recentData },
-      { data: leaveData },
+      { data: leaveData },  // join profiles sekalian — eliminasi N+1
       { data: allMurid },
       { data: allGuru },
       { data: sudahHadirMurid },
@@ -55,7 +54,6 @@ export default function DashboardPage() {
     ] = await Promise.all([
       supabase.from('profiles').select('*', { count: 'exact', head: true }),
       supabase.from('students').select('*', { count: 'exact', head: true }).eq('active', true),
-      supabase.from('attendance_students').select('*', { count: 'exact', head: true }).eq('date', today).eq('type', 'masuk'),
       supabase.from('leave_requests').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
       supabase.from('attendance_students')
         .select('*, students(full_name, kelas)')
@@ -63,7 +61,7 @@ export default function DashboardPage() {
         .order('scanned_at', { ascending: false })
         .limit(6),
       supabase.from('leave_requests')
-        .select('*')
+        .select('*, profiles(id, full_name)')  // join langsung — tidak perlu fetch profiles terpisah
         .eq('status', 'pending')
         .order('created_at', { ascending: false })
         .limit(3),
@@ -79,18 +77,13 @@ export default function DashboardPage() {
     setBelumHadirMurid((allMurid || []).filter(m => !sudahMuridIds.has(m.id)))
     setBelumHadirGuru((allGuru  || []).filter(g => !sudahGuruIds.has(g.id)))
 
-    setStats({ guru: guruCount || 0, murid: muridCount || 0, hadirHari: hadirCount || 0, cutiPending: cutiCount || 0 })
+    // hadirCount langsung dari sudahHadirMurid — eliminasi 1 query duplikat
+    const hadirCount = sudahHadirMurid?.length || 0
+    setStats({ guru: guruCount || 0, murid: muridCount || 0, hadirHari: hadirCount, cutiPending: cutiCount || 0 })
     setRecentAbs(recentData || [])
 
-    if (leaveData && leaveData.length > 0) {
-      const ids = [...new Set(leaveData.map(r => r.profile_id))]
-      const { data: profilesData } = await supabase.from('profiles').select('id, full_name').in('id', ids)
-      const map = {}
-      ;(profilesData || []).forEach(p => { map[p.id] = p })
-      setPendingLeave(leaveData.map(r => ({ ...r, profiles: map[r.profile_id] || null })))
-    } else {
-      setPendingLeave([])
-    }
+    // profiles sudah di-join di query leaveData — tidak perlu fetch terpisah
+    setPendingLeave(leaveData || [])
     setLoading(false)
   }
 
@@ -184,7 +177,7 @@ export default function DashboardPage() {
               {/* Greeting */}
               <div className="fu mb-6">
                 <h2 className="font-bold text-2xl" style={{ color: '#442F78' }}>
-                  Selamat datang, <span style={{ color: '#A78BFA' }}>{profile?.full_name?.split(' ')[0] || 'Admin'}</span>
+                  Selamat datang, <span style={{ color: '#A78BFA' }}>{profile?.full_name?.split(' ')[0] || 'Admin'}</span> 👋
                 </h2>
                 <p className="text-sm mt-1" style={{ color: '#9ca3af' }}>Berikut ringkasan aktivitas hari ini.</p>
               </div>
