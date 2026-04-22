@@ -54,17 +54,18 @@ export default function CutiPage() {
   const [showRekap, setShowRekap]     = useState(false)
 
   useEffect(() => {
+    if (!profile) return  // tunggu profile dari context
     const init = async () => {
-      const admin = prof?.role === 'admin' || prof?.jabatan === 'Kepala Sekolah'
+      const admin = profile?.role === 'admin' || profile?.jabatan === 'Kepala Sekolah'
       setIsAdmin(admin)
       if (admin) {
         const { data: g } = await supabase.from('profiles').select('id, full_name, jabatan').order('full_name')
         setGurus(g || [])
       }
-      await fetchRequests(user.id, admin)
+      await fetchRequests(profile.id, admin)
     }
     init()
-  }, [])
+  }, [profile])
 
   const fetchRequests = async (uid, admin) => {
     setLoading(true)

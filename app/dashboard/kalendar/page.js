@@ -156,7 +156,7 @@ export default function KalendarPage() {
 
   useEffect(() => {
     const init = async () => {
-      setIsAdmin(prof?.role === 'admin' || prof?.jabatan === 'Kepala Sekolah')
+      setIsAdmin(profile?.role === 'admin' || profile?.jabatan === 'Kepala Sekolah')
       setLoading(false)
     }
     init()

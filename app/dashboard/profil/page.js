@@ -84,20 +84,21 @@ export default function ProfilPage() {
   const [cutiLoading,  setCutiLoading]  = useState(false)
 
   useEffect(() => {
+    if (!profile) return  // tunggu profile dari context
     const init = async () => {
       setLoading(false)
       setCutiLoading(true)
       const { data: cuti } = await supabase
         .from('leave_requests')
         .select('*')
-        .eq('profile_id', user.id)
+        .eq('profile_id', profile.id)
         .eq('status', 'approved')
         .order('date_start', { ascending: false })
       setCutiList(cuti || [])
       setCutiLoading(false)
     }
     init()
-  }, [])
+  }, [profile])
 
   useEffect(() => {
     if (profile) fetchRekap()
