@@ -6,9 +6,9 @@ import { useRouter } from 'next/navigation'
 import Sidebar from '@/components/Sidebar'
 import { useProfile } from '@/lib/ProfileContext'
 
-const purple    = '#6d28d9'
-const purple50  = '#f5f3ff'
-const purple100 = '#ede9fe'
+const purple    = '#A78BFA'
+const purple50  = 'rgba(167,139,250,0.10)'
+const purple100 = '#EAB6FF'
 
 const EMPTY_FORM = {
   full_name: '', nisn: '', class_id: '', tahun_ajaran: '',
@@ -146,7 +146,7 @@ export default function MuridPage() {
       <style>
         body{margin:0;font-family:sans-serif;background:#fff;}
         .card{width:320px;margin:40px auto;padding:32px 24px;border:2px solid #ede9fe;border-radius:16px;text-align:center;}
-        .label{font-size:11px;color:#6d28d9;font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px;}
+        .label{font-size:11px;color:#442F78;font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px;}
         .name{font-size:20px;font-weight:800;color:#111;margin:12px 0 2px;}
         .kelas{font-size:13px;color:#6b7280;margin-bottom:20px;}
         .qr{width:200px;height:200px;margin:0 auto 16px;display:block;}
@@ -269,7 +269,7 @@ export default function MuridPage() {
   }
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden"
+    <div className="flex h-screen overflow-hidden"
       style={{ background: '#FAFAFA' }}>
       <style>{`
         @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}

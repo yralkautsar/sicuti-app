@@ -6,9 +6,9 @@ import { useRouter } from 'next/navigation'
 import Sidebar from '@/components/Sidebar'
 import { useProfile } from '@/lib/ProfileContext'
 
-const purple    = '#6d28d9'
-const purple50  = '#f5f3ff'
-const purple100 = '#ede9fe'
+const purple    = '#A78BFA'
+const purple50  = 'rgba(167,139,250,0.10)'
+const purple100 = '#EAB6FF'
 const MAX_CUTI  = 12
 
 
@@ -175,7 +175,7 @@ export default function CutiPage() {
 
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden"
+    <div className="flex h-screen overflow-hidden"
       style={{ background: '#FAFAFA' }}>
       <style>{`
         @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}

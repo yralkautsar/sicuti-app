@@ -6,9 +6,9 @@ import { useRouter } from 'next/navigation'
 import Sidebar from '@/components/Sidebar'
 import { useProfile } from '@/lib/ProfileContext'
 
-const purple    = '#6d28d9'
-const purple50  = '#f5f3ff'
-const purple100 = '#ede9fe'
+const purple    = '#A78BFA'
+const purple50  = 'rgba(167,139,250,0.10)'
+const purple100 = '#EAB6FF'
 
 // Portrait ID card: 5.4cm × 8.5cm → at 192dpi: 408px × 642px
 const CARD_W = 408
@@ -22,20 +22,20 @@ function buildCardHTML({ name, sub, label, qrDataUrl, logoDataUrl, qrCode }) {
       overflow:hidden;display:flex;flex-direction:column;
       font-family:'Segoe UI',Arial,sans-serif;position:relative;
     ">
-      <div style="background:#6d28d9;height:12px;width:100%;flex-shrink:0;"></div>
+      <div style="background:#442F78;height:12px;width:100%;flex-shrink:0;"></div>
       <div style="display:flex;align-items:center;gap:10px;padding:16px 20px 12px;flex-shrink:0;">
         ${logoDataUrl
           ? `<img src="${logoDataUrl}" style="width:44px;height:44px;object-fit:contain;border-radius:8px;flex-shrink:0;" />`
           : `<div style="width:44px;height:44px;background:#ede9fe;border-radius:8px;flex-shrink:0;"></div>`
         }
         <div>
-          <div style="font-size:8px;font-weight:700;color:#6d28d9;letter-spacing:.12em;text-transform:uppercase;">TK Karakter</div>
+          <div style="font-size:8px;font-weight:700;color:#442F78;letter-spacing:.12em;text-transform:uppercase;">TK Karakter</div>
           <div style="font-size:10px;font-weight:800;color:#1e1b4b;letter-spacing:.02em;line-height:1.3;">Mutiara Bunda Bali</div>
         </div>
       </div>
       <div style="height:1px;background:#ede9fe;margin:0 20px;flex-shrink:0;"></div>
       <div style="flex:1;display:flex;flex-direction:column;justify-content:center;padding:14px 20px;text-align:center;">
-        <div style="display:inline-block;background:#ede9fe;color:#6d28d9;font-size:8px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;padding:4px 12px;border-radius:20px;margin-bottom:10px;align-self:center;">${label}</div>
+        <div style="display:inline-block;background:#EAB6FF;color:#442F78;font-size:8px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;padding:4px 12px;border-radius:20px;margin-bottom:10px;align-self:center;">${label}</div>
         <div style="font-size:21px;font-weight:800;color:#111827;line-height:1.2;word-break:break-word;">${name}</div>
         <div style="font-size:12px;color:#6b7280;margin-top:5px;font-weight:500;">${sub}</div>
       </div>
@@ -45,7 +45,7 @@ function buildCardHTML({ name, sub, label, qrDataUrl, logoDataUrl, qrCode }) {
         </div>
         <div style="font-size:7.5px;color:#9ca3af;font-family:monospace;letter-spacing:.06em;margin-top:7px;">${qrCode}</div>
       </div>
-      <div style="background:#6d28d9;height:10px;width:100%;flex-shrink:0;"></div>
+      <div style="background:#442F78;height:10px;width:100%;flex-shrink:0;"></div>
     </div>
   `
 }
@@ -229,7 +229,7 @@ export default function QRMassalPage() {
   const allSelected = currentList.length > 0 && selectedIds.size === currentList.length
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden"
+    <div className="flex h-screen overflow-hidden"
       style={{ background: '#FAFAFA' }}>
       <style>{`
         @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}

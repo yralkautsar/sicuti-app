@@ -5,9 +5,9 @@ import { supabase } from '@/lib/supabase'
 import Sidebar from '@/components/Sidebar'
 import { useProfile } from '@/lib/ProfileContext'
 
-const purple    = '#6d28d9'
-const purple50  = '#f5f3ff'
-const purple100 = '#ede9fe'
+const purple    = '#A78BFA'
+const purple50  = 'rgba(167,139,250,0.10)'
+const purple100 = '#EAB6FF'
 
 const EMPTY_FORM = { nama_kelas: '', tahun_ajaran: '', wali_kelas_id: '', active: true }
 const TAHUN_AJARAN_OPTIONS = ['2024/2025', '2025/2026', '2026/2027']

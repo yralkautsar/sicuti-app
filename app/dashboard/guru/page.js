@@ -6,9 +6,9 @@ import { useRouter } from 'next/navigation'
 import Sidebar from '@/components/Sidebar'
 import { useProfile } from '@/lib/ProfileContext'
 
-const purple     = '#6d28d9'
-const purple50   = '#f5f3ff'
-const purple100  = '#ede9fe'
+const purple     = '#A78BFA'
+const purple50   = 'rgba(167,139,250,0.10)'
+const purple100  = '#EAB6FF'
 const SCHOOL     = 'TK Karakter Mutiara Bunda Bali'
 
 
@@ -65,13 +65,13 @@ export default function GuruPage() {
     win.document.write(`
       <html><head><title>QR Guru - ${guru.full_name}</title>
       <style>
-        body { margin:0; font-family:'Plus Jakarta Sans',sans-serif; background:#fff; }
+        body { margin:0; font-family:'Karla',sans-serif; background:#fff; }
         .card {
           width: 320px; margin: 40px auto; padding: 32px 24px;
           border: 2px solid #ede9fe; border-radius: 16px; text-align: center;
         }
         .logo { width: 60px; height: 60px; object-fit: contain; margin: 0 auto 12px; display: block; }
-        .school { font-size: 11px; color: #6d28d9; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 4px; }
+        .school { font-size: 11px; color: #442F78; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 4px; }
         .name { font-size: 20px; font-weight: 800; color: #111; margin: 12px 0 4px; }
         .jabatan { font-size: 13px; color: #6b7280; margin-bottom: 20px; }
         .qr { width: 200px; height: 200px; margin: 0 auto 16px; display: block; }
@@ -167,7 +167,7 @@ export default function GuruPage() {
   )
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden"
+    <div className="flex h-screen overflow-hidden"
       style={{ background: '#FAFAFA' }}>
       <style>{`
         @keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
