@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
+import { supabase } from '@/lib/supabase'
 import { useProfile } from '@/lib/ProfileContext'
 import Link from 'next/link'
 
@@ -88,7 +88,6 @@ export default function WeeklyPlanViewPage() {
   const { id } = useParams()
   const router = useRouter()
   const { profile, isAdmin } = useProfile()
-  const supabase = createClient()
 
   const [plan, setPlan] = useState(null)
   const [loading, setLoading] = useState(true)

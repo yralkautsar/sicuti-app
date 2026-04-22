@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
+import { supabase } from '@/lib/supabase'
 import { useProfile } from '@/lib/ProfileContext'
 import Link from 'next/link'
 import WeeklyPlanForm from '../WeeklyPlanForm'
@@ -10,7 +10,6 @@ import WeeklyPlanForm from '../WeeklyPlanForm'
 export default function TambahWeeklyPlanPage() {
   const { profile, isAdmin } = useProfile()
   const router = useRouter()
-  const supabase = createClient()
 
   const [classes, setClasses] = useState([])
   const [isSubmitting, setIsSubmitting] = useState(false)

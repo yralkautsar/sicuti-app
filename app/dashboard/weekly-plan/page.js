@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
+import { supabase } from '@/lib/supabase'
 import { useProfile } from '@/lib/ProfileContext'
 import Link from 'next/link'
 
@@ -18,7 +18,6 @@ function getPeriodeLabel(start, end) {
 export default function WeeklyPlanPage() {
   const { profile, isAdmin } = useProfile()
   const router = useRouter()
-  const supabase = createClient()
 
   const [plans, setPlans] = useState([])
   const [classes, setClasses] = useState([])

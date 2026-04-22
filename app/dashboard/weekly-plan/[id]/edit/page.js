@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
+import { supabase } from '@/lib/supabase'
 import { useProfile } from '@/lib/ProfileContext'
 import Link from 'next/link'
 import WeeklyPlanForm from '../../WeeklyPlanForm'
@@ -11,7 +11,6 @@ export default function EditWeeklyPlanPage() {
   const { id } = useParams()
   const router = useRouter()
   const { profile, isAdmin } = useProfile()
-  const supabase = createClient()
 
   const [plan, setPlan] = useState(null)
   const [classes, setClasses] = useState([])
