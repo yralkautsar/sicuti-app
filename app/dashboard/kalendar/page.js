@@ -287,10 +287,11 @@ export default function KalendarPage() {
 
       <main className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
-        <header className="bg-white border-b border-gray-100 px-8 py-4 flex items-center justify-between flex-shrink-0">
+        <header className="px-8 py-4 flex items-center justify-between flex-shrink-0"
+          style={{ background: '#FFFFFF', borderBottom: '1px solid #EAB6FF' }}>
           <div>
-            <h1 className="font-bold text-gray-900 text-lg">Kalendar Sekolah</h1>
-            <p className="text-xs text-gray-400">Kegiatan, libur, dan cuti guru</p>
+            <h1 className="font-bold text-lg" style={{ color: '#442F78' }}>Kalendar Sekolah</h1>
+            <p className="text-xs" style={{ color: '#A78BFA' }}>Kegiatan, libur, dan cuti guru</p>
           </div>
           <div className="flex items-center gap-3">
             <a href="/kalendar" target="_blank"

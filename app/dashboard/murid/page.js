@@ -288,10 +288,11 @@ export default function MuridPage() {
 
       {/* MAIN */}
       <main className="flex-1 flex flex-col overflow-hidden">
-        <header className="bg-white border-b border-gray-100 px-8 py-4 flex items-center justify-between flex-shrink-0">
+        <header className="px-8 py-4 flex items-center justify-between flex-shrink-0"
+          style={{ background: '#FFFFFF', borderBottom: '1px solid #EAB6FF' }}>
           <div>
-            <h1 className="font-bold text-gray-900 text-lg">Data Murid</h1>
-            <p className="text-xs text-gray-400">{totalAktif} murid aktif · {murids.length} total</p>
+            <h1 className="font-bold text-lg" style={{ color: '#442F78' }}>Data Murid</h1>
+            <p className="text-xs" style={{ color: '#A78BFA' }}>{totalAktif} murid aktif · {murids.length} total</p>
           </div>
           <div className="flex items-center gap-3">
             <button onClick={downloadTemplate}
@@ -745,7 +746,7 @@ export default function MuridPage() {
                   ) : (
                     <>
                       <p className="text-sm font-semibold text-gray-700 mb-1">Klik untuk pilih file CSV</p>
-                      <p className="text-xs text-gray-400">Format: .csv · Download template di atas untuk format yang benar</p>
+                      <p className="text-xs" style={{ color: '#A78BFA' }}>Format: .csv · Download template di atas untuk format yang benar</p>
                     </>
                   )}
                 </div>

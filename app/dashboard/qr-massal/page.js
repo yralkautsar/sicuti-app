@@ -242,10 +242,11 @@ export default function QRMassalPage() {
       <Sidebar profile={profile} />
 
       <main className="flex-1 flex flex-col overflow-hidden">
-        <header className="bg-white border-b border-gray-100 px-8 py-4 flex items-center justify-between flex-shrink-0">
+        <header className="px-8 py-4 flex items-center justify-between flex-shrink-0"
+          style={{ background: '#FFFFFF', borderBottom: '1px solid #EAB6FF' }}>
           <div>
-            <h1 className="font-bold text-gray-900 text-lg">Print QR Massal</h1>
-            <p className="text-xs text-gray-400">ID card portrait 5.4×8.5 cm · PNG per kartu atau PDF massal (8 kartu/halaman A4)</p>
+            <h1 className="font-bold text-lg" style={{ color: '#442F78' }}>Print QR Massal</h1>
+            <p className="text-xs" style={{ color: '#A78BFA' }}>ID card portrait 5.4×8.5 cm · PNG per kartu atau PDF massal (8 kartu/halaman A4)</p>
           </div>
           <button
             onClick={exportPDF}

@@ -194,10 +194,11 @@ export default function CutiPage() {
 
       {/* MAIN */}
       <main className="flex-1 flex flex-col overflow-hidden">
-        <header className="bg-white border-b border-gray-100 px-8 py-4 flex items-center justify-between flex-shrink-0">
+        <header className="px-8 py-4 flex items-center justify-between flex-shrink-0"
+          style={{ background: '#FFFFFF', borderBottom: '1px solid #EAB6FF' }}>
           <div>
-            <h1 className="font-bold text-gray-900 text-lg">Cuti Guru</h1>
-            <p className="text-xs text-gray-400">
+            <h1 className="font-bold text-lg" style={{ color: '#442F78' }}>Cuti Guru</h1>
+            <p className="text-xs" style={{ color: '#A78BFA' }}>
               {isAdmin ? `${pendingCount} pengajuan menunggu persetujuan` : `Sisa cuti Anda: ${sisaCuti} hari dari ${MAX_CUTI} hari/tahun`}
             </p>
           </div>
@@ -333,7 +334,7 @@ export default function CutiPage() {
                     </tbody>
                   </table>
                   <div className="px-5 py-3 border-t border-gray-50">
-                    <p className="text-xs text-gray-400">Klik nama guru untuk filter pengajuan di bawah.</p>
+                    <p className="text-xs" style={{ color: '#A78BFA' }}>Klik nama guru untuk filter pengajuan di bawah.</p>
                   </div>
                 </div>
               )}

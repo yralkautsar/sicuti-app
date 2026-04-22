@@ -185,10 +185,11 @@ export default function GuruPage() {
 
       {/* ── MAIN ── */}
       <main className="flex-1 flex flex-col overflow-hidden">
-        <header className="bg-white border-b border-gray-100 px-8 py-4 flex items-center justify-between flex-shrink-0">
+        <header className="px-8 py-4 flex items-center justify-between flex-shrink-0"
+          style={{ background: '#FFFFFF', borderBottom: '1px solid #EAB6FF' }}>
           <div>
-            <h1 className="font-bold text-gray-900 text-lg">Data Guru</h1>
-            <p className="text-xs text-gray-400">{gurus.length} guru terdaftar di sistem</p>
+            <h1 className="font-bold text-lg" style={{ color: '#442F78' }}>Data Guru</h1>
+            <p className="text-xs" style={{ color: '#A78BFA' }}>{gurus.length} guru terdaftar di sistem</p>
           </div>
           <button onClick={() => { setShowModal(true); setEditGuru(null); setForm(EMPTY_FORM) }}
             className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all"
