@@ -102,6 +102,23 @@ export default function KalendarPublikPage() {
   const [libNas,  setLibNas]  = useState([])
   const [loading, setLoading] = useState(true)
   const [selectedDay, setSelectedDay] = useState(null)
+  const [copied,      setCopied]      = useState(false)
+
+  async function handleShare() {
+    const url = `${window.location.origin}/kalendar`
+    try {
+      await navigator.clipboard.writeText(url)
+    } catch {
+      const el = document.createElement('textarea')
+      el.value = url
+      document.body.appendChild(el)
+      el.select()
+      document.execCommand('copy')
+      document.body.removeChild(el)
+    }
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
 
   const fetchAll = async () => {
     setLoading(true)
@@ -178,11 +195,39 @@ export default function KalendarPublikPage() {
               <div className="text-xs" style={{ color: purple, fontFamily: 'DM Mono' }}>Kalendar Sekolah</div>
             </div>
           </div>
-          <a href="/panduan"
-            className="text-xs font-medium transition-all px-3 py-1.5 rounded-lg"
-            style={{ color: purple, background: purple50 }}>
-            Panduan
-          </a>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleShare}
+              className="text-xs font-medium transition-all px-3 py-1.5 rounded-lg flex items-center gap-1.5"
+              style={{
+                color:      copied ? '#fff' : purple,
+                background: copied ? purple : purple50,
+                border:     `1px solid ${copied ? purple : 'transparent'}`,
+              }}
+            >
+              {copied ? (
+                <>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                  Tersalin!
+                </>
+              ) : (
+                <>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+                  </svg>
+                  Bagikan
+                </>
+              )}
+            </button>
+            <a href="/panduan"
+              className="text-xs font-medium transition-all px-3 py-1.5 rounded-lg"
+              style={{ color: purple, background: purple50 }}>
+              Panduan
+            </a>
+          </div>
         </div>
       </header>
 
