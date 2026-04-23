@@ -237,7 +237,7 @@ export default function WeeklyPlanForm({ initialData, classes, onSubmit, isSubmi
     hari_data: emptyHariData(),
     asmaul_husna: '',
     doa_harian: '',
-    surah_pendek: { jilid1: '', jilid2: '', jilid3: '' },
+    surah_pendek: { jilid_paud: '', jilid1: '', jilid2: '', jilid3: '' },
     mutiara_hikmah: '',
   }
 
@@ -463,6 +463,17 @@ export default function WeeklyPlanForm({ initialData, classes, onSubmit, isSubmi
               value={form.mutiara_hikmah}
               onChange={e => update('mutiara_hikmah', e.target.value)}
               placeholder="Mutiara Hikmah 12 tentang Cinta Tanah Air"
+              className={inputClass}
+            />
+          </div>
+
+          <div>
+            <label className={labelClass}>Surah Pendek — Jilid PAUD</label>
+            <input
+              type="text"
+              value={form.surah_pendek.jilid_paud || ''}
+              onChange={e => update('surah_pendek', { ...form.surah_pendek, jilid_paud: e.target.value })}
+              placeholder="Al Quraisy"
               className={inputClass}
             />
           </div>

@@ -18,7 +18,7 @@ const SLOTS_REGULAR = [
   { time: '09.00 – 09.25', label: 'Pilar Karakter' },
   { time: '09.25 – 10.00', label: 'Istirahat (Makan dan minum)' },
   { time: '10.00 – 10.45', label: 'Kegiatan Inti' },
-  { time: '10.45 – 11.00', label: 'Penutup (Fokus jantung, membacakan cerita, refleksi dan do\'a penutup)' },
+  { time: '10.45 – 11.00', label: "Penutup (Fokus jantung, membacakan cerita, refleksi dan do'a penutup)" },
 ]
 
 const SLOTS_JUMAT = [
@@ -26,7 +26,7 @@ const SLOTS_JUMAT = [
   { time: '08.00 – 08.45', label: "Circle Morning (Do'a sebelum belajar, asmaul husna, baris dan senam)" },
   { time: '08.45 – 09.15', label: 'Istirahat (Makan dan minum)' },
   { time: '09.15 – 09.45', label: 'Kegiatan Inti' },
-  { time: '09.45 – 10.00', label: 'Penutup (Fokus jantung, membacakan cerita, refleksi dan do\'a penutup)' },
+  { time: '09.45 – 10.00', label: "Penutup (Fokus jantung, membacakan cerita, refleksi dan do'a penutup)" },
 ]
 
 function formatDate(dateStr) {
@@ -91,6 +91,7 @@ export default function WeeklyPlanViewPage() {
 
   const [plan, setPlan] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [copied, setCopied] = useState(false)
 
   useEffect(() => {
     loadPlan()
@@ -99,7 +100,7 @@ export default function WeeklyPlanViewPage() {
   async function loadPlan() {
     const { data, error } = await supabase
       .from('weekly_plans')
-      .select('*, classes(nama_kelas, wali_kelas_id, profiles:wali_kelas_id(full_name, jabatan))')
+      .select('*, classes(nama_kelas, slug, wali_kelas_id, profiles:wali_kelas_id(full_name, jabatan))')
       .eq('id', id)
       .single()
 
@@ -109,6 +110,25 @@ export default function WeeklyPlanViewPage() {
     }
     setPlan(data)
     setLoading(false)
+  }
+
+  async function handleShare() {
+    if (!plan) return
+    const slug = plan.classes?.slug
+    if (!slug) return alert('Kelas belum punya slug. Hubungi admin.')
+    const url = `${window.location.origin}/rppm/${slug}?tahun=${encodeURIComponent(plan.tahun_ajaran)}&semester=${plan.semester}&minggu=${plan.minggu_ke}`
+    try {
+      await navigator.clipboard.writeText(url)
+    } catch {
+      const el = document.createElement('textarea')
+      el.value = url
+      document.body.appendChild(el)
+      el.select()
+      document.execCommand('copy')
+      document.body.removeChild(el)
+    }
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2500)
   }
 
   if (loading) return <div className="p-8 text-center text-gray-400 text-sm">Memuat RPPM...</div>
@@ -140,17 +160,45 @@ export default function WeeklyPlanViewPage() {
           </div>
         </div>
 
-        <Link
-          href={`/dashboard/weekly-plan/${id}/edit`}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white hover:opacity-90"
-          style={{ background: '#442F78' }}
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-          </svg>
-          Edit
-        </Link>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleShare}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all hover:opacity-90"
+            style={{
+              background: copied ? '#16a34a' : '#A78BFA22',
+              color: copied ? '#fff' : '#442F78',
+              border: '1.5px solid ' + (copied ? '#16a34a' : '#A78BFA'),
+            }}
+          >
+            {copied ? (
+              <>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+                Link tersalin!
+              </>
+            ) : (
+              <>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                  <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+                </svg>
+                Share ke WA
+              </>
+            )}
+          </button>
+          <Link
+            href={`/dashboard/weekly-plan/${id}/edit`}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white hover:opacity-90"
+            style={{ background: '#442F78' }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+            </svg>
+            Edit
+          </Link>
+        </div>
       </div>
 
       {/* Metadata card */}
@@ -342,11 +390,12 @@ export default function WeeklyPlanViewPage() {
           {plan.doa_harian && (
             <div><span className="font-semibold text-gray-600">Do'a Harian: </span><span className="text-gray-700">{plan.doa_harian}</span></div>
           )}
-          {(plan.surah_pendek?.jilid1 || plan.surah_pendek?.jilid2 || plan.surah_pendek?.jilid3) && (
+          {(plan.surah_pendek?.jilid_paud || plan.surah_pendek?.jilid1 || plan.surah_pendek?.jilid2 || plan.surah_pendek?.jilid3) && (
             <div>
               <span className="font-semibold text-gray-600">Surah Pendek: </span>
               <span className="text-gray-700">
                 {[
+                  plan.surah_pendek.jilid_paud && `Jilid PAUD: ${plan.surah_pendek.jilid_paud}`,
                   plan.surah_pendek.jilid1 && `Jilid 1: ${plan.surah_pendek.jilid1}`,
                   plan.surah_pendek.jilid2 && `Jilid 2: ${plan.surah_pendek.jilid2}`,
                   plan.surah_pendek.jilid3 && `Jilid 3: ${plan.surah_pendek.jilid3}`,
