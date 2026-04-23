@@ -431,8 +431,8 @@ export default function WeeklyPlanViewPage() {
         </div>
       </div>
 
-        </div> {/* end scrollable */}
+        </div>
       </main>
-    </div> {/* end outer wrapper */}
+    </div>
   )
 }
