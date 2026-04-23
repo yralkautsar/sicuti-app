@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { useProfile } from '@/lib/ProfileContext'
+import Sidebar from '@/components/Sidebar'
 import Link from 'next/link'
 
 const HARI_LIST = ['senin', 'selasa', 'rabu', 'kamis', 'jumat']
@@ -131,75 +132,76 @@ export default function WeeklyPlanViewPage() {
     setTimeout(() => setCopied(false), 2500)
   }
 
-  if (loading) return <div className="p-8 text-center text-gray-400 text-sm">Memuat RPPM...</div>
+  if (loading) return (
+    <div className="flex h-screen overflow-hidden" style={{ background: '#FAFAFA', fontFamily: "'Karla', sans-serif" }}>
+      <Sidebar profile={profile} />
+      <main className="flex-1 flex items-center justify-center">
+        <div className="w-7 h-7 rounded-full border-2 border-t-transparent animate-spin"
+          style={{ borderColor: '#EAB6FF #EAB6FF #EAB6FF #A78BFA' }}/>
+      </main>
+    </div>
+  )
   if (!plan) return null
 
   const waliKelas = plan.classes?.profiles
-  const isJumatSlotsUsed = plan.hari_data?.jumat
 
   return (
-    <div className="p-4 md:p-6 max-w-6xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between gap-3 mb-6 flex-wrap">
-        <div className="flex items-center gap-3">
-          <Link
-            href="/dashboard/weekly-plan"
-            className="text-gray-400 hover:text-[#442F78] transition-colors"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M19 12H5M12 5l-7 7 7 7" />
-            </svg>
-          </Link>
-          <div>
-            <h1 className="text-xl font-bold text-[#442F78]" style={{ fontFamily: 'Rubik' }}>
-              RPPM — {plan.classes?.nama_kelas}
-            </h1>
-            <p className="text-sm text-gray-400">
-              Minggu ke-{plan.minggu_ke} · {formatDate(plan.periode_start)} – {formatDate(plan.periode_end)}
-            </p>
-          </div>
-        </div>
+    <div className="flex h-screen overflow-hidden" style={{ background: '#FAFAFA', fontFamily: "'Karla', sans-serif" }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700;800&family=Karla:wght@300;400;500;600;700&family=DM+Mono:wght@300;400&display=swap');
+        ::-webkit-scrollbar { width:4px; }
+        ::-webkit-scrollbar-thumb { background:#EAB6FF; border-radius:4px; }
+      `}</style>
 
-        <div className="flex items-center gap-2">
-          <button
-            onClick={handleShare}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all hover:opacity-90"
-            style={{
-              background: copied ? '#16a34a' : '#A78BFA22',
-              color: copied ? '#fff' : '#442F78',
-              border: '1.5px solid ' + (copied ? '#16a34a' : '#A78BFA'),
-            }}
-          >
-            {copied ? (
-              <>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <polyline points="20 6 9 17 4 12"/>
-                </svg>
-                Link tersalin!
-              </>
-            ) : (
-              <>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
-                  <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
-                </svg>
-                Share ke WA
-              </>
-            )}
-          </button>
-          <Link
-            href={`/dashboard/weekly-plan/${id}/edit`}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white hover:opacity-90"
-            style={{ background: '#442F78' }}
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-            </svg>
-            Edit
-          </Link>
-        </div>
-      </div>
+      <Sidebar profile={profile} />
+
+      <main className="flex-1 flex flex-col overflow-hidden">
+        {/* Header */}
+        <header className="px-8 py-4 flex items-center justify-between flex-shrink-0"
+          style={{ background: '#FFFFFF', borderBottom: '1px solid #EAB6FF' }}>
+          <div className="flex items-center gap-4">
+            <Link href="/dashboard/weekly-plan" className="text-gray-400 hover:text-gray-600 transition-colors">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <path d="M19 12H5M12 5l-7 7 7 7"/>
+              </svg>
+            </Link>
+            <div>
+              <h1 className="font-bold text-lg" style={{ color: '#442F78', fontFamily: "'Rubik', sans-serif" }}>
+                RPPM — {plan.classes?.nama_kelas}
+              </h1>
+              <p className="text-xs" style={{ color: '#A78BFA' }}>
+                Minggu ke-{plan.minggu_ke} · {formatDate(plan.periode_start)} – {formatDate(plan.periode_end)}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <button onClick={handleShare}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all"
+              style={{
+                background: copied ? '#16a34a' : 'rgba(167,139,250,0.10)',
+                color: copied ? '#fff' : '#442F78',
+                border: `1.5px solid ${copied ? '#16a34a' : '#A78BFA'}`,
+              }}>
+              {copied ? (
+                <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>Link tersalin!</>
+              ) : (
+                <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>Share ke WA</>
+              )}
+            </button>
+            <Link href={`/dashboard/weekly-plan/${id}/edit`}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white hover:opacity-90"
+              style={{ background: '#442F78' }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+              </svg>
+              Edit
+            </Link>
+          </div>
+        </header>
+
+        {/* Scrollable content */}
+        <div className="flex-1 overflow-y-auto px-8 py-6">
 
       {/* Metadata card */}
       <div
@@ -428,6 +430,9 @@ export default function WeeklyPlanViewPage() {
           <p className="font-semibold text-gray-700">Cahyaning Edytyas Sanubari</p>
         </div>
       </div>
-    </div>
+
+        </div> {/* end scrollable */}
+      </main>
+    </div> {/* end outer wrapper */}
   )
 }
