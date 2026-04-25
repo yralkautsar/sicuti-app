@@ -75,7 +75,7 @@ function CPBlockEditor({ blocks, onChange }) {
             <select
               value={block.cp}
               onChange={e => updateBlock(bi, 'cp', e.target.value)}
-              className="flex-1 text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:border-[#A78BFA]"
+              className="flex-1 text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:border-[#A78BFA] text-[#1C1917]"
             >
               <option value="">-- Pilih CP --</option>
               {CP_OPTIONS.map(c => <option key={c} value={c}>{c}</option>)}
@@ -100,7 +100,7 @@ function CPBlockEditor({ blocks, onChange }) {
                   onChange={e => updateTujuan(bi, ti, e.target.value)}
                   rows={2}
                   placeholder="Tujuan pembelajaran..."
-                  className="flex-1 text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:border-[#A78BFA] resize-none"
+                  className="flex-1 text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:border-[#A78BFA] resize-none text-[#1C1917]"
                 />
                 <button
                   type="button"
@@ -169,7 +169,7 @@ function HariTab({ hari, data, onChange }) {
             value={data.tema_kegiatan}
             onChange={e => update('tema_kegiatan', e.target.value)}
             placeholder={isJumat ? 'OLAHRAGA' : 'RANCANG BANGUN'}
-            className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:border-[#A78BFA] font-semibold uppercase"
+            className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:border-[#A78BFA] font-semibold uppercase text-[#1C1917] rppm-input"
           />
         </div>
         <div>
@@ -181,7 +181,7 @@ function HariTab({ hari, data, onChange }) {
             value={data.detail_kegiatan}
             onChange={e => update('detail_kegiatan', e.target.value)}
             placeholder={isJumat ? 'Bergerak Mengikuti Instruksi' : 'Membangun Taman Lalu Lintas'}
-            className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:border-[#A78BFA]"
+            className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:border-[#A78BFA] text-[#1C1917] rppm-input"
           />
         </div>
       </div>
@@ -199,7 +199,7 @@ function HariTab({ hari, data, onChange }) {
                 value={ab}
                 onChange={e => updateAlatBahan(i, e.target.value)}
                 placeholder="Nama alat/bahan..."
-                className="flex-1 text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:border-[#A78BFA]"
+                className="flex-1 text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:border-[#A78BFA] text-[#1C1917] rppm-input"
               />
               <button
                 type="button"
