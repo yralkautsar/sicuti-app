@@ -103,12 +103,12 @@ export default function WeeklyPlanPage() {
         <div className="flex-1 overflow-y-auto px-8 py-6">
           <div className="flex flex-wrap gap-3 mb-6">
             <select value={filterTahun} onChange={e => setFilterTahun(e.target.value)}
-              className="text-sm border border-gray-200 rounded-xl px-3 py-2 bg-white" style={{ fontFamily: "'Karla', sans-serif" }}>
+              className="text-sm border border-gray-200 rounded-xl px-3 py-2 bg-white text-[#1C1917]" style={{ fontFamily: "'Karla', sans-serif" }}>
               {TAHUN_OPTIONS.map(t => <option key={t} value={t}>{t}</option>)}
             </select>
             {isAdmin && (
               <select value={filterClass} onChange={e => setFilterClass(e.target.value)}
-                className="text-sm border border-gray-200 rounded-xl px-3 py-2 bg-white" style={{ fontFamily: "'Karla', sans-serif" }}>
+                className="text-sm border border-gray-200 rounded-xl px-3 py-2 bg-white text-[#1C1917]" style={{ fontFamily: "'Karla', sans-serif" }}>
                 <option value="all">Semua Kelas</option>
                 {classes.map(c => <option key={c.id} value={c.id}>{c.nama_kelas}</option>)}
               </select>

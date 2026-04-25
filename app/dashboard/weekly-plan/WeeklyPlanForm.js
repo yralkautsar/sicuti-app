@@ -278,7 +278,7 @@ export default function WeeklyPlanForm({ initialData, classes, onSubmit, isSubmi
     onSubmit(cleaned)
   }
 
-  const inputClass = "w-full text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:border-[#A78BFA] rppm-input"
+  const inputClass = "w-full text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:border-[#A78BFA] rppm-input text-[#1C1917]"
   const labelClass = "block text-xs font-bold text-gray-600 mb-1.5 uppercase tracking-wide"
 
   return (
@@ -286,7 +286,9 @@ export default function WeeklyPlanForm({ initialData, classes, onSubmit, isSubmi
       <style>{`
         .rppm-input::placeholder         { color: #C4B5FD; font-style: italic; }
         textarea.rppm-input::placeholder { color: #C4B5FD; font-style: italic; }
+        select.rppm-input                { color: #1C1917; }
         select.rppm-input option[value=""] { color: #A78BFA; font-style: italic; }
+        select.rppm-input option         { color: #1C1917; font-style: normal; }
       `}</style>
 
       {/* ── Metadata ── */}
