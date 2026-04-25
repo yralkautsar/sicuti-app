@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react'
 import { useParams, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 
-// ── Constants ──────────────────────────────────────────────
 const SCHOOL = 'PAUD Mutiara Bunda'
 const C = {
   accent:    '#442F78',
@@ -20,6 +19,26 @@ const C = {
 
 const HARI_LIST  = ['senin','selasa','rabu','kamis','jumat']
 const HARI_LABEL = { senin:'Senin', selasa:'Selasa', rabu:'Rabu', kamis:'Kamis', jumat:"Jum'at" }
+
+// Slot waktu standar per tipe hari
+const SLOTS_REGULAR = [
+  { time:'07.30–07.45', label:'Mengaji Tilawati & Hafalan',   type:'standard' },
+  { time:'07.45–08.00', label:"Sholat Dhuha",                 type:'standard' },
+  { time:'08.00–08.45', label:'Circle Morning',               type:'standard' },
+  { time:'08.45–09.05', label:'Jurnal',                       type:'standard' },
+  { time:'09.00–09.25', label:'Pilar Karakter',               type:'standard' },
+  { time:'09.25–10.00', label:'Istirahat',                    type:'break'    },
+  { time:'10.00–10.45', label:'Kegiatan Inti',                type:'main'     },
+  { time:'10.45–11.00', label:'Penutup',                      type:'standard' },
+]
+
+const SLOTS_JUMAT = [
+  { time:'07.30–08.00', label:'Fun English',                  type:'standard' },
+  { time:'08.00–08.45', label:'Circle Morning',               type:'standard' },
+  { time:'08.45–09.15', label:'Istirahat',                    type:'break'    },
+  { time:'09.15–09.45', label:'Kegiatan Inti',                type:'main'     },
+  { time:'09.45–10.00', label:'Penutup',                      type:'standard' },
+]
 
 function getDayDates(periodeStart) {
   if (!periodeStart) return {}
@@ -43,20 +62,17 @@ function formatPeriode(start, end) {
 function findActivePlan(plans) {
   if (!plans?.length) return null
   const today = new Date().toISOString().split('T')[0]
-  return plans.find(p => p.periode_start <= today && p.periode_end >= today) || plans[plans.length - 1]
+  return plans.find(p => p.periode_start <= today && p.periode_end >= today)
+    || plans[plans.length - 1]
 }
 
 // ── Day Card ────────────────────────────────────────────────
 function DayCard({ hari, data, tanggal, isJumat }) {
-  if (!data) return null
-
-  const tujuanAll = data.cp_blocks
+  const slots = isJumat ? SLOTS_JUMAT : SLOTS_REGULAR
+  const alatBahan = data?.alat_bahan?.filter(x => x.trim()) || []
+  const tujuanAll = data?.cp_blocks
     ?.filter(b => b.cp)
     .flatMap(b => b.tujuan?.filter(t => t.trim()) || []) || []
-
-  const alatBahan = data.alat_bahan?.filter(x => x.trim()) || []
-  const hasContent = data.tema_kegiatan || data.detail_kegiatan || tujuanAll.length > 0
-  if (!hasContent) return null
 
   return (
     <div style={{
@@ -85,7 +101,7 @@ function DayCard({ hari, data, tanggal, isJumat }) {
         {tanggal && (
           <span style={{
             fontSize: 13,
-            color: isJumat ? 'rgba(255,255,255,0.75)' : C.inkDim,
+            color: isJumat ? 'rgba(255,255,255,0.7)' : C.inkDim,
           }}>
             {tanggal}
           </span>
@@ -96,7 +112,7 @@ function DayCard({ hari, data, tanggal, isJumat }) {
             fontSize: 11,
             fontWeight: 600,
             letterSpacing: '0.05em',
-            color: 'rgba(255,255,255,0.6)',
+            color: 'rgba(255,255,255,0.55)',
             textTransform: 'uppercase',
           }}>
             Jadwal Khusus
@@ -104,118 +120,201 @@ function DayCard({ hari, data, tanggal, isJumat }) {
         )}
       </div>
 
-      <div style={{ padding:'18px 20px', display:'flex', flexDirection:'column', gap: 16 }}>
+      {/* Timeline */}
+      <div style={{ padding: '4px 0 8px' }}>
+        {slots.map((slot, si) => {
+          const isMain   = slot.type === 'main'
+          const isBreak  = slot.type === 'break'
+          const isLast   = si === slots.length - 1
 
-        {/* Kegiatan Inti */}
-        {(data.tema_kegiatan || data.detail_kegiatan) && (
-          <div>
-            <p style={{
-              fontSize: 10,
-              fontWeight: 700,
-              letterSpacing: '0.08em',
-              textTransform: 'uppercase',
-              color: C.primary,
-              marginBottom: 6,
-            }}>
-              Kegiatan Hari Ini
-            </p>
-            {data.tema_kegiatan && (
-              <p style={{
-                fontFamily: "'Rubik', sans-serif",
-                fontWeight: 600,
-                fontSize: 15,
-                color: C.accent,
-                marginBottom: data.detail_kegiatan ? 3 : 0,
-              }}>
-                {data.tema_kegiatan}
-              </p>
-            )}
-            {data.detail_kegiatan && (
-              <p style={{ fontSize: 14, color: C.inkMid, lineHeight: 1.5 }}>
-                {data.detail_kegiatan}
-              </p>
-            )}
-          </div>
-        )}
-
-        {/* Alat & Bahan */}
-        {alatBahan.length > 0 && (
-          <div style={{
-            background: 'rgba(167,139,250,0.08)',
-            border: `1px solid ${C.border}`,
-            borderRadius: 12,
-            padding: '12px 16px',
-          }}>
-            <p style={{
-              fontSize: 10,
-              fontWeight: 700,
-              letterSpacing: '0.08em',
-              textTransform: 'uppercase',
-              color: C.accent,
-              marginBottom: 8,
-            }}>
-              Yang Perlu Disiapkan
-            </p>
-            <div style={{ display:'flex', flexWrap:'wrap', gap: 6 }}>
-              {alatBahan.map((item, i) => (
-                <span key={i} style={{
-                  display: 'inline-block',
-                  background: C.surface,
-                  border: `1px solid ${C.border}`,
-                  borderRadius: 20,
-                  padding: '3px 12px',
-                  fontSize: 13,
-                  color: C.accent,
-                  fontWeight: 500,
-                }}>
-                  {item}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Tujuan Pembelajaran — collapsible, secondary */}
-        {tujuanAll.length > 0 && (
-          <details>
-            <summary style={{
-              fontSize: 12,
-              fontWeight: 600,
-              color: C.inkFaint,
-              listStyle: 'none',
+          return (
+            <div key={si} style={{
               display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-              cursor: 'pointer',
-              userSelect: 'none',
+              gap: 0,
+              position: 'relative',
             }}>
-              <span style={{
-                fontSize: 10,
-                color: C.primary,
-                display: 'inline-block',
-                width: 16,
-                textAlign: 'center',
-              }}>▸</span>
-              Tujuan Pembelajaran ({tujuanAll.length})
-            </summary>
-            <ul style={{ marginTop: 10, paddingLeft: 4, display:'flex', flexDirection:'column', gap: 6 }}>
-              {tujuanAll.map((t, i) => (
-                <li key={i} style={{
-                  display: 'flex',
-                  gap: 8,
-                  fontSize: 13,
-                  color: C.inkDim,
-                  lineHeight: 1.5,
-                  listStyle: 'none',
+              {/* Time column */}
+              <div style={{
+                width: 86,
+                flexShrink: 0,
+                padding: '10px 0 10px 20px',
+                display: 'flex',
+                alignItems: isMain ? 'flex-start' : 'center',
+                paddingTop: isMain ? 12 : 10,
+              }}>
+                <span style={{
+                  fontSize: 11,
+                  fontFamily: "'DM Mono', monospace",
+                  color: isMain ? C.primary : C.inkFaint,
+                  fontWeight: isMain ? 500 : 400,
+                  lineHeight: 1.3,
+                  whiteSpace: 'nowrap',
                 }}>
-                  <span style={{ color: C.primary, flexShrink: 0 }}>—</span>
-                  <span>{t}</span>
-                </li>
-              ))}
-            </ul>
-          </details>
-        )}
+                  {slot.time}
+                </span>
+              </div>
 
+              {/* Connector line + dot */}
+              <div style={{
+                width: 24,
+                flexShrink: 0,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                paddingTop: isMain ? 16 : 14,
+              }}>
+                {/* Dot */}
+                <div style={{
+                  width:  isMain ? 10 : isBreak ? 6 : 7,
+                  height: isMain ? 10 : isBreak ? 6 : 7,
+                  borderRadius: '50%',
+                  background: isMain ? C.primary : isBreak ? C.border : '#E5E4E2',
+                  border: isMain ? `2px solid ${C.accent}` : 'none',
+                  flexShrink: 0,
+                  zIndex: 1,
+                }} />
+                {/* Line below dot */}
+                {!isLast && (
+                  <div style={{
+                    flex: 1,
+                    width: 1.5,
+                    background: '#E7E5E4',
+                    marginTop: 3,
+                    minHeight: 16,
+                  }} />
+                )}
+              </div>
+
+              {/* Content column */}
+              <div style={{
+                flex: 1,
+                padding: isMain ? '10px 20px 16px 8px' : '9px 20px 9px 8px',
+                borderBottom: !isLast ? `1px solid transparent` : 'none',
+              }}>
+                {isBreak ? (
+                  <span style={{
+                    fontSize: 13,
+                    color: C.inkFaint,
+                    fontStyle: 'italic',
+                  }}>
+                    {slot.label}
+                  </span>
+                ) : isMain ? (
+                  /* Kegiatan Inti — highlighted */
+                  <div>
+                    <p style={{
+                      fontSize: 10,
+                      fontWeight: 700,
+                      letterSpacing: '0.08em',
+                      textTransform: 'uppercase',
+                      color: C.primary,
+                      marginBottom: 5,
+                    }}>
+                      Kegiatan Inti
+                    </p>
+                    {data?.tema_kegiatan ? (
+                      <>
+                        <p style={{
+                          fontFamily: "'Rubik', sans-serif",
+                          fontWeight: 600,
+                          fontSize: 14,
+                          color: C.accent,
+                          marginBottom: data.detail_kegiatan ? 2 : 8,
+                        }}>
+                          {data.tema_kegiatan}
+                        </p>
+                        {data.detail_kegiatan && (
+                          <p style={{ fontSize: 13, color: C.inkMid, lineHeight: 1.5, marginBottom: 10 }}>
+                            {data.detail_kegiatan}
+                          </p>
+                        )}
+                        {/* Alat & Bahan */}
+                        {alatBahan.length > 0 && (
+                          <div style={{
+                            background: 'rgba(167,139,250,0.07)',
+                            border: `1px solid ${C.border}`,
+                            borderRadius: 10,
+                            padding: '10px 12px',
+                          }}>
+                            <p style={{
+                              fontSize: 10,
+                              fontWeight: 700,
+                              letterSpacing: '0.07em',
+                              textTransform: 'uppercase',
+                              color: C.accent,
+                              marginBottom: 7,
+                            }}>
+                              Yang Perlu Disiapkan
+                            </p>
+                            <div style={{ display:'flex', flexWrap:'wrap', gap: 5 }}>
+                              {alatBahan.map((item, i) => (
+                                <span key={i} style={{
+                                  display: 'inline-block',
+                                  background: C.surface,
+                                  border: `1px solid ${C.border}`,
+                                  borderRadius: 20,
+                                  padding: '2px 10px',
+                                  fontSize: 12,
+                                  color: C.accent,
+                                  fontWeight: 500,
+                                }}>
+                                  {item}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        {/* Tujuan — collapsible */}
+                        {tujuanAll.length > 0 && (
+                          <details style={{ marginTop: 10 }}>
+                            <summary style={{
+                              fontSize: 12,
+                              fontWeight: 600,
+                              color: C.inkFaint,
+                              listStyle: 'none',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 5,
+                              cursor: 'pointer',
+                              userSelect: 'none',
+                            }}>
+                              <span style={{ fontSize:10, color: C.primary }}>▸</span>
+                              Tujuan Pembelajaran ({tujuanAll.length})
+                            </summary>
+                            <ul style={{ marginTop: 8, paddingLeft: 2, display:'flex', flexDirection:'column', gap: 5 }}>
+                              {tujuanAll.map((t, i) => (
+                                <li key={i} style={{
+                                  display:'flex', gap:7, fontSize:12,
+                                  color: C.inkDim, lineHeight:1.5, listStyle:'none',
+                                }}>
+                                  <span style={{ color: C.primary, flexShrink:0 }}>—</span>
+                                  <span>{t}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </details>
+                        )}
+                      </>
+                    ) : (
+                      <p style={{ fontSize: 13, color: C.inkFaint, fontStyle:'italic' }}>
+                        Kegiatan belum diisi
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  /* Standard slot */
+                  <span style={{
+                    fontSize: 13,
+                    color: C.inkDim,
+                    lineHeight: 1.4,
+                  }}>
+                    {slot.label}
+                  </span>
+                )}
+              </div>
+            </div>
+          )
+        })}
       </div>
     </div>
   )
@@ -285,7 +384,7 @@ export default function PublicRppmPage() {
   if (notFound) return (
     <div style={{ minHeight:'100vh', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:8, padding:32, fontFamily:"'Karla', sans-serif" }}>
       <p style={{ fontWeight:700, color: C.inkMid, fontSize:16 }}>Halaman tidak ditemukan</p>
-      <p style={{ color: C.inkFaint, fontSize:14, textAlign:'center' }}>Link yang kamu buka tidak valid atau kelas sudah tidak aktif.</p>
+      <p style={{ color: C.inkFaint, fontSize:14, textAlign:'center' }}>Link tidak valid atau kelas sudah tidak aktif.</p>
     </div>
   )
 
@@ -325,22 +424,19 @@ export default function PublicRppmPage() {
               </p>
             </div>
           </div>
-          <button
-            onClick={handleCopy}
-            style={{
-              flexShrink: 0,
-              padding: '7px 16px',
-              borderRadius: 10,
-              border: `1px solid ${copied ? C.accent : C.border}`,
-              background: copied ? C.accent : C.surface,
-              color: copied ? '#fff' : C.accent,
-              fontSize: 12,
-              fontWeight: 600,
-              cursor: 'pointer',
-              fontFamily: "'Karla', sans-serif",
-              transition: 'all 0.2s',
-            }}
-          >
+          <button onClick={handleCopy} style={{
+            flexShrink: 0,
+            padding: '7px 16px',
+            borderRadius: 10,
+            border: `1px solid ${copied ? C.accent : C.border}`,
+            background: copied ? C.accent : C.surface,
+            color: copied ? '#fff' : C.accent,
+            fontSize: 12,
+            fontWeight: 600,
+            cursor: 'pointer',
+            fontFamily: "'Karla', sans-serif",
+            transition: 'all 0.2s',
+          }}>
             {copied ? 'Tersalin!' : 'Bagikan'}
           </button>
         </div>
@@ -356,16 +452,16 @@ export default function PublicRppmPage() {
             </p>
             <div style={{ display:'flex', flexWrap:'wrap', gap:6 }}>
               {plans.map(p => {
-                const active = activePlan?.id === p.id
+                const isActive = activePlan?.id === p.id
                 return (
                   <button key={p.id} onClick={() => setActivePlan(p)} style={{
                     padding: '5px 14px',
                     borderRadius: 20,
-                    border: `1px solid ${active ? C.accent : C.border}`,
-                    background: active ? C.accent : C.surface,
-                    color: active ? '#fff' : C.inkDim,
+                    border: `1px solid ${isActive ? C.accent : C.border}`,
+                    background: isActive ? C.accent : C.surface,
+                    color: isActive ? '#fff' : C.inkDim,
                     fontSize: 13,
-                    fontWeight: active ? 600 : 400,
+                    fontWeight: isActive ? 600 : 400,
                     cursor: 'pointer',
                     fontFamily: "'Karla', sans-serif",
                   }}>
