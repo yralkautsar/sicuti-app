@@ -9,13 +9,21 @@
 
 ## Executive Summary
 
-**Overall Assessment**: **Good Foundation, Ready to Optimize** ✓
+**Overall Assessment**: **Good Foundation, Actively Improving** ✓
 
-SiCuti has a **solid design system** (purple theme, consistent typography, custom components) and **good fundamentals** (role-based access, responsive layouts, sidebar navigation). However, there are **optimization opportunities** in accessibility, mobile UX, form patterns, and visual polish that will improve adoption and reduce support burden as you scale.
+SiCuti has a **solid design system** (purple theme, consistent typography, custom components) and **good fundamentals** (role-based access, responsive layouts, sidebar navigation). Several UX issues have been resolved since the initial audit. Remaining opportunities are in accessibility, mobile UX, and visual consistency.
 
-**Priority Issues Found**: 8  
-**Low-Hanging Fruit**: 5 (quick wins)  
+**Priority Issues Remaining**: 5  
+**Low-Hanging Fruit**: 3 (quick wins)  
 **Scalability Blockers**: 2 (address before growth)
+
+### Recently Resolved ✅
+- **Form error messages** — `lib/errorMessages.js` created; maps DB errors to Indonesian user-friendly strings. Used in kelas, guru, and murid pages.
+- **Button loading states** — `isSubmitting` pattern implemented across all major forms (guru, murid, kelas, weekly-plan). Spinner + disabled state on submit.
+- **Forgot password** — Full forgot password flow added inline in login page (modal).
+- **Reset password** — Dedicated `/reset-password` page with token validation and show/hide password toggle.
+- **QR Massal progress** — Progress bar (`progress` + `progressLabel` state) added to qr-massal page.
+- **Print support** — `@media print` CSS added to laporan/page.js; PDF export via jsPDF + html2canvas for QR massal.
 
 ---
 
@@ -159,42 +167,9 @@ a:focus {
 
 ## 2. HIGH Priority Issues (Address in Next Sprint)
 
-### 2.1 **Form Error Handling Is Too Generic**
+### ~~2.1 Form Error Handling Is Too Generic~~ ✅ RESOLVED
 
-**Issue**: Error messages don't tell users HOW to fix the problem.
-
-**Current Pattern** (kelas/page.js line 123):
-
-```javascript
-setFormError(err.message || "Terjadi kesalahan.");
-// User sees: "duplicate key value violates unique constraint"
-// OR just: "Terjadi kesalahan."
-```
-
-**Better Pattern** (provide context):
-
-```javascript
-// Convert cryptic DB errors to user-friendly messages
-const errorMap = {
-  "duplicate key":
-    "Nama kelas sudah ada untuk tahun ajaran ini. Gunakan nama berbeda.",
-  "not-null-violation": "Semua field wajib diisi.",
-  "foreign key violation": "Data yang direferensikan tidak ditemukan.",
-};
-
-const getErrorMessage = (err) => {
-  for (const [key, message] of Object.entries(errorMap)) {
-    if (err.message.toLowerCase().includes(key)) return message;
-  }
-  return "Terjadi kesalahan. Hubungi admin jika masalah berlanjut.";
-};
-
-setFormError(getErrorMessage(err));
-```
-
-**Apply to**: kelas/page.js, murid/page.js, guru/page.js, weekly-plan pages
-
-**Effort**: 2-3 hours | **Impact**: Medium (reduces support load, improves UX)
+`lib/errorMessages.js` created with `getUserFriendlyErrorMessage(error)`. Handles: duplicate key, not-null, foreign key, RLS/permission, network, timeout, invalid format, rate limit. Imported and used in kelas, guru, and murid pages. Weekly-plan pages still use raw `alert(error.message)` — extend if needed.
 
 ---
 
@@ -327,47 +302,9 @@ const LoadingKelas = () => (
 
 ## 3. MEDIUM Priority Issues (Improve in Next 2 Sprints)
 
-### 3.1 **Button States & Feedback Missing**
+### ~~3.1 Button States & Feedback Missing~~ ✅ RESOLVED
 
-**Issue**: Buttons don't provide clear feedback when clicked.
-
-**Current**:
-
-- No loading spinner during async operations
-- No success/error visual feedback
-- Disabled state not always clear
-
-**Better Pattern**:
-
-```javascript
-const [saving, setSaving] = useState(false);
-
-return (
-  <button
-    onClick={handleSave}
-    disabled={saving}
-    className="px-4 py-2 rounded-lg text-white font-medium transition-all"
-    style={{
-      background: saving ? "#d1d5db" : "#A78BFA",
-      cursor: saving ? "not-allowed" : "pointer",
-      opacity: saving ? 0.7 : 1,
-    }}
-  >
-    {saving ? (
-      <>
-        <span className="inline-block w-4 h-4 border-2 border-t-transparent rounded-full animate-spin mr-2" />
-        Menyimpan...
-      </>
-    ) : (
-      "Simpan"
-    )}
-  </button>
-);
-```
-
-**Apply to**: All form submit buttons (save, update, delete confirmations)
-
-**Effort**: 2-3 hours | **Impact**: Medium (user confidence, prevents double-clicks)
+`isSubmitting` state pattern implemented across all major forms. Submit buttons show spinner + "Menyimpan..." + `disabled` during async operations. Applies to: guru create/edit, murid create/edit, kelas forms, WeeklyPlanForm tambah/edit. Delete confirmations still use `window.confirm()` — acceptable for now.
 
 ---
 
@@ -478,30 +415,11 @@ import { Calendar, Users, FileText } from 'lucide-react'
 
 ---
 
-### 4.2 **Print Styles Missing**
+### ~~4.2 Print Styles Missing~~ ✅ RESOLVED
 
-**Issue**: Print QR codes page likely doesn't have print-optimized styling.
-
-**Add to globals.css**:
-
-```css
-@media print {
-  body {
-    background: white;
-  }
-  .no-print {
-    display: none;
-  }
-  a {
-    text-decoration: none;
-  }
-  img {
-    max-width: 100%;
-  }
-}
-```
-
-**Effort**: 30 min | **Impact**: Low (specific to QR print flow)
+- `laporan/page.js` — `@media print` CSS implemented (hides nav, expands table for print)
+- `qr-massal/page.js` — PDF export via `html2canvas` + `jsPDF`; 4×2 ID cards per A4 landscape page; progress bar shows generation progress
+- `scan/page.js` — `.no-print` class on login/panduan buttons
 
 ---
 
@@ -596,41 +514,48 @@ import { FixedSizeList } from "react-window";
 
 ## 6. Quick Wins (Can Complete This Week)
 
-| Issue                           | Fix                                        | Time    | Impact       |
-| ------------------------------- | ------------------------------------------ | ------- | ------------ |
-| **Focus indicators missing**    | Add focus ring CSS globally                | 30 min  | High (a11y)  |
-| **Contrast failures**           | Update theme.js colors                     | 30 min  | High (a11y)  |
-| **Login subtitle hard to read** | Increase opacity rgba(255,255,255,0.87)    | 15 min  | Medium       |
-| **No empty states**             | Add 4-5 empty state components             | 3 hours | Medium (UX)  |
-| **Touch targets too small**     | Set min-height/width 44px on buttons/icons | 1 hour  | High (a11y)  |
-| **Print QR codes**              | Add @media print styles                    | 30 min  | Low          |
-| **Animation timing**            | Update .4s → 0.3s, ease → easeOut          | 30 min  | Low (polish) |
+| Issue                           | Status  | Fix                                        | Time    | Impact       |
+| ------------------------------- | ------- | ------------------------------------------ | ------- | ------------ |
+| **Focus indicators missing**    | Open    | Add focus ring CSS globally                | 30 min  | High (a11y)  |
+| **Contrast failures**           | Open    | Update theme.js colors                     | 30 min  | High (a11y)  |
+| **Login subtitle hard to read** | Open    | Increase opacity rgba(255,255,255,0.87)    | 15 min  | Medium       |
+| **No empty states**             | Open    | Add 4-5 empty state components             | 3 hours | Medium (UX)  |
+| **Touch targets too small**     | Open    | Set min-height/width 44px on buttons/icons | 1 hour  | High (a11y)  |
+| **Print QR codes**              | ✅ Done | PDF via jsPDF + html2canvas                | —       | —            |
+| **Form error messages**         | ✅ Done | lib/errorMessages.js created               | —       | —            |
+| **Button loading states**       | ✅ Done | isSubmitting pattern in all major forms    | —       | —            |
+| **Animation timing**            | Open    | Update .4s → 0.3s, ease → easeOut          | 30 min  | Low (polish) |
 
-**Total**: ~6 hours → **High ROI for compliance + UX**
+**Remaining open quick wins**: ~5 hours → Focus indicators + contrast + empty states
 
 ---
 
 ## 7. 3-Month Roadmap
 
-### Month 1 (Now)
+### Month 1 (Completed ✅)
 
-- ✅ Fix accessibility (contrast, focus, touch targets) — CRITICAL
-- ✅ Add empty states — HIGH
-- ✅ Improve form error messages — HIGH
-- ✅ Mobile responsiveness gaps — HIGH
+- ✅ Form error messages — `lib/errorMessages.js` done
+- ✅ Button loading states — `isSubmitting` pattern done
+- ✅ Print/PDF for QR massal and laporan — done
+- ✅ Forgot password + reset password — done
+- ✅ RPPM public page redesign — timeline view done
+- ✅ Panduan page — public usage guide done
+- ⬜ Fix accessibility (contrast, focus, touch targets) — still open
+- ⬜ Add empty states — still open
+- ⬜ Mobile responsiveness gaps — still open
 
-### Month 2
+### Month 2 (Next)
 
-- Extract color system to tokens
-- Add loading/skeleton states
-- Enhance button feedback (loading spinners)
-- Upgrade animations (timing/easing)
+- Fix remaining accessibility issues (contrast, focus rings, touch targets 44px)
+- Add empty state components for kelas, murid, guru, weekly-plan, laporan
+- Extract color system to tokens (replace local color constants in each page)
+- Upgrade animations (0.3s + easeOut)
 
 ### Month 3
 
 - Prepare for multi-school scaling (adaptive nav, virtualized lists)
-- Implement dark mode (token system makes this easy)
-- Add PDF export for reports (build on existing CSV)
+- RPPM PDF export (jsPDF + html2canvas already in project)
+- Laporan empty state for holidays/weekends
 - User testing & refinement
 
 ---

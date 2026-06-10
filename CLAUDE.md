@@ -73,13 +73,13 @@ sicuti-app/
         [id]/
           page.js        # View RPPM + Share to WA button
           edit/          # Edit RPPM
-    kalendar/            # Public: school calendar for parents
+    kalendar/            # Public: school calendar for parents (uses Plus Jakarta Sans font)
     rppm/
-      [slug]/            # Public: weekly lesson plan per class for parents
+      [slug]/            # Public: weekly lesson plan per class for parents (timeline view)
     scan/                # Public: QR scanner tablet page
-    login/
-    reset-password/
-    panduan/
+    login/               # Login + forgot password modal (inline)
+    reset-password/      # Reset password with token validation + show/hide toggle
+    panduan/             # Public: usage guide for QR scan, cuti, and dashboard
     globals.css
     layout.js            # Root layout — font loading via next/font/google
   components/
@@ -88,6 +88,7 @@ sicuti-app/
     supabase.js          # Supabase client — import as: import { supabase } from '@/lib/supabase'
     ProfileContext.js    # React Context — useProfile() hook for all dashboard pages
     theme.js             # Color and font constants
+    errorMessages.js     # getUserFriendlyErrorMessage(error) — maps DB errors to Indonesian strings
   public/
     logoborder.png       # School logo
 ```
@@ -160,7 +161,8 @@ chore    : config or tooling
 
 # Error Handling
 - Always handle Supabase errors — check error before using data
-- Show user-friendly alert() for form errors (current pattern in project)
+- For form errors in kelas/guru/murid pages: use getUserFriendlyErrorMessage(error) from '@/lib/errorMessages'
+- For other pages: alert() with error.message is acceptable
 - Log errors to console in development
 
 # 'use client' directive
@@ -209,7 +211,9 @@ chore    : config or tooling
 - Tailwind CSS for layout and spacing utilities
 - Inline style={{ }} for dynamic values (colors from theme, conditional logic)
 - Never use !important
-- Never use @import in individual page files — fonts are loaded in app/layout.js only
+- Fonts are loaded via next/font/google in app/layout.js (primary method)
+- Many existing pages also include a <style> tag with @import as a fallback — this is the current pattern
+  Do not add @import in new pages; use the font-family inline style instead
 
 # Theme Colors (from lib/theme.js — use these, do not hardcode)
 - accent:   #442F78   (dark purple — headings, buttons, active states)
@@ -261,7 +265,9 @@ chore    : config or tooling
 
 # Auth
 - Profile is loaded ONCE in app/dashboard/layout.js
-- All dashboard pages access it via: const { profile, isAdmin } = useProfile()
+- All dashboard pages access it via: const { profile } = useProfile()
+- isAdmin is computed locally in each page — never comes from context:
+  const isAdmin = profile?.role === 'admin' || profile?.jabatan === 'Kepala Sekolah'
 - Never call supabase.auth.getUser() inside individual pages
 
 # RPC Functions (already created in DB)
@@ -289,8 +295,10 @@ SUPABASE_SERVICE_ROLE_KEY     # Service role — SERVER ONLY, used in /api/creat
 3. ProfileContext          — auth profile shared across all dashboard pages
 
 # ProfileContext (lib/ProfileContext.js)
-- Provides: profile, isAdmin, pendingCuti
-- Used in ALL dashboard pages via: const { profile, isAdmin } = useProfile()
+- Provides: { profile, setProfile } only — isAdmin and pendingCuti are NOT in context
+- Used in ALL dashboard pages via: const { profile } = useProfile()
+- isAdmin computed locally: profile?.role === 'admin' || profile?.jabatan === 'Kepala Sekolah'
+- pendingCuti fetched locally per page that needs it
 - Never bypass this — never re-fetch profile in individual pages
 
 # No external state library
@@ -309,7 +317,7 @@ SUPABASE_SERVICE_ROLE_KEY     # Service role — SERVER ONLY, used in /api/creat
 - Realtime: debounce 1s via debounceRef to prevent burst re-fetch
 - Reports: Map pre-index O(1) lookup instead of O(n²)
 - Holidays API: _libCache[year] in-memory cache
-- Fonts: next/font/google in layout.js — no @import in individual pages
+- Fonts: next/font/google in layout.js (primary); existing pages use <style>@import</style> as fallback
 - DB: 11 indexes + 3 unique constraints
 - Scan: isProcessingRef lock to prevent duplicate scans
 - Scan: scaleX(-1) CSS mirror — decode unaffected
@@ -373,7 +381,7 @@ style: text hitam di input form RPPM
 - [x] Manual attendance input (izin/sakit/alpha) from Kelas page
 - [x] Daily and monthly attendance reports with CSV export
 - [x] Teacher leave request and approval flow
-- [x] Bulk QR print (PNG + PDF)
+- [x] Bulk QR print (PNG + PDF) with progress bar indicator
 - [x] Profile page with attendance recap and leave summary
 - [x] School calendar (events + national holidays) with public view
 - [x] Share link button on public /kalendar page
@@ -382,13 +390,16 @@ style: text hitam di input form RPPM
 - [x] Share to WA button on RPPM view — auto-generates URL with params
 - [x] classes.slug — auto-generated from nama_kelas for public RPPM URLs
 - [x] Surah Pendek Jilid PAUD field in RPPM form and view
+- [x] Panduan page /panduan — public usage guide (absensi, cuti, FAQ)
+- [x] Forgot password modal in login page (inline, no separate page)
+- [x] Reset password page /reset-password — token validation + show/hide password
+- [x] User-friendly Indonesian error messages (lib/errorMessages.js)
 
 # Planned — do not start without discussion
 - [ ] Attendance correction (admin edit/delete attendance records)
 - [ ] Monthly report PDF export (jsPDF + html2canvas already in project)
 - [ ] RPPM PDF export (same stack)
 - [ ] Centralized styling — extend lib/theme.js, replace inline color strings
-- [ ] QR Massal progress indicator ("Memproses X / 60 kartu...")
 - [ ] Laporan empty state for holidays/weekends
 - [ ] Expand tahun ajaran beyond hardcoded array
 ```
@@ -448,8 +459,8 @@ Do not assume and proceed without confirmation.
 - Do not fetch profile inside individual pages — always use useProfile()
 - Do not use useEffect for data fetching in a way that creates race conditions
   (always use a cleanup flag or ref guard for concurrent fetches)
-- Do not add @import for fonts inside individual page files
-  (fonts are loaded in app/layout.js only)
+- Do not add @import for fonts in NEW page files
+  (existing pages have it as fallback — acceptable, but do not spread further)
 - Do not use input/select/textarea without text-[#1C1917] class
   (all form fields must have black text for readability)
 
@@ -504,8 +515,9 @@ weekly_plans      -- RPPM per class per week (JSONB: hari_data, surah_pendek)
 profile?.role === 'admin' || profile?.jabatan === 'Kepala Sekolah'
 
 -- QR format
--- Teacher: GRU-XXXXXXXX
--- Student: MRD-XXXXXXXX
+-- Teacher: GURU-{uuid}   e.g. GURU-f4af07bc-60fd-4817-b00d-dcc5beb54dc1
+-- Admin  : ADM-{uuid}    generated when role=admin or jabatan=Kepala Sekolah
+-- Student: MRD-XXXXXXXX  generated in murid/page.js
 
 -- Slug generation (auto from nama_kelas)
 -- "TK B Disiplin" → "tk-b-disiplin"
