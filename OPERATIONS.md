@@ -7,6 +7,7 @@ Operational procedures, troubleshooting, and maintenance tasks for SiCuti in pro
 ## 1. Overview
 
 This guide covers:
+
 - **Daily operations** — Monitoring, responding to issues
 - **Database maintenance** — Backups, recovery, optimization
 - **Troubleshooting** — Common problems and solutions
@@ -24,16 +25,16 @@ This guide covers:
 □ Check error logs (last 24 hours)
   Supabase dashboard → Logs tab
   Look for: RLS errors, SQL errors, auth failures
-  
+
 □ Verify application status
   https://sicuti-app.vercel.app → Load page
   Try login with test account
   Navigate to dashboard
-  
+
 □ Check database performance
   Supabase dashboard → Database → Queries
   Look for slow queries (> 1 second)
-  
+
 □ Review user reports
   Check email for reported issues
   Check admin dashboard for error messages
@@ -52,12 +53,14 @@ This guide covers:
 ### 2.3 Weekly Tasks
 
 **Every Monday**:
+
 - Review last week's error logs
 - Check database growth (table sizes)
 - Verify all backups are working
 - Update team with metrics (uptime, performance)
 
 **Every Friday**:
+
 - Test disaster recovery (optional)
 - Review database indexes for optimization
 - Plan next week's maintenance (if needed)
@@ -68,29 +71,32 @@ This guide covers:
 
 ### 3.1 What to Monitor
 
-| Metric | Threshold | Action |
-|--------|-----------|--------|
-| Uptime | < 99% | Investigate |
-| Response time | > 2s average | Check database/Vercel |
-| Error rate | > 1% | Review logs |
-| Database size | > 80% quota | Upgrade plan |
-| RLS errors | > 10 per day | Review security policies |
-| Auth failures | > 20 per day | Check account status |
+| Metric        | Threshold    | Action                   |
+| ------------- | ------------ | ------------------------ |
+| Uptime        | < 99%        | Investigate              |
+| Response time | > 2s average | Check database/Vercel    |
+| Error rate    | > 1%         | Review logs              |
+| Database size | > 80% quota  | Upgrade plan             |
+| RLS errors    | > 10 per day | Review security policies |
+| Auth failures | > 20 per day | Check account status     |
 
 ### 3.2 Log Locations
 
 **Application logs** (Vercel):
+
 1. Go to https://vercel.com
 2. Select sicuti-app project
 3. Click "Deployments" → latest deployment → "View Logs"
 4. Shows runtime errors, function calls
 
 **Database logs** (Supabase):
+
 1. Go to Supabase dashboard
 2. Project → "Logs" tab
 3. Shows SQL queries, auth events, errors
 
 **Browser errors** (Production):
+
 1. Open https://sicuti-app.vercel.app
 2. Press F12 → Console tab
 3. Look for JavaScript errors (red X)
@@ -128,17 +134,20 @@ Missing data:
 ### 4.1 Backup Strategy
 
 **Automatic backups** (Supabase included):
+
 - Frequency: Daily
 - Retention: 7 days
 - Location: Supabase managed infrastructure
 - Restore time: ~5 minutes
 
 **To verify backup works**:
+
 1. Supabase dashboard → Backups
 2. See list of available backups with timestamps
 3. Note: Backups are automatic, no action needed
 
 **To restore from backup**:
+
 1. Supabase dashboard → Backups
 2. Click on backup date you want to restore to
 3. Review what changed since that backup
@@ -147,6 +156,7 @@ Missing data:
 6. Verify application still works
 
 **Important**: Restore to production requires caution:
+
 - Data after restore point will be lost
 - Coordinate with team before restoring
 - Test on staging first if possible
@@ -155,6 +165,7 @@ Missing data:
 ### 4.2 Database Performance
 
 **Check slow queries**:
+
 ```sql
 -- Supabase SQL Editor → view slow queries
 -- Look for queries taking > 1 second
@@ -162,12 +173,14 @@ Missing data:
 ```
 
 **Optimize**:
+
 1. Add index if query doesn't have one
 2. Break complex query into simpler steps
 3. Use RPC function for atomic operations
 4. Cache results if data doesn't change frequently
 
 **Index strategy**:
+
 - Attendance lookups: Index on (student_id, tanggal)
 - Leave requests: Index on (guru_id, status)
 - Weekly plans: Index on (class_id, tahun_ajaran, semester, minggu)
@@ -194,6 +207,7 @@ WHERE c.id IS NULL;
 ```
 
 **If orphaned records exist**:
+
 1. Investigate why they exist
 2. Delete or reassign to correct class
 3. Add constraint to prevent future orphans
@@ -222,6 +236,7 @@ SELECT 'weekly_plans', COUNT(*) FROM weekly_plans;
 ```
 
 **Healthy ranges** (for ~100 students, ~20 teachers):
+
 - students: 100-150 rows
 - attendance_students: 10,000-50,000 rows (daily records)
 - weekly_plans: 500-1,000 rows (per week, per class)
@@ -236,44 +251,47 @@ If any table grows unexpectedly, investigate.
 ### 5.1 Issue: Attendance not recording (QR scanner failing)
 
 **Symptoms**:
+
 - Scan QR code → page shows error
 - Attendance record not created
 - Error in console: "Failed to record attendance"
 
 **Diagnosis**:
+
 ```
 1. Check Supabase status
    - Is database responding?
    - Are RPC functions enabled?
-   
+
 2. Check RLS policy
    - Can anon user call record_student_attendance RPC?
    - Supabase dashboard → RLS policies
-   
+
 3. Check QR code format
    - Is it MRD-xxxxx or GRU-xxxxx?
    - Is the QR code in database?
-   
+
 4. Check network
    - Is browser connected to network?
    - Any CORS errors in console?
 ```
 
 **Solutions**:
+
 ```
 If QR code not in database:
   → Generate QR code for student
   → Update students table with qr_code
-  
+
 If RLS policy blocking:
   → Check policy allows anon read on attendance table
   → Verify policy on students table
-  
+
 If RPC function broken:
   → Check RPC function exists in Supabase
   → Verify function logic is correct
   → Re-test with SELECT query
-  
+
 If network issue:
   → Check internet connection
   → Reload page
@@ -283,46 +301,49 @@ If network issue:
 ### 5.2 Issue: Login not working
 
 **Symptoms**:
+
 - Enter credentials → "Invalid login"
 - Or page keeps redirecting to login
 - Or stuck on login screen
 
 **Diagnosis**:
+
 ```
 1. Verify account exists
    Supabase dashboard → Authentication → Users
    Search for email address
-   
+
 2. Check account is not disabled
    Supabase dashboard → Auth settings
    Verify email verification not required
-   
+
 3. Check password is correct
    Verify in Supabase (users are hashed, can't see)
    Try reset password flow
-   
+
 4. Check profile exists
    Supabase → SQL Editor
    SELECT * FROM profiles WHERE email = 'user@example.com';
-   
+
 5. Check RLS policy
    Can user read their own profile?
 ```
 
 **Solutions**:
+
 ```
 If account doesn't exist:
   → Create account via /api/create-user endpoint
   → Or use Supabase dashboard to create
-  
+
 If account disabled:
   → Verify in Supabase Authentication settings
   → Reactivate if needed
-  
+
 If profile missing:
   → Insert row in profiles table
   → Use correct UUID (must match auth user id)
-  
+
 If RLS blocking:
   → Check RLS policy allows self-read
   → Verify email matches between auth & profiles
@@ -331,42 +352,45 @@ If RLS blocking:
 ### 5.3 Issue: Reports not generating / taking too long
 
 **Symptoms**:
+
 - Click "Export to CSV" → waiting forever
 - Or "Generate Report" → spinner keeps spinning
 - Network tab shows slow API call
 
 **Diagnosis**:
+
 ```
 1. Check data volume
    How many attendance records?
    If > 100,000 rows → may be slow
-   
+
 2. Check database query
    Open browser DevTools → Network tab
    See what query is being run
    Estimate how long it takes
-   
+
 3. Check browser resources
    Is browser process using too much CPU/memory?
    Try with different browser
-   
+
 4. Check database performance
    Supabase → Logs tab
    Is query taking > 5 seconds?
 ```
 
 **Solutions**:
+
 ```
 If data too large:
   → Add date range filter
   → Generate report by month instead of year
   → Add pagination to reports
-  
+
 If query slow:
   → Add index to attendance table
   → Use RPC function instead of client query
   → Pre-compute reports (cache results)
-  
+
 If browser slow:
   → Increase browser RAM
   → Try different browser
@@ -376,26 +400,28 @@ If browser slow:
 ### 5.4 Issue: Permission denied / RLS blocking legitimate access
 
 **Symptoms**:
+
 - Admin can't access admin dashboard
 - Teacher can't see own class students
 - Error: "new row violates row level security policy"
 
 **Diagnosis**:
+
 ```
 1. Check user role
    Supabase → profiles table
    Is profile.role = 'admin' for admin user?
    Is profile.role = 'guru' for teacher?
-   
+
 2. Check RLS policy
    Supabase → RLS policies
    Find policy for table user is accessing
    Test policy with test queries
-   
+
 3. Check policy logic
    Is policy checking role correctly?
    Is policy checking user ID correctly?
-   
+
 4. Test policy manually
    Supabase → SQL Editor
    Run as admin: SELECT * FROM students WHERE class_id = '...'
@@ -404,17 +430,18 @@ If browser slow:
 ```
 
 **Solutions**:
+
 ```
 If role is wrong:
   → Update profiles set role = 'admin' where id = '...';
   → Or: update profiles set jabatan = 'Kepala Sekolah' where id = '...';
   → Have user logout & login again
-  
+
 If RLS policy is wrong:
   → Fix policy logic in Supabase
   → Re-test with test queries
   → Re-deploy application
-  
+
 If policy is missing:
   → Create new policy for the table
   → Test before enabling
@@ -424,32 +451,35 @@ If policy is missing:
 ### 5.5 Issue: Database quota exceeded
 
 **Symptoms**:
+
 - Error: "Database quota exceeded"
 - Cannot insert new records
 - Vercel deployment fails with database error
 
 **Diagnosis**:
+
 ```
 1. Check database size
    Supabase dashboard → Database → Storage
    How much of quota is used?
-   
+
 2. Find what's taking space
    Run SQL to get table sizes (see 4.4)
    Is any table unexpectedly large?
-   
+
 3. Check backup size
    Supabase → Backups
    How much space do backups take?
 ```
 
 **Solutions**:
+
 ```
 If quota exceeded:
   → Upgrade Supabase plan (dashboard → Billing)
   → Or delete old data (with caution)
   → Or archive old data to file
-  
+
 If table is too large:
   → Check for duplicate records → delete
   → Check for orphaned records → delete
@@ -460,23 +490,25 @@ If table is too large:
 ### 5.6 Issue: Vercel deployment fails
 
 **Symptoms**:
+
 - Merge to master → Vercel shows red X
 - Build log shows error
 - Version not deploying to production
 
 **Diagnosis**:
+
 ```
 1. Check build logs
    Vercel dashboard → Deployments → Latest
    Click to see full build output
    Look for error message
-   
+
 2. Common causes:
    - ESLint error (syntax)
    - Import error (missing file)
    - Environment variable missing
    - Database connection timeout
-   
+
 3. Try rebuilding
    Vercel dashboard → Deployments → "..."
    Click "Redeploy"
@@ -484,22 +516,23 @@ If table is too large:
 ```
 
 **Solutions**:
+
 ```
 If ESLint error:
   → Run npm run lint locally
   → Fix all issues
   → git push to re-trigger build
-  
+
 If import error:
   → Verify file exists at path
   → Check import statement
   → git commit fix, push to re-trigger
-  
+
 If env var missing:
   → Vercel dashboard → Settings → Environment Variables
   → Add missing variable
   → Trigger new deployment: git push
-  
+
 If database timeout:
   → Check Supabase status page
   → Wait and retry
@@ -513,6 +546,7 @@ If database timeout:
 ### 6.1 Critical Issue Procedure (Production Down)
 
 **Level 1: Confirm Issue**
+
 ```
 Time 0:00
 □ Verify problem is real (test URL, try login)
@@ -522,6 +556,7 @@ Time 0:00
 ```
 
 **Level 2: Quick Diagnosis**
+
 ```
 Time 0:05
 □ Check Vercel logs for deployment errors
@@ -534,19 +569,20 @@ Time 0:05
 ```
 
 **Level 3: Immediate Action**
+
 ```
 Time 0:10
 If code issue:
   → Revert last commit: git revert HEAD
   → git push origin master
   → Wait for Vercel to redeploy (~2 min)
-  
+
 If database issue:
   → Check Supabase status
   → If Supabase down: wait for fix or contact support
   → If RLS policy broken: fix policy
   → If table corrupted: restore from backup
-  
+
 If infrastructure issue:
   → Check Vercel status page
   → Contact Vercel support if needed
@@ -554,6 +590,7 @@ If infrastructure issue:
 ```
 
 **Level 4: Verification & Communication**
+
 ```
 Time 0:15
 □ Verify application is back online
@@ -565,13 +602,13 @@ Time 0:15
 
 ### 6.2 Escalation Matrix
 
-| Issue | Response Time | Owner | Contact |
-|-------|---|---|---|
-| Login not working | 15 min | Operations | DevOps on-call |
-| Attendance scanner broken | 30 min | Developer | SiCuti team |
-| Database down | 5 min | Infrastructure | Supabase support |
-| Deployment stuck | 10 min | DevOps | DevOps on-call |
-| Data corruption | ASAP | DBA | Restore from backup |
+| Issue                     | Response Time | Owner          | Contact             |
+| ------------------------- | ------------- | -------------- | ------------------- |
+| Login not working         | 15 min        | Operations     | DevOps on-call      |
+| Attendance scanner broken | 30 min        | Developer      | SiCuti team         |
+| Database down             | 5 min         | Infrastructure | Supabase support    |
+| Deployment stuck          | 10 min        | DevOps         | DevOps on-call      |
+| Data corruption           | ASAP          | DBA            | Restore from backup |
 
 ### 6.3 Incident Post-Mortem
 
@@ -586,26 +623,33 @@ After any critical issue:
 **Impact**: [How many users affected]
 
 ### What Happened
+
 [Detailed description of what occurred]
 
 ### Root Cause
+
 [Why did it happen - technical root cause]
 
 ### Detection
+
 [How was it detected, how long before detected]
 
 ### Resolution
+
 [What was done to fix it]
 
 ### Timeline
+
 - Time: Action taken
 - Time: Result of action
 - Time: Issue resolved
 
 ### Prevention
+
 [What can we do to prevent this in future]
 
 ### Action Items
+
 - [ ] Action 1 (assigned to person, deadline)
 - [ ] Action 2
 - [ ] Action 3
@@ -620,6 +664,7 @@ After any critical issue:
 ### 7.1 When to Scale
 
 **Indicators**:
+
 - Database > 80% quota used → Upgrade Supabase plan
 - API response > 2s average → Optimize queries or scale database
 - Concurrent users > 500 → Vercel auto-scales (usually OK)
@@ -628,6 +673,7 @@ After any critical issue:
 ### 7.2 Scaling Database
 
 **Signs database needs upgrade**:
+
 ```
 - Queries taking > 2 seconds
 - "Database quota exceeded" error
@@ -636,6 +682,7 @@ After any critical issue:
 ```
 
 **How to upgrade** (Supabase):
+
 1. Dashboard → Billing
 2. Select higher plan tier
 3. Confirm upgrade
@@ -645,6 +692,7 @@ After any critical issue:
 ### 7.3 Scaling Application
 
 **Vercel auto-scales**, but you can optimize:
+
 ```
 1. Review Vercel deployment logs
 2. Identify slow API calls
@@ -657,6 +705,7 @@ After any critical issue:
 ### 7.4 Scaling Storage
 
 **If running out of space**:
+
 ```
 1. Check what's taking space (see 4.4)
 2. Options:
@@ -751,6 +800,7 @@ After any critical issue:
 ### 9.1 Disaster Scenarios
 
 **Scenario 1: Database corrupted**
+
 ```
 1. Immediately stop all writes to prevent spreading corruption
 2. Restore from most recent backup
@@ -760,6 +810,7 @@ After any critical issue:
 ```
 
 **Scenario 2: Production database deleted**
+
 ```
 1. DO NOT PANIC — backups exist
 2. Immediately restore latest backup
@@ -769,6 +820,7 @@ After any critical issue:
 ```
 
 **Scenario 3: Entire application down**
+
 ```
 1. Check all status pages (Vercel, Supabase)
 2. If Vercel down: wait for their recovery
@@ -778,6 +830,7 @@ After any critical issue:
 ```
 
 **Scenario 4: Data breach / unauthorized access**
+
 ```
 1. Immediately revoke access
 2. Change all secrets (API keys, database passwords)
@@ -788,20 +841,22 @@ After any critical issue:
 
 ### 9.2 Recovery Point Objective (RPO) & Recovery Time Objective (RTO)
 
-| Scenario | RPO | RTO |
-|----------|-----|-----|
-| Database failure | 24 hours (daily backups) | 5 min (automatic restore) |
-| Application crash | Real-time (git history) | 2 min (redeploy) |
-| Data corruption | 24 hours (daily backups) | 5 min (restore backup) |
-| Infrastructure failure | 24 hours | 30 min (failover/restore) |
+| Scenario               | RPO                      | RTO                       |
+| ---------------------- | ------------------------ | ------------------------- |
+| Database failure       | 24 hours (daily backups) | 5 min (automatic restore) |
+| Application crash      | Real-time (git history)  | 2 min (redeploy)          |
+| Data corruption        | 24 hours (daily backups) | 5 min (restore backup)    |
+| Infrastructure failure | 24 hours                 | 30 min (failover/restore) |
 
 **Meaning**:
+
 - **RPO** = How much data might be lost (max 24 hours)
 - **RTO** = How long to recover (max 30 minutes)
 
 ### 9.3 Recovery Procedures
 
 **Database recovery**:
+
 1. Identify what point in time you need to restore to
 2. Supabase dashboard → Backups
 3. Select backup date
@@ -810,6 +865,7 @@ After any critical issue:
 6. Test critical flows
 
 **Application recovery**:
+
 1. Identify last good commit
 2. Revert: `git revert <bad-commit>`
 3. Deploy: `git push origin master`
@@ -823,6 +879,7 @@ After any critical issue:
 ### 10.1 Database Performance
 
 **Identify slow queries**:
+
 ```sql
 -- In Supabase SQL Editor
 -- Find queries taking > 1000ms
@@ -831,6 +888,7 @@ After any critical issue:
 ```
 
 **Common optimizations**:
+
 ```
 1. Add index to frequently filtered columns
    CREATE INDEX idx_student_class ON students(class_id);
@@ -848,6 +906,7 @@ After any critical issue:
 ### 10.2 Application Performance
 
 **Frontend optimization**:
+
 ```
 1. Code splitting (Next.js does this)
 2. Image optimization (use next/image)
@@ -856,6 +915,7 @@ After any critical issue:
 ```
 
 **Backend optimization**:
+
 ```
 1. Cache frequently accessed data
 2. Use RPC for atomic operations
@@ -866,12 +926,14 @@ After any critical issue:
 ### 10.3 Monitoring Performance
 
 **Track these metrics**:
+
 - Page load time (< 2s target)
 - Database query time (< 100ms target)
 - API response time (< 500ms target)
 - Error rate (< 0.1% target)
 
 **Tools**:
+
 - Vercel dashboard (deployment metrics)
 - Supabase logs (query performance)
 - Browser DevTools (page load performance)
@@ -884,12 +946,14 @@ After any critical issue:
 ### 11.1 Data Retention
 
 **How long to keep data**:
+
 - Student attendance: Full academic year + 3 months
 - Teacher leave requests: 2 years (for audit)
 - Audit logs: 1 year minimum
 - Backups: 7 days (automatic by Supabase)
 
 **Data deletion policy**:
+
 ```
 Each June (end of academic year):
 1. Archive student attendance from previous year
@@ -901,17 +965,20 @@ Each June (end of academic year):
 ### 11.2 Audit Logging
 
 **What to log**:
+
 - Admin actions (create/delete user, approve leave)
 - Data modifications (edit student, edit attendance)
 - Access attempts (failed logins, permission denied)
 - System changes (RLS policy updates, schema changes)
 
 **Where logs are stored**:
+
 - Supabase logs (automatic)
 - Vercel logs (automatic)
 - Application logs (if custom logging added)
 
 **Audit log retention**:
+
 - Supabase logs: Available for query in dashboard
 - Exported logs: Keep in secure storage for 1+ years
 
@@ -922,12 +989,14 @@ Each June (end of academic year):
 ### 12.1 Secret Management
 
 **Secrets to protect**:
+
 - Supabase service role key (server-only)
 - Database passwords (Supabase-managed)
 - API keys (if any external integrations)
 - JWT tokens (temporary, session-based)
 
 **Best practices**:
+
 ```
 ✓ Store in Vercel environment variables (encrypted)
 ✓ Rotate keys periodically (every 90 days)
@@ -939,12 +1008,14 @@ Each June (end of academic year):
 ### 12.2 Access Control Review
 
 **Monthly review**:
+
 1. List all users with dashboard access
 2. Verify each user should still have access
 3. Check roles are correct (admin vs guru)
 4. Disable any inactive accounts
 
 **Procedure**:
+
 ```
 Supabase → Authentication → Users
 For each user:
@@ -957,6 +1028,7 @@ For each user:
 ### 12.3 Security Patches
 
 **Monitor for security updates**:
+
 ```bash
 npm audit  # Check for vulnerable packages
 
@@ -972,24 +1044,28 @@ git push  # Triggers rebuild & staging test
 ## 13. Operations Checklist
 
 ### Daily (EOD)
+
 - [ ] Check error logs for issues
 - [ ] Verify application loads
 - [ ] Database backup completed
 - [ ] No critical errors in logs
 
 ### Weekly (Monday AM)
+
 - [ ] Review last week's errors
 - [ ] Database performance review
 - [ ] User report summary
 - [ ] Plan any maintenance
 
 ### Monthly (First Sunday)
+
 - [ ] Security audit
 - [ ] Database optimization
 - [ ] Dependency updates
 - [ ] Post-mortem on any incidents
 
 ### Quarterly (Every 3 months)
+
 - [ ] Full security review
 - [ ] Disaster recovery test
 - [ ] Performance optimization
@@ -999,31 +1075,34 @@ git push  # Triggers rebuild & staging test
 
 ## 14. Quick Reference
 
-| Task | Who | When | Duration |
-|------|-----|------|----------|
-| Daily monitoring | Operations | Every day | 15 min |
-| Weekly maintenance | DevOps | Sunday 2 AM | 30 min |
-| Monthly review | Tech lead | 1st of month | 1 hour |
-| Quarterly audit | Security | Every 3 months | 2 hours |
-| Emergency response | On-call | As needed | 15-30 min |
+| Task               | Who        | When           | Duration  |
+| ------------------ | ---------- | -------------- | --------- |
+| Daily monitoring   | Operations | Every day      | 15 min    |
+| Weekly maintenance | DevOps     | Sunday 2 AM    | 30 min    |
+| Monthly review     | Tech lead  | 1st of month   | 1 hour    |
+| Quarterly audit    | Security   | Every 3 months | 2 hours   |
+| Emergency response | On-call    | As needed      | 15-30 min |
 
 ---
 
 ## 15. Contacts & Resources
 
 **Team**:
+
 - Tech Lead: [Name] — Architecture, major decisions
 - DevOps: [Name] — Deployments, infrastructure
 - DBA: [Name] — Database, performance
 - On-call: [Name] — Emergency response (rotating)
 
 **External**:
+
 - Vercel status: https://www.vercel-status.com
 - Supabase status: https://status.supabase.com
 - GitHub: https://github.com/yralkautsar/sicuti-app
 - Supabase dashboard: https://app.supabase.com
 
 **Documentation**:
+
 - [DEPLOYMENT.md](./DEPLOYMENT.md) — Deployment procedures
 - [DATABASE.md](./DATABASE.md) — Database schema
 - [ARCHITECTURE.md](./ARCHITECTURE.md) — System design

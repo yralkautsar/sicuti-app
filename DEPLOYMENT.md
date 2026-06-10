@@ -8,12 +8,13 @@ Complete deployment and environment management guide for SiCuti.
 
 SiCuti uses a **two-environment setup** for reliable deployments:
 
-| Environment | URL | Branch | Database | Deployment |
-|---|---|---|---|---|
-| **Staging** | https://sicuti-staging.vercel.app | `develop` | Staging Supabase | Auto-deploy on push |
-| **Production** | https://sicuti-app.vercel.app | `master` | Production Supabase | Auto-deploy on push |
+| Environment    | URL                               | Branch    | Database            | Deployment          |
+| -------------- | --------------------------------- | --------- | ------------------- | ------------------- |
+| **Staging**    | https://sicuti-staging.vercel.app | `develop` | Staging Supabase    | Auto-deploy on push |
+| **Production** | https://sicuti-app.vercel.app     | `master`  | Production Supabase | Auto-deploy on push |
 
 **Deployment Flow**:
+
 ```
 develop (push) → Vercel builds staging → Manual test → Merge to master → Vercel builds production
 ```
@@ -25,6 +26,7 @@ develop (push) → Vercel builds staging → Manual test → Merge to master →
 ### 2.1 Local Development Environment
 
 **Prerequisites**:
+
 - Node.js 18+
 - Git
 - Vercel CLI (optional but recommended)
@@ -54,11 +56,11 @@ npm run dev
 
 ### 2.2 Staging Environment (Supabase Staging)
 
-| Variable | Value | Location |
-|---|---|---|
-| NEXT_PUBLIC_SUPABASE_URL | https://hylzeqciqpdiooajahow.supabase.co | Vercel env vars |
-| NEXT_PUBLIC_SUPABASE_ANON_KEY | [staging-key] | Vercel env vars |
-| SUPABASE_SERVICE_ROLE_KEY | [staging-service-role] | Vercel env vars (server-only) |
+| Variable                      | Value                                    | Location                      |
+| ----------------------------- | ---------------------------------------- | ----------------------------- |
+| NEXT_PUBLIC_SUPABASE_URL      | https://hylzeqciqpdiooajahow.supabase.co | Vercel env vars               |
+| NEXT_PUBLIC_SUPABASE_ANON_KEY | [staging-key]                            | Vercel env vars               |
+| SUPABASE_SERVICE_ROLE_KEY     | [staging-service-role]                   | Vercel env vars (server-only) |
 
 **Deployment**: Automatic on push to `develop` branch
 
@@ -66,11 +68,11 @@ npm run dev
 
 ### 2.3 Production Environment (Supabase Production)
 
-| Variable | Value | Location |
-|---|---|---|
-| NEXT_PUBLIC_SUPABASE_URL | https://jfiujpyezuhrpvgnybvw.supabase.co | Vercel env vars |
-| NEXT_PUBLIC_SUPABASE_ANON_KEY | [prod-key] | Vercel env vars |
-| SUPABASE_SERVICE_ROLE_KEY | [prod-service-role] | Vercel env vars (server-only) |
+| Variable                      | Value                                    | Location                      |
+| ----------------------------- | ---------------------------------------- | ----------------------------- |
+| NEXT_PUBLIC_SUPABASE_URL      | https://jfiujpyezuhrpvgnybvw.supabase.co | Vercel env vars               |
+| NEXT_PUBLIC_SUPABASE_ANON_KEY | [prod-key]                               | Vercel env vars               |
+| SUPABASE_SERVICE_ROLE_KEY     | [prod-service-role]                      | Vercel env vars (server-only) |
 
 **Deployment**: Automatic on push to `master` branch
 
@@ -187,6 +189,7 @@ If failed: Build notification sent to GitHub
 ### 4.2 Build Failures
 
 **Common causes**:
+
 1. **Lint errors**: ESLint violations
    - Fix: `npm run lint` locally, fix errors, re-push
 
@@ -222,11 +225,13 @@ vercel ls
 ### 5.1 Sensitive Credentials
 
 **NEVER commit**:
+
 - `.env.local` (local development)
 - `.env.production.local`
 - API keys, secrets, passwords
 
 **Use Vercel dashboard**:
+
 1. Go to Project Settings → Environment Variables
 2. Add variables
 3. Select which environments (Staging / Production / Preview)
@@ -239,7 +244,7 @@ Staging Supabase credentials change:
   ↓
 1. Update keys in Supabase dashboard
 2. Add new keys to Vercel (Settings → Environment Variables)
-3. Redeploy staging: 
+3. Redeploy staging:
    git push origin develop
 4. Test on staging
   ↓
@@ -255,6 +260,7 @@ Production Supabase credentials change:
 ### 5.3 Variable Organization
 
 **Staging Environment Variables** (in Vercel):
+
 ```
 NEXT_PUBLIC_SUPABASE_URL = https://hylzeqciqpdiooajahow.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY = eyJhbGciOi...
@@ -262,6 +268,7 @@ SUPABASE_SERVICE_ROLE_KEY = eyJhbGciOi...
 ```
 
 **Production Environment Variables** (in Vercel):
+
 ```
 NEXT_PUBLIC_SUPABASE_URL = https://jfiujpyezuhrpvgnybvw.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY = eyJhbGciOi...
@@ -279,7 +286,7 @@ Since SiCuti uses manual SQL migrations (no CLI):
 ```
 1. Create SQL migration file:
    SQL_MIGRATIONS/migration_001_add_field.sql
-   
+
    Example:
    ALTER TABLE weekly_plans ADD COLUMN semester_data JSONB;
 
@@ -291,7 +298,7 @@ Since SiCuti uses manual SQL migrations (no CLI):
    - Copy & paste SQL from migration file
    - Execute
    - Test on staging environment
-   
+
 4. After staging validation:
    - Open Supabase dashboard (production)
    - Go to SQL Editor
@@ -305,6 +312,7 @@ Since SiCuti uses manual SQL migrations (no CLI):
 ```
 
 **Important Notes**:
+
 - Always run migrations on staging FIRST
 - Never run untested migrations on production
 - Keep migration files in repository for audit trail
@@ -492,16 +500,17 @@ git push -f origin master  # Force push reverted state
 
 Keep staging & production as similar as possible:
 
-| Component | Staging | Production |
-|---|---|---|
-| Next.js version | Same (package.json) | Same |
-| Supabase schema | Mirror | Mirror |
-| Supabase RLS policies | Same | Same |
-| Environment variables | Similar (diff keys) | Similar |
-| Node.js version | Vercel defaults | Vercel defaults |
-| Tailwind CSS config | Same | Same |
+| Component             | Staging             | Production      |
+| --------------------- | ------------------- | --------------- |
+| Next.js version       | Same (package.json) | Same            |
+| Supabase schema       | Mirror              | Mirror          |
+| Supabase RLS policies | Same                | Same            |
+| Environment variables | Similar (diff keys) | Similar         |
+| Node.js version       | Vercel defaults     | Vercel defaults |
+| Tailwind CSS config   | Same                | Same            |
 
 **Checklist**:
+
 - [ ] Staging & Production Supabase projects have identical schema
 - [ ] RLS policies are identical (except for testing accounts)
 - [ ] Staging data is fresh (mirrors production structure)
@@ -515,6 +524,7 @@ Keep staging & production as similar as possible:
 ### 10.1 Vercel Dashboard
 
 **Check deployment status**:
+
 1. Go to https://vercel.com
 2. Select project (sicuti-staging or sicuti-app)
 3. View "Deployments" tab
@@ -528,6 +538,7 @@ Keep staging & production as similar as possible:
 ### 10.2 Git Integration
 
 **Automatic notifications**:
+
 - Vercel posts deployment status to GitHub pull requests
 - Status badges show build success/failure
 - Check deployment before merging PR
@@ -535,6 +546,7 @@ Keep staging & production as similar as possible:
 ### 10.3 Supabase Logs
 
 **Monitor database queries**:
+
 1. Go to Supabase dashboard
 2. Select project
 3. Logs tab shows:
@@ -544,6 +556,7 @@ Keep staging & production as similar as possible:
    - Performance metrics
 
 **Check for issues**:
+
 ```sql
 -- Slow queries (take >1 second)
 -- High error rates
@@ -558,6 +571,7 @@ Keep staging & production as similar as possible:
 ### 11.1 Performance Monitoring
 
 **Set up alerts for**:
+
 - Build time > 5 minutes
 - API response time > 2 seconds
 - Database queries > 1 second
@@ -567,6 +581,7 @@ Keep staging & production as similar as possible:
 ### 11.2 Capacity Planning
 
 **When to scale**:
+
 - Database size > 10GB (upgrade Supabase plan)
 - Active users > 500 concurrent (Vercel auto-scales)
 - Response time degradation (add indexes, optimize queries)
@@ -595,11 +610,13 @@ Quarterly:
 ### 12.1 Data Backup
 
 **Supabase automatic backups**:
+
 - Daily backups (included with pro plan)
 - 7-day retention
 - Manual backups available via Supabase dashboard
 
 **Restore from backup**:
+
 1. Supabase dashboard → Backups
 2. Select backup date
 3. Review changes (what was restored)
@@ -607,6 +624,7 @@ Quarterly:
 5. Database reverts to that point in time
 
 **Manual backup**:
+
 ```bash
 # Export production database
 pg_dump postgresql://[user]:[password]@[host]:[port]/[db] > backup.sql
@@ -630,7 +648,7 @@ pg_dump postgresql://[user]:[password]@[host]:[port]/[db] > backup.sql
 
 3. **If Vercel issue**: Wait for Vercel team or rollback last commit
 4. **If Supabase issue**: Use backup to restore
-5. **If our code issue**: 
+5. **If our code issue**:
    - Rollback to last working commit
    - Or redeploy with manual fix
 
@@ -641,15 +659,17 @@ pg_dump postgresql://[user]:[password]@[host]:[port]/[db] > backup.sql
 ### Issue: Build fails with "env variable not found"
 
 **Solution**:
+
 1. Check variable is defined in Vercel project settings
 2. Variable should be in correct environment (Staging/Production/Preview)
-3. For NEXT_PUBLIC_ variables: visible in browser code
+3. For NEXT*PUBLIC* variables: visible in browser code
 4. For server variables: only in API routes
 5. Redeploy after adding variable: `git push`
 
 ### Issue: Deployment stuck in "Building"
 
 **Solution**:
+
 1. Vercel dashboard → Settings → Git
 2. Rebuild deployment: Click "..." → Redeploy
 3. Or push empty commit: `git commit --allow-empty -m "retry build"`
@@ -658,6 +678,7 @@ pg_dump postgresql://[user]:[password]@[host]:[port]/[db] > backup.sql
 ### Issue: Staging works but production broken
 
 **Solution**:
+
 1. Verify environment variables are correct (different Supabase projects)
 2. Check production database has data
 3. Compare recent commits to what's on master vs develop
@@ -666,6 +687,7 @@ pg_dump postgresql://[user]:[password]@[host]:[port]/[db] > backup.sql
 ### Issue: Supabase connection timeout
 
 **Solution**:
+
 1. Check Supabase project is not paused
 2. Verify Supabase URL in env vars is correct
 3. Check network connectivity
@@ -676,6 +698,7 @@ pg_dump postgresql://[user]:[password]@[host]:[port]/[db] > backup.sql
 ## 14. Deployment Checklist
 
 **Before pushing to develop (staging)**:
+
 - [ ] Code tested locally
 - [ ] No console errors
 - [ ] Linting passes: `npm run lint`
@@ -684,6 +707,7 @@ pg_dump postgresql://[user]:[password]@[host]:[port]/[db] > backup.sql
 - [ ] Commit message is clear
 
 **Before merging to master (production)**:
+
 - [ ] Tested on staging (all flows in test checklist)
 - [ ] Code review approved
 - [ ] RLS policies verified
@@ -692,6 +716,7 @@ pg_dump postgresql://[user]:[password]@[host]:[port]/[db] > backup.sql
 - [ ] Rollback plan prepared (if needed)
 
 **After production deployment**:
+
 - [ ] Build succeeds in Vercel
 - [ ] Application loads without errors
 - [ ] Quick sanity test (login, view dashboard)
@@ -702,19 +727,19 @@ pg_dump postgresql://[user]:[password]@[host]:[port]/[db] > backup.sql
 
 ## 15. Quick Reference
 
-| Task | Command / URL |
-|---|---|
-| Start local dev | `npm run dev` → http://localhost:3000 |
-| Lint check | `npm run lint` |
-| Build locally | `npm run build && npm run start` |
-| Deploy to staging | `git push origin develop` |
-| Deploy to production | `git push origin master` |
-| View staging | https://sicuti-staging.vercel.app |
-| View production | https://sicuti-app.vercel.app |
-| Vercel dashboard | https://vercel.com |
-| Supabase staging | https://app.supabase.com (select staging project) |
-| Supabase production | https://app.supabase.com (select production project) |
-| GitHub repo | https://github.com/yralkautsar/sicuti-app |
+| Task                 | Command / URL                                        |
+| -------------------- | ---------------------------------------------------- |
+| Start local dev      | `npm run dev` → http://localhost:3000                |
+| Lint check           | `npm run lint`                                       |
+| Build locally        | `npm run build && npm run start`                     |
+| Deploy to staging    | `git push origin develop`                            |
+| Deploy to production | `git push origin master`                             |
+| View staging         | https://sicuti-staging.vercel.app                    |
+| View production      | https://sicuti-app.vercel.app                        |
+| Vercel dashboard     | https://vercel.com                                   |
+| Supabase staging     | https://app.supabase.com (select staging project)    |
+| Supabase production  | https://app.supabase.com (select production project) |
+| GitHub repo          | https://github.com/yralkautsar/sicuti-app            |
 
 ---
 
