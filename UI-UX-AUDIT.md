@@ -26,26 +26,29 @@ SiCuti has a **solid design system** (purple theme, consistent typography, custo
 **Issue**: Some text combinations fail WCAG AA (4.5:1) standard.
 
 **Examples**:
+
 - Login page subtitle: `color: 'rgba(255,255,255,0.45)'` on dark purple background (~2:1 ratio) ❌
 - Dashboard secondary text: `color: '#A8A29E'` (inkFaint) on white background (~3:1 ratio) ❌
 - Error text colors may not meet 4.5:1 on all backgrounds
 
-**Impact**: 
+**Impact**:
+
 - Fails WCAG AA compliance (legal risk for schools, federal regulations in some regions)
 - Hard to read for low-vision users, older teachers, mobile use in sunlight
 - Reduces user confidence in the platform
 
 **Fix**:
+
 ```javascript
 // BEFORE (theme.js)
 export const COLORS = {
-  inkFaint: '#A8A29E',  // ~3:1 on white — fails AA
-}
+  inkFaint: "#A8A29E", // ~3:1 on white — fails AA
+};
 
 // AFTER — Use darker secondary text
 export const COLORS = {
-  inkFaint: '#6B7280',  // ~5:1 on white — passes AAA
-}
+  inkFaint: "#6B7280", // ~5:1 on white — passes AAA
+};
 
 // For light text on dark backgrounds:
 // rgba(255,255,255,0.45) → rgba(255,255,255,0.87) (87% opacity)
@@ -53,6 +56,7 @@ export const COLORS = {
 ```
 
 **Apply to**:
+
 - `dashboard/page.js` line 159 — time display secondary text
 - `login/page.js` line 147 — "Gunakan email..." text
 - `kelas/page.js` — any secondary labels
@@ -66,17 +70,20 @@ export const COLORS = {
 **Issue**: Several interactive elements fail the 44×44pt minimum (Apple HIG / Material Design).
 
 **Examples**:
+
 - Icon buttons in sidebar (line 21-40, Sidebar.js): `width="18" height="18"` with only `px-3 py-2.5` padding
   - Calculated: 18 + 12 = 30pt (fails minimum)
 - Status badges: `text-xs px-1.5 py-0.5` = ~16×16pt (fails)
 - Close/delete icon buttons (if any) likely too small
 
 **Impact**:
+
 - Teachers on tablets or with large fingers make mis-taps → frustration, wrong deletions
 - Elderly users (common in schools) struggle with precise tapping
 - Violates platform guidelines (Apple HIG, Material Design)
 
 **Fix**:
+
 ```javascript
 // BEFORE — Sidebar nav items
 <a className="flex items-center gap-3 px-3 py-2.5 rounded-xl..."
@@ -97,6 +104,7 @@ style={{
 ```
 
 **Apply to**:
+
 - Sidebar nav items (Sidebar.js lines 115-130)
 - Delete/edit icon buttons (kelas/page.js, murid/page.js, guru/page.js)
 - Status toggle buttons (attendance UI)
@@ -112,20 +120,24 @@ style={{
 **Current**: `input:focus { outline: none; }` (login/page.js line 67) removes focus completely!
 
 **Impact**:
+
 - Teachers using keyboard-only input methods cannot navigate
 - Screen reader users get lost
 - Fails WCAG AA requirement (2.4.7 Focus Visible)
 
 **Fix**:
+
 ```css
 /* BEFORE (removes focus) */
-input:focus { outline: none; }  /* ❌ */
+input:focus {
+  outline: none;
+} /* ❌ */
 
 /* AFTER (restore + enhance) */
 input:focus,
 button:focus,
 a:focus {
-  outline: 2px solid #A78BFA;  /* Your purple accent */
+  outline: 2px solid #a78bfa; /* Your purple accent */
   outline-offset: 2px;
   border-radius: 4px;
 }
@@ -133,7 +145,7 @@ a:focus {
 /* For Tailwind, add to globals.css: */
 @layer components {
   @focus-visible {
-    outline: 2px solid #A78BFA;
+    outline: 2px solid #a78bfa;
     outline-offset: 2px;
   }
 }
@@ -152,29 +164,32 @@ a:focus {
 **Issue**: Error messages don't tell users HOW to fix the problem.
 
 **Current Pattern** (kelas/page.js line 123):
+
 ```javascript
-setFormError(err.message || 'Terjadi kesalahan.')
+setFormError(err.message || "Terjadi kesalahan.");
 // User sees: "duplicate key value violates unique constraint"
 // OR just: "Terjadi kesalahan."
 ```
 
 **Better Pattern** (provide context):
+
 ```javascript
 // Convert cryptic DB errors to user-friendly messages
 const errorMap = {
-  'duplicate key': 'Nama kelas sudah ada untuk tahun ajaran ini. Gunakan nama berbeda.',
-  'not-null-violation': 'Semua field wajib diisi.',
-  'foreign key violation': 'Data yang direferensikan tidak ditemukan.',
-}
+  "duplicate key":
+    "Nama kelas sudah ada untuk tahun ajaran ini. Gunakan nama berbeda.",
+  "not-null-violation": "Semua field wajib diisi.",
+  "foreign key violation": "Data yang direferensikan tidak ditemukan.",
+};
 
 const getErrorMessage = (err) => {
   for (const [key, message] of Object.entries(errorMap)) {
-    if (err.message.toLowerCase().includes(key)) return message
+    if (err.message.toLowerCase().includes(key)) return message;
   }
-  return 'Terjadi kesalahan. Hubungi admin jika masalah berlanjut.'
-}
+  return "Terjadi kesalahan. Hubungi admin jika masalah berlanjut.";
+};
 
-setFormError(getErrorMessage(err))
+setFormError(getErrorMessage(err));
 ```
 
 **Apply to**: kelas/page.js, murid/page.js, guru/page.js, weekly-plan pages
@@ -188,36 +203,52 @@ setFormError(getErrorMessage(err))
 **Issue**: Pages with no data show nothing (blank page = confusing).
 
 **Examples**:
+
 - Murid page with no students imported
 - RPPM list when no lesson plans created yet
 - Leave requests when no requests submitted
 
 **Better Pattern**:
+
 ```javascript
 if (classes.length === 0) {
   return (
     <div className="flex flex-col items-center justify-center h-96">
-      <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+      <svg
+        width="64"
+        height="64"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+      >
         {/* Illustrative icon */}
       </svg>
-      <h3 style={{ color: '#442F78', marginTop: '16px' }} className="font-bold text-lg">
+      <h3
+        style={{ color: "#442F78", marginTop: "16px" }}
+        className="font-bold text-lg"
+      >
         Belum ada kelas
       </h3>
-      <p style={{ color: '#78716C', marginTop: '8px' }} className="text-sm max-w-xs">
+      <p
+        style={{ color: "#78716C", marginTop: "8px" }}
+        className="text-sm max-w-xs"
+      >
         Mulai dengan menambahkan kelas tahun ajaran ini.
       </p>
       <button
         onClick={() => setShowModal(true)}
         className="mt-6 px-4 py-2 rounded-lg text-white font-medium"
-        style={{ background: '#A78BFA' }}>
+        style={{ background: "#A78BFA" }}
+      >
         + Tambah Kelas
       </button>
     </div>
-  )
+  );
 }
 ```
 
 **Apply to**:
+
 - kelas/page.js (when no classes)
 - murid/page.js (when no students)
 - guru/page.js (when no teachers)
@@ -233,23 +264,27 @@ if (classes.length === 0) {
 **Issue**: Some pages show spinners, others don't. Users don't know if page is loading or broken.
 
 **Current**:
+
 - Dashboard page (line 168-171): Spinner when loading ✓
 - Kelas page: No loading indicator while fetching classes (line 44-67) ❌
 - Murid page: Unclear if data is loading ❌
 
 **Better Pattern** (Skeleton Screen for faster perceived load):
+
 ```javascript
 // Instead of blank page + spinner, show placeholder structure
 const LoadingKelas = () => (
   <div className="space-y-4">
-    {[1,2,3].map(i => (
-      <div key={i} className="h-20 bg-gray-100 rounded-lg animate-pulse"/>
+    {[1, 2, 3].map((i) => (
+      <div key={i} className="h-20 bg-gray-100 rounded-lg animate-pulse" />
     ))}
   </div>
-)
+);
 
 // Use in render:
-{loading ? <LoadingKelas /> : <KelasContent />}
+{
+  loading ? <LoadingKelas /> : <KelasContent />;
+}
 ```
 
 **Apply to**: kelas, murid, guru, laporan pages
@@ -263,10 +298,12 @@ const LoadingKelas = () => (
 **Issue**: Some pages don't stack properly on mobile (< 375px).
 
 **Examples**:
+
 - Dashboard stat cards (line 183 `grid grid-cols-4`): Becomes 4 columns on mobile = tiny cards
 - Tables (attendance, teacher list): No horizontal scroll affordance, text truncates
 
 **Fix**:
+
 ```javascript
 // BEFORE — 4 columns on all screen sizes
 <div className="grid grid-cols-4 gap-4 mb-6">
@@ -279,6 +316,7 @@ const LoadingKelas = () => (
 ```
 
 **Apply to**:
+
 - dashboard/page.js line 183 (stat cards)
 - kelas/page.js (class list)
 - Any tables (add horizontal scroll wrapper on mobile)
@@ -293,14 +331,16 @@ const LoadingKelas = () => (
 
 **Issue**: Buttons don't provide clear feedback when clicked.
 
-**Current**: 
+**Current**:
+
 - No loading spinner during async operations
 - No success/error visual feedback
 - Disabled state not always clear
 
 **Better Pattern**:
+
 ```javascript
-const [saving, setSaving] = useState(false)
+const [saving, setSaving] = useState(false);
 
 return (
   <button
@@ -308,20 +348,21 @@ return (
     disabled={saving}
     className="px-4 py-2 rounded-lg text-white font-medium transition-all"
     style={{
-      background: saving ? '#d1d5db' : '#A78BFA',
-      cursor: saving ? 'not-allowed' : 'pointer',
-      opacity: saving ? 0.7 : 1
-    }}>
+      background: saving ? "#d1d5db" : "#A78BFA",
+      cursor: saving ? "not-allowed" : "pointer",
+      opacity: saving ? 0.7 : 1,
+    }}
+  >
     {saving ? (
       <>
-        <span className="inline-block w-4 h-4 border-2 border-t-transparent rounded-full animate-spin mr-2"/>
+        <span className="inline-block w-4 h-4 border-2 border-t-transparent rounded-full animate-spin mr-2" />
         Menyimpan...
       </>
     ) : (
-      'Simpan'
+      "Simpan"
     )}
   </button>
-)
+);
 ```
 
 **Apply to**: All form submit buttons (save, update, delete confirmations)
@@ -335,11 +376,13 @@ return (
 **Issue**: Theme colors defined but not used consistently. Colors hardcoded in pages instead of using theme tokens.
 
 **Current**:
+
 - dashboard/page.js line 9-12: Colors defined locally (purple, purple50, etc.)
 - Not imported from theme.js
 - Inconsistent across pages
 
 **Fix**: Centralize in theme.js, import everywhere:
+
 ```javascript
 // lib/theme.js
 export const COLORS = {
@@ -371,25 +414,28 @@ import { COLORS } from '@/lib/theme'
 **Issue**: Fade-up animations on dashboard are present but feel slow/stiff.
 
 **Current** (dashboard/page.js line 126-136):
+
 ```javascript
-@keyframes fadeUp { 
-  from { opacity: 0; transform: translateY(12px) } 
-  to { opacity: 1; transform: translateY(0) } 
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px) }
+  to { opacity: 1; transform: translateY(0) }
 }
 .fu  { animation: fadeUp .4s ease both; }
 .fu1 { animation: fadeUp .4s ease .08s both; }
 ```
 
-**Issue**: 
+**Issue**:
+
 - All animations use `ease` (slow in, slow out) → feels floaty
 - 0.4s is slightly slow for micro-interactions
 - Stagger (0.08s) is too subtle; humans perceive above 0.1s
 
 **Better**:
+
 ```javascript
-@keyframes fadeUp { 
+@keyframes fadeUp {
   from { opacity: 0; transform: translateY(8px) }  /* Less distance = faster */
-  to { opacity: 1; transform: translateY(0) } 
+  to { opacity: 1; transform: translateY(0) }
 }
 
 /* Use easing that feels snappy */
@@ -437,12 +483,21 @@ import { Calendar, Users, FileText } from 'lucide-react'
 **Issue**: Print QR codes page likely doesn't have print-optimized styling.
 
 **Add to globals.css**:
+
 ```css
 @media print {
-  body { background: white; }
-  .no-print { display: none; }
-  a { text-decoration: none; }
-  img { max-width: 100%; }
+  body {
+    background: white;
+  }
+  .no-print {
+    display: none;
+  }
+  a {
+    text-decoration: none;
+  }
+  img {
+    max-width: 100%;
+  }
 }
 ```
 
@@ -455,6 +510,7 @@ import { Calendar, Users, FileText } from 'lucide-react'
 ### For 2-3 Teachers → 10+ Teachers & Multiple Schools
 
 **What Will Break**:
+
 1. **Sidebar grows**: 10+ navigation items overflow on mobile
 2. **Data pages**: Tables with 100+ rows become slow (no virtualization)
 3. **Color consistency**: Hardcoded colors scattered across pages become hard to maintain
@@ -463,6 +519,7 @@ import { Calendar, Users, FileText } from 'lucide-react'
 **Prevention**:
 
 **1. Extract Color System → Design Tokens** (Priority: HIGH)
+
 ```javascript
 // lib/tokens.js — Single source of truth
 export const tokens = {
@@ -472,12 +529,12 @@ export const tokens = {
   secondary: '#442F78',
   surface: '#FFFFFF',
   background: '#FAFAFA',
-  
+
   // Status colors (consistent across all pages)
   success: '#16A34A',
   warning: '#D97706',
   error: '#DC2626',
-  
+
   // Spacing scale (prevents arbitrary values)
   spacing: {
     xs: '4px',
@@ -486,7 +543,7 @@ export const tokens = {
     lg: '24px',
     xl: '32px',
   },
-  
+
   // Responsive breakpoints
   breakpoints: {
     mobile: '375px',
@@ -501,6 +558,7 @@ style={{ color: tokens.primary }}
 ```
 
 **2. Adaptive Navigation** (Priority: MEDIUM)
+
 ```javascript
 // For 10+ items, switch to collapsible sections
 <nav>
@@ -520,33 +578,33 @@ style={{ color: tokens.primary }}
 ```
 
 **3. Virtualized Tables** (Priority: HIGH if 100+ rows expected)
+
 ```javascript
-import { FixedSizeList } from 'react-window'
+import { FixedSizeList } from "react-window";
 
 <FixedSizeList
   height={600}
   itemCount={students.length}
   itemSize={50}
-  width="100%">
-  {({ index, style }) => (
-    <StudentRow student={students[index]} style={style} />
-  )}
-</FixedSizeList>
+  width="100%"
+>
+  {({ index, style }) => <StudentRow student={students[index]} style={style} />}
+</FixedSizeList>;
 ```
 
 ---
 
 ## 6. Quick Wins (Can Complete This Week)
 
-| Issue | Fix | Time | Impact |
-|-------|-----|------|--------|
-| **Focus indicators missing** | Add focus ring CSS globally | 30 min | High (a11y) |
-| **Contrast failures** | Update theme.js colors | 30 min | High (a11y) |
-| **Login subtitle hard to read** | Increase opacity rgba(255,255,255,0.87) | 15 min | Medium |
-| **No empty states** | Add 4-5 empty state components | 3 hours | Medium (UX) |
-| **Touch targets too small** | Set min-height/width 44px on buttons/icons | 1 hour | High (a11y) |
-| **Print QR codes** | Add @media print styles | 30 min | Low |
-| **Animation timing** | Update .4s → 0.3s, ease → easeOut | 30 min | Low (polish) |
+| Issue                           | Fix                                        | Time    | Impact       |
+| ------------------------------- | ------------------------------------------ | ------- | ------------ |
+| **Focus indicators missing**    | Add focus ring CSS globally                | 30 min  | High (a11y)  |
+| **Contrast failures**           | Update theme.js colors                     | 30 min  | High (a11y)  |
+| **Login subtitle hard to read** | Increase opacity rgba(255,255,255,0.87)    | 15 min  | Medium       |
+| **No empty states**             | Add 4-5 empty state components             | 3 hours | Medium (UX)  |
+| **Touch targets too small**     | Set min-height/width 44px on buttons/icons | 1 hour  | High (a11y)  |
+| **Print QR codes**              | Add @media print styles                    | 30 min  | Low          |
+| **Animation timing**            | Update .4s → 0.3s, ease → easeOut          | 30 min  | Low (polish) |
 
 **Total**: ~6 hours → **High ROI for compliance + UX**
 
@@ -555,18 +613,21 @@ import { FixedSizeList } from 'react-window'
 ## 7. 3-Month Roadmap
 
 ### Month 1 (Now)
+
 - ✅ Fix accessibility (contrast, focus, touch targets) — CRITICAL
 - ✅ Add empty states — HIGH
 - ✅ Improve form error messages — HIGH
 - ✅ Mobile responsiveness gaps — HIGH
 
 ### Month 2
+
 - Extract color system to tokens
 - Add loading/skeleton states
 - Enhance button feedback (loading spinners)
 - Upgrade animations (timing/easing)
 
 ### Month 3
+
 - Prepare for multi-school scaling (adaptive nav, virtualized lists)
 - Implement dark mode (token system makes this easy)
 - Add PDF export for reports (build on existing CSV)
@@ -592,7 +653,9 @@ import { FixedSizeList } from 'react-window'
 ## 9. Final Recommendations
 
 ### For Next Release (2-3 weeks)
+
 **Focus on Accessibility + Empty States**
+
 1. Fix contrast failures (30 min)
 2. Restore focus indicators (30 min)
 3. Increase touch target sizes (1-2 hours)
@@ -601,12 +664,14 @@ import { FixedSizeList } from 'react-window'
 **Expected Impact**: High compliance score, reduced support tickets, better mobile experience
 
 ### For Production Readiness (1-2 months)
+
 1. Extract token system (color, spacing, breakpoints)
 2. Add loading/skeleton states
 3. Enhance form UX (error messages, validation)
 4. Test on actual school devices (teacher tablets, admin phones)
 
 ### For Scaling (3-6 months)
+
 1. Prepare navigation for 10+ items (accordion/collapsible)
 2. Virtualize large lists (100+ students)
 3. Dark mode support (via tokens)
@@ -619,6 +684,7 @@ import { FixedSizeList } from 'react-window'
 **SiCuti's UI is well-structured** with good fundamentals. The **main opportunities** are in **accessibility compliance** (critical for schools), **mobile UX** (teachers use tablets), and **scalability preparation** (token system, adaptive navigation).
 
 Addressing the **critical + high priority items** (6-8 hours of work) will result in a **significantly improved product** that's:
+
 - ✅ Accessible to all users (legal compliance)
 - ✅ Mobile-friendly (field use)
 - ✅ Maintainable (token system)
@@ -629,6 +695,7 @@ Addressing the **critical + high priority items** (6-8 hours of work) will resul
 ---
 
 **Questions?** Refer to:
+
 - Accessibility: WCAG 2.1 Guidelines (https://www.w3.org/WAI/WCAG21/quickref/)
 - Mobile: Apple HIG (https://developer.apple.com/design/human-interface-guidelines/), Material Design (https://material.io/design)
 - React patterns: React docs
