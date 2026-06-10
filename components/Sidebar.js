@@ -112,10 +112,15 @@ export default function Sidebar({ profile, pendingCuti = 0, className = '' }) {
           const active = pathname === href
           return (
             <a key={href} href={href}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
-              style={active
-                ? { background: C.primaryBg, color: C.accent, fontWeight: 600 }
-                : { color: '#6b7280' }}>
+              className="flex items-center gap-3 px-3 rounded-xl text-sm font-medium transition-all"
+              style={{
+                minHeight: '44px',
+                display: 'flex',
+                alignItems: 'center',
+                ...(active
+                  ? { background: C.primaryBg, color: C.accent, fontWeight: 600 }
+                  : { color: '#6b7280' })
+              }}>
               <span style={{ color: active ? C.primary : '#9ca3af' }}>{icon}</span>
               {label}
               {label === 'Cuti Guru' && pendingCuti > 0 && isAdmin && (
@@ -132,8 +137,14 @@ export default function Sidebar({ profile, pendingCuti = 0, className = '' }) {
       {/* Scan tablet shortcut */}
       <div className="px-3 pb-3">
         <a href="/scan" target="_blank"
-          className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
-          style={{ background: C.primaryBg, color: C.accent }}>
+          className="flex items-center gap-2.5 px-3 rounded-xl text-sm font-medium transition-all"
+          style={{
+            minHeight: '44px',
+            display: 'flex',
+            alignItems: 'center',
+            background: C.primaryBg,
+            color: C.accent
+          }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.primary} strokeWidth="2" strokeLinecap="round">
             <path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/>
             <circle cx="12" cy="12" r="3"/>

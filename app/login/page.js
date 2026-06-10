@@ -57,14 +57,12 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex" style={{ fontFamily: "'Karla', sans-serif", background: '#FAFAFA' }}>
       <style>{`
-        
         @keyframes fadeUp { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
         .fu  { animation: fadeUp 0.5s ease forwards; }
         .fu1 { animation: fadeUp 0.5s ease 0.1s forwards; opacity:0; }
         .fu2 { animation: fadeUp 0.5s ease 0.2s forwards; opacity:0; }
         .fu3 { animation: fadeUp 0.5s ease 0.3s forwards; opacity:0; }
         .fu4 { animation: fadeUp 0.5s ease 0.4s forwards; opacity:0; }
-        input:focus { outline: none; }
         h1,h2,h3 { font-family: 'Rubik', sans-serif; }
       `}</style>
 
@@ -85,7 +83,7 @@ export default function LoginPage() {
             </div>
             <div>
               <div className="font-bold text-white text-sm leading-tight" style={{ fontFamily: "'Rubik', sans-serif" }}>{SCHOOL}</div>
-              <div className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.45)', fontFamily: 'DM Mono', letterSpacing: '0.06em' }}>
+              <div className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.87)', fontFamily: 'DM Mono', letterSpacing: '0.06em' }}>
                 Sistem Manajemen Sekolah
               </div>
             </div>
@@ -154,7 +152,7 @@ export default function LoginPage() {
             {/* Email */}
             <div className="fu2">
               <label className="block text-xs font-semibold uppercase tracking-widest mb-1.5"
-                style={{ color: '#A8A29E', fontFamily: 'DM Mono' }}>Email</label>
+                style={{ color: '#6B7280', fontFamily: 'DM Mono' }}>Email</label>
               <input
                 type="email" required
                 autoFocus
@@ -172,7 +170,7 @@ export default function LoginPage() {
             {/* Password */}
             <div className="fu3">
               <label className="block text-xs font-semibold uppercase tracking-widest mb-1.5"
-                style={{ color: '#A8A29E', fontFamily: 'DM Mono' }}>Password</label>
+                style={{ color: '#6B7280', fontFamily: 'DM Mono' }}>Password</label>
               <input
                 type="password" required
                 value={password} onChange={e => setPassword(e.target.value)}
@@ -226,7 +224,7 @@ export default function LoginPage() {
             </div>
           </form>
 
-          <p className="text-center text-xs mt-8" style={{ color: '#A8A29E' }}>
+          <p className="text-center text-xs mt-8" style={{ color: '#6B7280' }}>
             Butuh bantuan? Hubungi{' '}
             <span className="font-medium" style={{ color: accent }}>admin sekolah</span>.
           </p>
