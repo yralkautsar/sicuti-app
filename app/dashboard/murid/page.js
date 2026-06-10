@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import Sidebar from '@/components/Sidebar'
 import { useProfile } from '@/lib/ProfileContext'
+import { getUserFriendlyErrorMessage } from '@/lib/errorMessages'
 
 const purple    = '#A78BFA'
 const purple50  = 'rgba(167,139,250,0.10)'
@@ -100,7 +101,7 @@ export default function MuridPage() {
       setForm(EMPTY_FORM)
       setEditMurid(null)
     } catch (err) {
-      setFormError(err.message || 'Terjadi kesalahan.')
+      setFormError(getUserFriendlyErrorMessage(err))
     }
     setSaving(false)
   }
@@ -274,7 +275,6 @@ export default function MuridPage() {
       <style>{`
         @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
         .fu{animation:fadeUp .35s ease both}
-        input:focus,select:focus,textarea:focus{outline:none}
         ::-webkit-scrollbar{width:4px}
         ::-webkit-scrollbar-thumb{background:${purple100};border-radius:4px}
         .overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(4px);z-index:50;display:flex;align-items:center;justify-content:center;padding:16px}

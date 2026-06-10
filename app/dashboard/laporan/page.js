@@ -363,10 +363,8 @@ export default function LaporanPage() {
     <div className="flex h-screen overflow-hidden"
       style={{ background: '#FAFAFA' }}>
       <style>{`
-        
         @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
         .fu{animation:fadeUp .35s ease both}
-        input:focus,select:focus{outline:none}
         ::-webkit-scrollbar{width:4px}
         ::-webkit-scrollbar-thumb{background:${purple100};border-radius:4px}
         @media print {
