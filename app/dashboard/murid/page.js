@@ -91,7 +91,7 @@ export default function MuridPage() {
         const { error } = await supabase.from('students').update(payload).eq('id', editMurid.id)
         if (error) throw error
       } else {
-        const qr_code = 'MRD-' + Math.random().toString(36).substring(2, 10).toUpperCase()
+        const qr_code = `MRD-${crypto.randomUUID()}`
         const { error } = await supabase.from('students').insert({ ...payload, qr_code })
         if (error) throw error
       }
@@ -245,7 +245,7 @@ export default function MuridPage() {
     let success = 0, failed = 0
     for (const row of csvPreview) {
       try {
-        const qr_code = 'MRD-' + Math.random().toString(36).substring(2, 10).toUpperCase()
+        const qr_code = `MRD-${crypto.randomUUID()}`
         const { error } = await supabase.from('students').insert({
           full_name:     row.full_name,
           nisn:          row.nisn || null,

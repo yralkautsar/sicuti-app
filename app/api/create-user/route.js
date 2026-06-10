@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
+import { randomUUID } from 'crypto'
 
 export async function POST(request) {
   try {
@@ -32,7 +33,7 @@ export async function POST(request) {
 
     // 2. Generate QR code
     const prefix = (role === 'admin' || jabatan === 'Kepala Sekolah') ? 'ADM' : 'GURU'
-    const qr_code = `${prefix}-${Math.random().toString(36).substring(2, 10).toUpperCase()}`
+    const qr_code = `${prefix}-${randomUUID()}`
 
     // 3. Insert profile
     const { error: profileError } = await supabaseAdmin
